@@ -2,13 +2,19 @@
   "name": "codelab",
   "version": "0.0.1",
   "description": "WebRTC codelab",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
   },
+  "repository": "",
+  "keywords": [
+    "node.js",
+    "eclipse",
+    "nodeclipse"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/webrtc/codelab"
+    "url": "https://github.com/nicolasdonato/ProgWeb"
   },
   "keywords": [
     "webrtc",
@@ -19,6 +25,7 @@
   "dependencies": {
     "node-static": "~0.7.1",
     "socket.io": "~0.9.16",
-    "express": "~3.4.0"
+    "express": "~3.4.0",
+	"mongodb" :">= 2.0.4"
   }
 }

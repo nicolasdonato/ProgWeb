@@ -43,6 +43,52 @@ if (room === '') {
   //
 }
 
+
+/*
+ * Authentification de la connection
+ * */
+var connect = io.connect("/connect");
+
+connect.emit('listUsers');
+
+connect.on("userList", function (list) {
+	// list existing users
+	for(var index in list){
+		$("#users").text($("#users").text() + "\n" + list[index].name + " " + list[index].password);
+	}
+});
+
+connect.on('log', function (array) {
+  console.log.apply(console, array);
+});
+
+connect.on('connectionApproved', connectionApproved);
+connect.on('connectionRefused', connectionRefused);
+
+function formInit(){
+	$("#loginForm").hide();
+	$("#loginInProgress").show();
+	connect.emit("authentification", {
+		login: $("#login").val(),
+		password: $("#pwd").val()
+    });
+	return false;
+}
+
+function connectionApproved(userInfo)
+{
+	trace("connectionApproved signal received");
+	$("#loginInProgress").hide();
+	$("#connectionData").text(userInfo);
+	$("#connectionData").show();
+}
+function connectionRefused()
+{
+	trace("connectionRefused signal received");
+	$("#loginInProgress").hide();
+	$("#loginForm").show();
+}
+
 // Demande de connexion au serveur de sockets. Si on regarde le code du
 // server dans server.js on verra que si on est le premier client connecté
 // on recevra un message "created", sinon un message "joined"

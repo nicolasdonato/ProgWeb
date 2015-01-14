@@ -1,10 +1,23 @@
+var portNumber = 8888;
+
 var static = require('node-static');
 var http = require('http');
 var file = new(static.Server)();
 var app = http.createServer(function (req, res) {
-  file.serve(req, res);
-}).listen(2013);
 
+  console.log("Incoming request: (" + req.method + ") " + req.url);
+  
+  file.serve(req, res);
+  
+}).listen(portNumber);
+
+
+//
+var dbManager = require('./modules/dbManager.js');
+
+var dbName = "GEOCHAT";
+
+dbManager.initialize(dbName);
 
 // var express = require('express');
 // var app = express();
@@ -71,3 +84,41 @@ io.sockets.on('connection', function (socket){
 
 });
 
+
+io.
+of('/connect').
+on('connection', function (socket){
+	
+	// convenience function to log server messages on the client
+	function log(){
+		var array = [">>> Message from server:"];
+		array.push.apply(array, arguments);
+		socket.emit('log', array);
+	}
+
+	socket.on('listUsers', function () {
+		log('Client asked for users');
+		dbManager.list(function(err, userList){
+
+			for(var index in userList){
+				log('Found user ' + userList[index].name);
+			}
+			socket.emit('userList', userList);
+		});
+		// for a real app, would be room only (not broadcast)
+	});
+
+	socket.on('authentification', function (data) {
+		log('Client asked for auth with credentials : ' + data.login + " " + data.password);
+		dbManager.findByNameAndPassword(data.login, data.password, function(success){
+			if(success){
+				socket.emit('connectionApproved', data.login + " is authentified");
+			}
+			else
+				{
+
+				socket.emit('connectionRefused');
+				}
+		});
+	});
+});
