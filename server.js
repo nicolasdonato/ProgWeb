@@ -11,11 +11,8 @@ require('./modules/routes').setup(app);
 // Lancement du serveur
 var server = http.createServer(app).listen(portNumber);/*process.env.port || */
 
-var dbManager = require('./modules/dbManager');
-
-var dbName = "GEOCHAT";
-
-dbManager.initialize(dbName);
+require('./modules/dbConnection').initialize("GEOCHAT");
+require('./modules/dbManager').initialize();
 
 var io = require('socket.io').listen(server);
 
