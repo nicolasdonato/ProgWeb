@@ -1,50 +1,43 @@
 var portNumber = 8888;
 
-var static = require('node-static');
+var os = require('os');
+var express = require('express');
 var http = require('http');
-var file = new(static.Server)();
-var app = http.createServer(function (req, res) {
 
-  console.log("Incoming request: (" + req.method + ") " + req.url);
-  
-  file.serve(req, res);
-  
-}).listen(portNumber);
+var app = express();
+require('./modules/config').config(app, express);
+// Définition des routes
+require('./modules/routes').setup(app);
+// Lancement du serveur
+var server = http.createServer(app).listen(portNumber);/*process.env.port || */
 
-
-//
-var dbManager = require('./modules/dbManager.js');
+var dbManager = require('./modules/dbManager');
 
 var dbName = "GEOCHAT";
 
 dbManager.initialize(dbName);
 
-// var express = require('express');
-// var app = express();
-// console.log(express.static(__dirname + '/js'));
-// app.use(express.static(__dirname + '/js'));
-// app.all('*', function(req, res){
-// 	res.sendfile("index.html");
-// });
+var io = require('socket.io').listen(server);
 
-// app.listen(9000);
+var connectionSocket = require('./modules/sockets/authentification');
 
-// M.Buffa. Rappel des trois syntaxes de socket.io
-// socket = un tuyau relié à un client. C'est un objet unique par client.
-//      Donc si on fait socket.n = 3; c'est comme si on ajoutait une propriété
-// 		"n" à la session dédiée au client connecté. 
-// socket.emit(type_message, data) = envoie un message juste au client connecté
-// socket.broadcast.emit(type_message, data1, data2) = envoie à tous les clients
-// 		sauf au client connecté
-// io.sockets.emit(type_message, data1, data2) = envoie à tous les clients y compris
-// 		au client connecté.
-// 	Variantes avec les "room" :
-// 	socket.broadcast.to(nom de la salle).emit(...) = tous sauf client courant, mais
-// 													 de la salle
-// io.sockets.in(nom de la salle).emit(...) = tous les clients de la salle y compris
-// 											  le client courant.
+connectionSocket.configure(io, "/auth");
 
-var io = require('socket.io').listen(app);
+//M.Buffa. Rappel des trois syntaxes de socket.io
+//socket = un tuyau relié à un client. C'est un objet unique par client.
+//   Donc si on fait socket.n = 3; c'est comme si on ajoutait une propriété
+//		"n" à la session dédiée au client connecté. 
+//socket.emit(type_message, data) = envoie un message juste au client connecté
+//socket.broadcast.emit(type_message, data1, data2) = envoie à tous les clients
+//		sauf au client connecté
+//io.sockets.emit(type_message, data1, data2) = envoie à tous les clients y compris
+//		au client connecté.
+//	Variantes avec les "room" :
+//	socket.broadcast.to(nom de la salle).emit(...) = tous sauf client courant, mais
+//													 de la salle
+//io.sockets.in(nom de la salle).emit(...) = tous les clients de la salle y compris
+//											  le client courant.
+
 io.sockets.on('connection', function (socket){
 
 	// Permet d'envoyer des traces au client distant
@@ -82,43 +75,4 @@ io.sockets.on('connection', function (socket){
 
 	});
 
-});
-
-
-io.
-of('/connect').
-on('connection', function (socket){
-	
-	// convenience function to log server messages on the client
-	function log(){
-		var array = [">>> Message from server:"];
-		array.push.apply(array, arguments);
-		socket.emit('log', array);
-	}
-
-	socket.on('listUsers', function () {
-		log('Client asked for users');
-		dbManager.list(function(err, userList){
-
-			for(var index in userList){
-				log('Found user ' + userList[index].name);
-			}
-			socket.emit('userList', userList);
-		});
-		// for a real app, would be room only (not broadcast)
-	});
-
-	socket.on('authentification', function (data) {
-		log('Client asked for auth with credentials : ' + data.login + " " + data.password);
-		dbManager.findByNameAndPassword(data.login, data.password, function(success){
-			if(success){
-				socket.emit('connectionApproved', data.login + " is authentified");
-			}
-			else
-				{
-
-				socket.emit('connectionRefused');
-				}
-		});
-	});
 });
