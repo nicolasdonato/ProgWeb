@@ -1,4 +1,4 @@
-var tags = require('./tags');
+var tags = require('../tags');
 
 exports.setup = function(app){
 	app.post('/ws/tags', tags.create);

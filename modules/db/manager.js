@@ -1,6 +1,6 @@
 //var mongoose = require('mongoose');
 //var UserSchema = require('user');
-var dbConnection = require('./dbConnection');
+var dbConnection = require('./connection');
 
 var damien = { name : 'damien', password : 'lepiller'};
 var damien2 = { name : 'damie2n', password : 'lepiller'};

@@ -12,10 +12,10 @@ var node_express = require('express');
 var node_http = require('http');
 var node_io = require('socket.io'); 
 
-var mod_config = require('./modules/config'); 
-var mod_routes = require('./modules/routes'); 
-var mod_dbConnect = require('./modules/dbConnection'); 
-var mod_dbManager = require('./modules/dbManager'); 
+var mod_config = require('./modules/config/config'); 
+var mod_routes = require('./modules/config/routes'); 
+var mod_dbConnect = require('./modules/db/connection'); 
+var mod_dbManager = require('./modules/db/manager'); 
 var mod_socket = require('./modules/sockets/manager');
 var mod_socket_auth = require('./modules/sockets/authentification');
 

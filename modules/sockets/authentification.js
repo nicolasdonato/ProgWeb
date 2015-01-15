@@ -1,5 +1,5 @@
 
-var dbManager = require('../dbManager'); // WARNING: DB must have been initialized before !
+var dbManager = require('../db/manager'); // WARNING: DB must have been initialized before !
 
 
 module.exports.configure = function(io, socketPath) {
