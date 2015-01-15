@@ -4,52 +4,61 @@
 
 <meta name='keywords' content='WebRTC, HTML5, JavaScript' />
 <meta name='description' content='WebRTC Reference App' />
-<meta name='viewport' content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
+<meta name='viewport'
+	content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
 
 <base target='_blank' />
 
 <title>WebRTC client</title>
 
 <link rel='stylesheet' href='css/main.css' />
-<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-<script src='/socket.io/socket.io.js'></script>
-<script src='js/lib/adapter.js'></script>
-<script src="js/lib/jquery-2.1.3.js"></script>
+
 </head>
 
 <body>
 
-<div id='container'>
+	<div id='container'>
 
-  <div id='videos'>
-    <video id='localVideo' autoplay muted></video>
-    <video id='remoteVideo' autoplay></video>
-  </div>
+		<div id='videos'>
+			<video id='localVideo' autoplay muted></video>
+			<video id='remoteVideo' autoplay></video>
+		</div>
 
-  <div id='textareas'>
-		<textarea id="dataChannelSend" disabled placeholder="Press Start, enter some text, then press Send."></textarea>
-		<textarea id="dataChannelReceive" disabled></textarea>
+		<div id='textareas'>
+			<textarea id="dataChannelSend" 
+				placeholder="Press Start, enter some text, then press Send."></textarea>
+			<textarea id="dataChannelReceive" disabled></textarea>
+		</div>
+		<div id="carte" style="width: 100%; height: 100%"></div>
+		<button id="sendButton" >Send</button>
+
 	</div>
-	<div id="carte" style="width:100%; height:100%"></div>
-  <button id="sendButton" disabled>Send</button>
 
-</div>
+	<p>
+		Room URL: <br>
+		<code id="url">...</code>
+	</p>
+	<span id="users"></span>
+	<form id="loginForm" onsubmit="return formInit();">
+		<p>
+			Nom : <input id="login" type="text" /> Mot de passe : <input
+				id="pwd" type="password" /> <input id="Go" type="submit"
+				value="Go !" />
+		</p>
+	</form>
+	<div id="loginInProgress" style="display: none;">Please wait ....
+		auth in progress</div>
+	<div id="connectionData" style="display: none;"></div>
 
-        <p>
-            Room URL: <br>
-            <code id="url">...</code>
-        </p>
-		<span id="users"></span>
-        <form id="loginForm" onsubmit="return formInit();">
-	        <p>
-		        Nom : <input id="login" type="text" />
-		        Mot de passe : <input id="pwd" type="password" />
-		        <input id="Go" type="submit" value="Go !" /> 
-	        </p>
-        </form>
-        <div id="loginInProgress" style="display:none;">Please wait .... auth in progress</div>
-        <div id="connectionData" style="display:none;"></div>
-        
+
+	<script src="js/lib/jquery-2.1.3.js"></script>
+	<script src='js/lib/adapter.js'></script>
+	<script type="text/javascript" src="js/lib/jquery.class.js"></script>
+	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+	<script src='/socket.io/socket.io.js'></script>
+	<script src='js/chat.js'></script>
+	<script src='js/maps.js'></script>
+	<script src='js/webrtc.js'></script>
 	<script src='js/main.js'></script>
 </body>
 </html>
