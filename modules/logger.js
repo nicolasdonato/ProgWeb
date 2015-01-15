@@ -1,41 +1,20 @@
 
-var fs = require('fs');
+var node_fs = require('fs');
+
+var mod_utils = require('./utils'); 
 
 
-var out = fs.createWriteStream('logs/out.log', {flags: 'a'}); 
-var err = fs.createWriteStream('logs/err.log', {flags: 'a'}); 
+var outLog = 'logs/out.log'; 
+var errLog = 'logs/err.log'; 
 
 
-function getTimeStamp() {
-
-	var s = '[';
-
-	var currentTime = new Date()
-
-	var year = currentTime.getFullYear(); 
-	var month = currentTime.getMonth() + 1; 
-	var day = currentTime.getDate(); 
-	s += year + '-' + month + '-' + day + ' '; 
-
-	var hours = currentTime.getHours()
-	var minutes = currentTime.getMinutes()
-	if (minutes < 10) {
-		minutes = '0' + minutes
-	}
-	var seconds = currentTime.getSeconds()
-	if (seconds < 10) {
-		seconds = '0' + seconds
-	}
-	var milli = currentTime.getMilliseconds(); 
-	s += hours + ':' + minutes + ':' + seconds + '.' + milli + ']';
-
-	return s;
-}
+var out = node_fs.createWriteStream(outLog, {flags: 'a'}); 
+var err = node_fs.createWriteStream(errLog, {flags: 'a'}); 
 
 
-module.exports.out = function(message) {
+module.exports.out = function (message) {
 
-	var stamp = getTimeStamp();
+	var stamp = mod_utils.getTimeStamp();
 	var lines = message.split('\n');
 
 	for (var i = 0; i < lines.length; i++) {
@@ -44,12 +23,18 @@ module.exports.out = function(message) {
 }; 
 
 
-module.exports.err = function(message) {
+module.exports.err = function (message) {
 
-	var stamp = getTimeStamp();
+	var stamp = mod_utils.getTimeStamp();
 	var lines = message.split('\n');
 
 	for (var i = 0; i < lines.length; i++) {
 		err.write(stamp + ' ' + lines[i] + '\n');
 	}
 }; 
+
+
+module.exports.reset = function () {
+	out = node_fs.createWriteStream(outLog, {flags: 'w'}); 
+	err = node_fs.createWriteStream(errLog, {flags: 'w'}); 
+}

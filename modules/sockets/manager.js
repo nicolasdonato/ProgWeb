@@ -9,7 +9,7 @@ module.exports.connect = function(io) {
 
 		function log() {
 
-			var array = [">>> "];
+			var array = [">>> [socket] "];
 			for (var i = 0; i < arguments.length; i++) {
 				array.push(arguments[i]);
 			}
