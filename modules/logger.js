@@ -3,10 +3,14 @@ var node_fs = require('fs');
 
 var mod_utils = require('./utils'); 
 
+var dirLog = 'logs';
+var outLog = dirLog + '/out.log'; 
+var errLog = dirLog + '/err.log'; 
 
-var outLog = 'logs/out.log'; 
-var errLog = 'logs/err.log'; 
-
+// create directory logs
+if (!node_fs.existsSync(dirLog)){
+	node_fs.mkdirSync(dirLog);
+}
 
 var out = node_fs.createWriteStream(outLog, {flags: 'a'}); 
 var err = node_fs.createWriteStream(errLog, {flags: 'a'}); 

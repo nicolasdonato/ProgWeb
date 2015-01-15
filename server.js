@@ -4,6 +4,13 @@
 
 var portNumber = 8888;
 
+var path = __dirname;
+path = path.indexOf('\\') >= 0 ? path.replace(/\\/g, '/') : path; //change windows slashes to unix
+if (path.substr(path.length - 1) == '/') { //remove trailing slash
+    path = path.substr(0, path.length - 1);
+} 
+var tabDir = path.split("/");
+var contextRoot = tabDir[tabDir.length - 1];
 
 // MODULES
 //////////
@@ -30,7 +37,7 @@ logger.out('SERVER LAUNCHING');
 // SERVER
 /////////
 
-mod_db_connect.initialize("GEOCHAT");
+mod_db_connect.initialize(contextRoot); //mod_db_connect.initialize("GEOCHAT");
 mod_db.initialize();
 
 var app = node_express();
