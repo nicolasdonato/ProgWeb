@@ -10,7 +10,7 @@ exports.config = function(app, express){
 	app.configure(function(){
 		// Log les access web
 		app.use(express.logger({
-			stream: fs.createWriteStream('./logs/access.log', {flags: 'a'}) 
+			stream: fs.createWriteStream('logs/access.log', {flags: 'a'}) 
 		}));
 		// Permet de récupérer les variables envoyées en POST
 		app.use(express.bodyParser());
@@ -20,7 +20,7 @@ exports.config = function(app, express){
 		//
 		// NB : __dirname correspond au répertoire où se trouve ce fichier et on veut que la redirection par défaut pointe vers le contenu du répertoire public
 		//
-		app.use(express.static(path.resolve(__dirname, '..') + "/public"));
+		app.use(express.static(path.resolve(__dirname, '../..') + "/public"));
 		  //server.use('/media', express.static(__dirname + '/media'));
 
 	});
