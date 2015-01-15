@@ -11,6 +11,7 @@ var WebRTC = Class.create({
 	
 	localStream: null, // stream of the local webcam
 	localVideo: null,
+	localMember: null,
 	
 	turnReady: false,
 	isChannelReady: false,
@@ -21,10 +22,13 @@ var WebRTC = Class.create({
 	
 	listPeerConnection: [],
 	
+	functionSendCandidate: null,
+	
 	initialize: function(options) {
 		
 		this.webrtc = this;
 		
+		this.localMember = options.localMember;
 		this.localVideo = options.localVideo;
 		this.constraints = options.constraints || {
 			video: true
@@ -32,6 +36,8 @@ var WebRTC = Class.create({
 		this.pc_config = options.pc_config;
 		this.pc_constraints = options.pc_constraints;
 		this.sdpConstraints = options.sdpConstraints;
+		
+		this.functionSendCandidate = options.functionSendCandidate || null;
 		
 		this.options = options;
 		
@@ -47,7 +53,7 @@ var WebRTC = Class.create({
     },
     
     handleUserMedia: function (stream) {
-		this.webrtc.localStream = stream;
+		this.webrtc.localStream = stream; // TODO a verifier pour firefox
 		attachMediaStream(this.webrtc.localVideo, stream);
 		console.log('Adding local stream.');
 		
@@ -186,6 +192,18 @@ var WebRTC = Class.create({
 		}
 	},
 	
+	getPC: function(member) {
+		if (this.listPeerConnection) {
+			for (var idx = 0; idx < this.listPeerConnection.length; idx++) {
+				var tmpPC = this.listPeerConnection[idx];
+				if (tmpPC && tmpPC.member == member) {
+					return tmpPC;
+				}
+			}
+		}
+		return null;
+	},
+	
 	sendData: function (data) {
 		this.pc.sendChannel.send(data);
 		trace('Sent data by RTCPeerConnection: ' + data);
@@ -230,21 +248,15 @@ var WebRTC = Class.create({
 	handleSendChannelStateChange: function(event) {
 		var readyState = this.webrtc.pc.sendChannel.readyState;
 		trace('Send channel state is: ' + readyState);
-		//if (this.webrtc.enableMessageInterface)
-		//	this.webrtc.enableMessageInterface(readyState == "open");
-		this.webrtc.trigger("channelStateChange", {
-			readyState: readyState == "open"
-		});
+		if (this.webrtc.enableMessageInterface)
+			this.webrtc.enableMessageInterface(readyState == "open");
 	},
 	
 	handleReceiveChannelStateChange: function(event) {
 		var readyState = this.webrtc.pc.sendChannel.readyState;
 		trace('Receive channel state is: ' + readyState);
-		//if (this.webrtc.enableMessageInterface)
-		//	this.webrtc.enableMessageInterface(readyState == "open");
-		this.webrtc.trigger("channelStateChange", {
-			readyState: readyState == "open"
-		});
+		if (this.webrtc.enableMessageInterface)
+			this.webrtc.enableMessageInterface(readyState == "open");
 	},
 	
 	handleIceCandidate: function (event) {
@@ -254,12 +266,14 @@ var WebRTC = Class.create({
 		
 		if (event.candidate) {
 			// On envoie cette candidature à tout le monde.
-			this.sendMessage({
-				type: 'candidate',
-				label: event.candidate.sdpMLineIndex,
-				id: event.candidate.sdpMid,
-				candidate: event.candidate.candidate
-			});
+			if (this.webrtc.functionSendCandidate && jQuery.isFunction(this.webrtc.functionSendCandidate)) {
+				this.webrtc.functionSendCandidate({
+					type: 'candidate',
+					label: event.candidate.sdpMLineIndex,
+					id: event.candidate.sdpMid,
+					candidate: event.candidate.candidate
+				});
+			}
 		} else {
 			console.log('End of candidates.');
 		}
@@ -290,24 +304,48 @@ var WebRTC = Class.create({
 	
 		// Envoi de l'offre. Normalement en retour on doit recevoir une "answer"
 		//nodePeerConnection.pc.createOffer(this.setLocalAndSendMessage, null, constraints);
-		nodePeerConnection.pc.createOffer(function(offer) {
+		nodePeerConnection.pc.createOffer(function(sessionDescription) {
 			// Set Opus as the preferred codec in SDP if Opus is present.
 			// M.Buffa : là c'est de la tambouille compliquée pour modifier la 
 			// configuration SDP pour dire qu'on préfère un codec nommé OPUS (?)
 			sessionDescription.sdp = this.webrtc.preferOpus(sessionDescription.sdp);
-			nodePeerConnection.pc.setLocalDescription(sessionDescription, function() {
-			    // send the offer to a server to be forwarded to the friend you're calling.
-				// Envoi par WebSocket
-				sendMessage(sessionDescription);
-		    });
+			nodePeerConnection.pc.setLocalDescription(sessionDescription);
+			// Envoi par WebSocket
+			sendMessage({
+				remoteSessionDescription: sessionDescription,
+				member: this.webrtc.localMember
+			});
 			
 		}, null, constraints);
 	},
 	
+	setRemoteDescription: function(data) {
+		var tmpPC = this.getPC(data.member);
+		if (tmpPC) {
+			tmpPC.setRemoteDescription(new RTCSessionDescription(data.remoteSessionDescription));
+		}
+	},
+	
 	// Exécuté par l'appelé uniquement...
-	doAnswer: function() {
+	doAnswer: function(data) {
 		console.log('Sending answer to peer.');
-		this.pc.createAnswer(this.setLocalAndSendMessage, null, this.webrtc.sdpConstraints);
+		var tmpPC = this.getPC(data.member);
+		if (tmpPC) {
+			tmpPC.createAnswer(function(sessionDescription) {
+				// Set Opus as the preferred codec in SDP if Opus is present.
+				// M.Buffa : là c'est de la tambouille compliquée pour modifier la 
+				// configuration SDP pour dire qu'on préfère un codec nommé OPUS (?)
+				sessionDescription.sdp = this.webrtc.preferOpus(sessionDescription.sdp);
+				tmpPC.setLocalDescription(sessionDescription);
+				// Envoi par WebSocket
+				sendMessage({
+					remoteSessionDescription: sessionDescription,
+					member: this.webrtc.localMember
+				});
+				
+			}, null, this.webrtc.sdpConstraints);
+		}
+		//this.pc.createAnswer(this.setLocalAndSendMessage, null, this.webrtc.sdpConstraints);
 	},
 	
 	mergeConstraints: function (cons1, cons2) {
@@ -458,20 +496,12 @@ var WebRTCNode = Class.create({
 	remoteVideo: null,
 	sendChannel: null,
 	
-	isStarted: false,
-	isInitiator: false,
-	
 	member: null,
 	
 	initialize: function(options) {
 		
 		this.webrtc = options.webrtc || null;
-		
-		this.isInitiator = options.isInitiator || false;
-		this.isStarted = false;
-		
 		this.member = options.member || null;
-		
 		
     }
 });
