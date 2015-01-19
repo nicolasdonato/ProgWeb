@@ -1,5 +1,6 @@
 
-var mod_db_auth = require('../db/authentification'); // WARNING: DB must have been initialized before !
+var mod_db_users = require('../db/users'); 
+var mod_db_sessions = require('../db/sessions'); 
 
 
 module.exports.configure = function (io, socketPath) {
@@ -8,8 +9,10 @@ module.exports.configure = function (io, socketPath) {
 
 
 		function log() {
-			var array = [">>> [authentification] "];
+			
+			var array = [">>> [authentication] "];
 			array.push.apply(array, arguments);
+			
 			socket.emit('log', array);
 		}
 
@@ -17,7 +20,7 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('listUsers', function () {
 			log('Client asked for users');
 			
-			mod_db_auth.list(function(err, userList) {
+			mod_db_users.list(function(err, userList) {
 				
 				for (var index in userList) {
 					log('Found user ' + userList[index].name);
@@ -31,10 +34,10 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('authentification', function (data) {
 			log('Client asked for auth with credentials <' + data.login + "," + data.password + ">");
 			
-			mod_db_auth.login(data.login, data.password, function (success, object) {
+			mod_db_sessions.login(data.login, data.password, function (result) {
 				
-				if (success) {
-					socket.emit('connectionApproved', object);
+				if (result.authenticated) {
+					socket.emit('connectionApproved', result);
 				} else {
 					socket.emit('connectionRefused');
 				}

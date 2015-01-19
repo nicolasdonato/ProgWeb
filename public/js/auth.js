@@ -2,10 +2,49 @@
 var token = ''; 
 
 
-var auth = io.connect("/auth");
+var auth = io.connect("/session/login");
 
-auth.emit('listUsers');
+//auth.emit('listUsers');
 
+var on_connectionApproved = function (data) {
+	var userName = $("#login").val();
+	$("#userName").val(userName);
+	$("#token").val(data.token);
+	
+	$("#loginInProgress").hide();
+	$("#connectionData").text("Hello "+userName+", your connection token is : "+ data.token);
+	
+	// Asynchronously Load the map API 
+	/*var script = document.createElement('script');
+	script.src = "js/main.js";
+	document.head.appendChild(script);*/
+	
+	$.getScript("js/main.js")
+	.done(function() {
+
+		$("#connectionData").show();
+		$("#container").show();
+	})
+	.fail(function() {
+
+});
+};
+
+var on_connectionRefused = function () {
+	$("#loginInProgress").hide();
+	$("#connectionData").text('LOGIN FAILED');
+	$("#connectionData").show();
+	$("#loginForm").show();
+};
+
+var on_connectionResult = function(data){
+	if(data.authenticated){
+		on_connectionApproved(data);
+	}
+	else {
+		on_connectionRefused();
+	}
+};
 
 auth.on("userList", function (list) {
 	
@@ -21,39 +60,34 @@ auth.on('log', function (array) {
 });
 
 
-auth.on('connectionApproved', function (data) {
-	user = data.userName;
-	token = data.token; 
-	$("#loginInProgress").hide();
-	$("#connectionData").text(token);
-	jQuery("#userName").val(user);
-	jQuery("#token").val(token);
-	$("#connectionData").show();
-	
-	jQuery("#container").show();
-	// Asynchronously Load the map API 
-	var script = document.createElement('script');
-	script.src = "js/main.js";
-	document.head.appendChild(script);
-});
+auth.on('connectionApproved', on_connectionApproved);
+
+auth.on('connectionRefused', on_connectionRefused);
+
 
 function getMember() {
 	return jQuery("#userName").val();
 }
 
-auth.on('connectionRefused', function () {
-	$("#loginInProgress").hide();
-	$("#connectionData").text('LOGIN FAILED');
-	$("#loginForm").show();
-});
+var authBySocket = false;
+var authByAjax = true;
 
-
+var serverUrl = "session/login"
+	
 function authenticate() {
 	
 	$("#loginForm").hide();
+	$("#loginForm").hide();
 	$("#loginInProgress").show();
+
+	var data = { login: $("#login").val(), password: $("#pwd").val() };
 	
-	auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
+	if(authBySocket){
+		auth.emit("authentification", data);
+	}
+	if(authByAjax){
+		$.post(serverUrl, data , on_connectionResult, "json");
+	}
 	
 	return false;
 }
