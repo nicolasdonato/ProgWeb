@@ -1,59 +1,45 @@
+window.AUTH = {
+	token: '',
+	auth: io.connect("/auth"),
+	users: {},
+	connectionData : {},
+	getMember: function() {
+		return AUTH.connectionData.userName;
+	},
+	authenticate: function(e) {
+		if(e.keyCode === 13){
+			$("#loginForm").hide();
 
-var token = ''; 
-
-
-var auth = io.connect("/auth");
-
-auth.emit('listUsers');
-
-
-auth.on("userList", function (list) {
-	
-	for (var index in list) {
-		var line = $("#users").text() + "\n" + list[index].name + " " + list[index].password; 
-		$("#users").text(line);
+			AUTH.auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
+		}
+		return false;
 	}
+};
+
+AUTH.auth.emit('listUsers');
+
+AUTH.auth.on("userList", function (list) {
+	AUTH.users = list;
+	console.log('--- userList ---');
+	console.log(AUTH.users);
 });
 
-
-auth.on('log', function (array) {
+AUTH.auth.on('log', function (array) {
   console.log.apply(console, array);
 });
 
-
-auth.on('connectionApproved', function (data) {
-	user = data.userName;
-	token = data.token; 
-	$("#loginInProgress").hide();
-	$("#connectionData").text(token);
-	jQuery("#userName").val(user);
-	jQuery("#token").val(token);
-	$("#connectionData").show();
+AUTH.auth.on('connectionApproved', function (data) {
+	AUTH.connectionData.userName 	= data.userName;
+	AUTH.connectionData.token 		= data.token;
 	
-	jQuery("#container").show();
+	// TODO : load project in #main
+
 	// Asynchronously Load the map API 
 	var script = document.createElement('script');
 	script.src = "js/main.js";
 	document.head.appendChild(script);
 });
 
-function getMember() {
-	return jQuery("#userName").val();
-}
-
-auth.on('connectionRefused', function () {
-	$("#loginInProgress").hide();
-	$("#connectionData").text('LOGIN FAILED');
-	$("#loginForm").show();
+AUTH.auth.on('connectionRefused', function () {
+	// TODO handle login error
 });
-
-
-function authenticate() {
-	
-	$("#loginForm").hide();
-	$("#loginInProgress").show();
-	
-	auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
-	
-	return false;
-}

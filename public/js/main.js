@@ -38,7 +38,7 @@ var webrtc = new WebRTC({
 var map = new Map({
 	divMap: document.getElementById("carte"),
 	localMember: function() {
-		return getMember();
+		return AUTH.getMember();
 	},
 	showMap: function(mapElement) {
 		jQuery(mapElement).css({
