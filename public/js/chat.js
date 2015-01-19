@@ -1,16 +1,19 @@
 
 var ChatMessage = Class.create({
 	socket: null,
+	component: null,
+	mapFunctionOn: null,
 	
 	initialize: function(options) {
 		this.socket = io.connect();
-		this.socket.on("message", this.receiveMessage);
-		this.socket.mapFunctionOn = {};
+		this.component = (options && options.component) ? options.component : "message";
+		this.socket.on(this.component, this.receiveMessage.bind(this));
+		this.mapFunctionOn = {};
     },
 	
 	on: function (messageType, functionToExecute) {
 		if (functionToExecute && jQuery.isFunction(functionToExecute)) {
-			this.socket.mapFunctionOn[messageType] = functionToExecute;
+			this.mapFunctionOn[messageType] = functionToExecute;
 		}
 		return this;
 	},
@@ -21,7 +24,7 @@ var ChatMessage = Class.create({
 			data: data
 		};
 		console.log('Sending message: ', message);
-		this.socket.emit('message', message);
+		this.socket.emit(this.component, message);
 		return this;
 	},
 	

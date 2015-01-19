@@ -46,7 +46,7 @@
 	</div>
 
 
-	<div id='container'>
+	<div id='container' style="display:none">
 
 		<div id='videos'>
 			<video id='localVideo' autoplay muted></video>
@@ -54,15 +54,15 @@
 		</div>
 
 		<div id='textareas'>
+			<textarea id="dataChannelReceive" disabled></textarea>
 			<textarea id="dataChannelSend"
 				placeholder="Press Start, enter some text, then press Send."></textarea>
-			<textarea id="dataChannelReceive" disabled></textarea>
+			<button id="sendButton">Send</button>
 		</div>
 
 		<div id="carte" style="width: 100%; height: 100%"></div>
 
-		<button id="sendButton">Send</button>
-
+		<div id="carte"></div>
 	</div>
 
 
@@ -80,11 +80,10 @@
 			.... auth in progress</div>
 
 		<div id="connectionData" style="display: none;"></div>
+		<input type="hidden" id="userName" />
+		<input type="hidden" id="token" />
 
 	</div>
-	
-	<div id="carte"></div>
 
-	<script src='js/main.js'></script>
 </body>
 </html>

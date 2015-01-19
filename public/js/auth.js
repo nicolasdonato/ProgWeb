@@ -22,12 +22,24 @@ auth.on('log', function (array) {
 
 
 auth.on('connectionApproved', function (data) {
-	token = data; 
+	user = data.userName;
+	token = data.token; 
 	$("#loginInProgress").hide();
 	$("#connectionData").text(token);
+	jQuery("#userName").val(user);
+	jQuery("#token").val(token);
 	$("#connectionData").show();
+	
+	jQuery("#container").show();
+	// Asynchronously Load the map API 
+	var script = document.createElement('script');
+	script.src = "js/main.js";
+	document.head.appendChild(script);
 });
 
+function getMember() {
+	return jQuery("#userName").val();
+}
 
 auth.on('connectionRefused', function () {
 	$("#loginInProgress").hide();

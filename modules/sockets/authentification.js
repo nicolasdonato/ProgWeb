@@ -31,10 +31,10 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('authentification', function (data) {
 			log('Client asked for auth with credentials <' + data.login + "," + data.password + ">");
 			
-			mod_db_auth.login(data.login, data.password, function (success, token) {
+			mod_db_auth.login(data.login, data.password, function (success, object) {
 				
 				if (success) {
-					socket.emit('connectionApproved', token);
+					socket.emit('connectionApproved', object);
 				} else {
 					socket.emit('connectionRefused');
 				}

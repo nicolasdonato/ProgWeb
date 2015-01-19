@@ -1,19 +1,48 @@
 ///////////////////////////////////////////
 //API de geolocalisation
 //
-//
+// see http://wrightshq.com/playground/placing-multiple-markers-on-a-google-map-using-api-3/
+
+//jQuery(function($) {
+//    // Asynchronously Load the map API 
+//    var script = document.createElement('script');
+//    script.src = "http://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize";
+//    document.head.appendChild(script);
+//});
 
 var Map = Class.create({
+	
+	map: null,
 	isCarteEnable: false,
 	divMap: null,
-	sendGeolocFunction: null,
+	bounds: null,
+	socketMap: null,
+	localMember: null,
 	
 	initialize: function(options) {
 		this.divMap = options.divMap || null;
+		this.bounds = new google.maps.LatLngBounds();
 		this.isCarteEnable = options.isCarteEnable || false;
-		this.sendGeolocFunction = options.sendGeolocFunction || null;
 		this.showMap = options.showMap || null;
+		this.localMember = options.localMember || null;
+		this.createEventTask();
     },
+    
+    createEventTask: function() {
+		this.socketMap = new ChatMessage({
+			component: "geolocalisation_component"
+		});
+		this.socketMap.on('geolocation', (function(data) {
+			console.log('Receiving geolocation of others people: ', data.coords);
+			this.createPositionOnMap(data);
+		}).bind(this)).on('bye', function(data) {
+			// suppression du marker
+		});
+	},
+	
+	sendMessageMap: function(messageType, data) {
+		this.socketMap.sendMessage(messageType, data);
+	},
 	
 	showGeolocationOnGoogleMap: function (geolocation) {
 
@@ -24,43 +53,56 @@ var Map = Class.create({
 		}
 	},
 
-	createPositionOnMap: function(crd) {
+	createPositionOnMap: function(data) {
+		var crd = data.coords;
 		console.log('Your current position is:');
 		console.log('Latitude : ' + crd.latitude);
 		console.log('Longitude: ' + crd.longitude);
 		console.log('More or less ' + crd.accuracy + ' meters.');
 		
 		if (!this.isCarteEnable) {
-			var latlng = new google.maps.LatLng(crd.latitude, crd.longitude);
 			//objet contenant des propriétés avec des identificateurs prédéfinis dans Google Maps permettant
 			//de définir des options d'affichage de notre carte
 			var options = {
-				center: latlng,
+				//center: position,
 				zoom: 19,
 				mapTypeId: google.maps.MapTypeId.ROADMAP
 			};
 			
 			//constructeur de la carte qui prend en paramêtre le conteneur HTML
 			//dans lequel la carte doit s'afficher et les options
-			var carte = new google.maps.Map(this.divMap, options);
-			this.divMap.map=carte;
+			this.map = new google.maps.Map(this.divMap, options);
 			
 			if (this.showMap && jQuery.isFunction(this.showMap)) {
 				this.showMap(this.divMap);
 			}
 		}
 		
+		var position = new google.maps.LatLng(crd.latitude, crd.longitude);
+		this.bounds.extend(position);
+		
 		//création du marqueur
-		var marqueur = new google.maps.Marker({
-			position: latlng,
-			map: this.divMap.map
+		var marker = new google.maps.Marker({
+			position: position,
+			map: this.map,
+			title: data.member
 		});
+		
+		// Allow each marker to have an info window    
+//        google.maps.event.addListener(marker, 'click', (function(marker, i) {
+//            return function() {
+//                infoWindow.setContent(infoWindowContent[i][0]);
+//                infoWindow.open(map, marker);
+//            }
+//        })(marker, i));
+		
+		// Automatically center the map fitting all markers on the screen
+		this.map.fitBounds(this.bounds);
 	},
 
 	//on envoie la geolocalisation de l'appelant
 	sendPosition: function() {
-		var functionSendPosition = this.sendGeolocFunction;
-		navigator.geolocation.getCurrentPosition(function (pos) {
+		navigator.geolocation.getCurrentPosition((function (pos) {
 			console.log('Sending geolocation: ', pos.coords);
 			var coords = {
 				latitude: pos.coords.latitude,
@@ -71,9 +113,13 @@ var Map = Class.create({
 				heading: pos.coords.heading,
 				speed: pos.coords.speed
 			};
-			if (functionSendPosition && jQuery.isFunction(functionSendPosition)) {
-				functionSendPosition(coords);
-			}
+			this.sendMessageMap('geolocation', {
+				coords: coords,
+				member: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
+			});
+		}).bind(this), null /*Error function*/, {
+			timeout:10000
 		});
 	}
+	
 });

@@ -23,7 +23,10 @@ module.exports.login = function(userName, userPassword, callBack) {
 			data['token'] = token; 
 			db.collection(DbName).update(query, data); 
 			
-			callBack(data.length, token);
+			callBack(data.length, {
+				userName: userName,
+				token: token
+			});
 		});
 	});
 };

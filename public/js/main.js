@@ -1,45 +1,12 @@
 'use strict';
 
 // initialisation des objets
-/*var webrtc = new WebRTC({
-	localVideo: document.querySelector('#localVideo'),
-	remoteVideo: document.querySelector('#remoteVideo'),
-	// definition des contraintes
-	constraints: {video: true},
-	// Configuration des serveurs stun...
-	pc_config: webrtcDetectedBrowser === 'firefox' ?
-		{'iceServers':[{'url':'stun:23.21.150.121'}]} : // number IP
-		{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
-	//Peer connection constraints
-	pc_constraints: {
-		'optional': [
-		    {'DtlsSrtpKeyAgreement': true},
-			{'RtpDataChannels': true}
-		]
-	},
-	// Set up audio and video regardless of what devices are present.
-	sdpConstraints: {
-		'mandatory': {
-			'OfferToReceiveAudio':true,
-			'OfferToReceiveVideo':true
-		}
-	},
-	enableMessage: function (shouldEnable) {
-		if (shouldEnable) {
-			sendTextarea.disabled = false;
-			sendTextarea.focus();
-			sendTextarea.placeholder = "";
-			sendButton.disabled = false;
-		} else {
-			sendTextarea.disabled = true;
-			sendButton.disabled = true;
-		}
-	}
-});*/
-
 var webrtc = new WebRTC({
 	localVideo: document.querySelector('#localVideo'),
 	remoteVideo: document.querySelector('#remoteVideo'),
+	localMember: function() {
+		return getMember();
+	},
 	// definition des contraintes
 	constraints: {video: true},
 	// Configuration des serveurs stun...
@@ -60,29 +27,30 @@ var webrtc = new WebRTC({
 			'OfferToReceiveVideo':true
 		}
 	},
-	addNewStream: function(streamElement) {
-		
+	addNewVideo: function(videoElement) {
+		jQuery("#videos").append(videoElement);
 	},
-	deleteStream: function(streamElement) {
+	deleteVideo: function(videoElement) {
 		
 	}
 });
 
 var map = new Map({
 	divMap: document.getElementById("carte"),
-	sendGeolocFunction: function(coords) {
-		sendMessage('geolocation', coords);
+	localMember: function() {
+		return getMember();
 	},
 	showMap: function(mapElement) {
 		jQuery(mapElement).css({
-			height: "500px",
-			width: "100%"
+			height: "150px",
+			width: "150px"
 		});
 	}
 });
 
 window.onbeforeunload = function(e){
-	sendMessage('bye');
+	//sendMessage('bye');
+	webrtc.hangup();
 }
 
 /////////////////////////////////////////////
@@ -118,9 +86,6 @@ chatMessage.on('created', function (room){ // Si on reçoit le message "created"
 	map.sendPosition();
 }).on('log', function (array){ // Appelé par le serveur pour faire des traces chez les clients connectés
 	console.log.apply(console, array);
-}).on('geolocation', function(coords) {
-	console.log('Receiving geolocation of others people: ', coords);
-	map.createPositionOnMap(coords);
 }).on('messageChat', function(messageChat) {
 	console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
 	var val = jQuery("#dataChannelReceive").val();
@@ -128,10 +93,6 @@ chatMessage.on('created', function (room){ // Si on reçoit le message "created"
 	jQuery("#dataChannelReceive").val(val);
 }).on('refreshFileList', function (fileToRefresh) {
 	// faire le refresh de la liste de fichiers git
-}).on('got user media', function() {
-	// On ouvre peut-être la connexion p2p
-	console.log('Got user message and start the webrtc');
-  	webrtc.maybeStart();
 });
 
 //Envoi de message générique, le serveur broadcaste à tout le monde
@@ -145,7 +106,7 @@ function sendMessage(messageType, data){
 jQuery("#sendButton").click(function () {
 	var data = jQuery('#dataChannelSend').val();
 	sendMessage('messageChat', {
-		user: "toto",
+		user: getMember(),
 		message: data
 	});
 });
