@@ -1,0 +1,41 @@
+﻿doctype html
+html
+	head
+		title ProgWeb Project
+		link(rel='stylesheet', href='test.css')
+		link(rel='stylesheet', href='../lib/jsTree/themes/default/style.min.css')
+		script(src='http://code.jquery.com/jquery-2.1.3.min.js')
+		script(src='../lib/jsTree/jstree.min.js')
+		script(src='test.js')
+	body
+		header
+			form
+				input(placeholder='Login')
+				br
+				input(placeholder='Password')
+			nav
+				a(href='#') Projet 1
+				a(href='#') Projet 2
+				a(href='#') Projet 3
+			button(type='text') Deconnexion
+		main
+			aside#geochat
+				section#geo
+					img(src='https://mts1.googleapis.com/vt?pb=!1m4!1m3!1i6!2i33!3i21!2m3!1e0!2sm!3i285000000!3m9!2sen-US!3sUS!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0')
+				section#out
+				input#in(type='text')
+			section#cams
+				.cam.u0
+					p Damien
+					video(poster='https://avatars2.githubusercontent.com/u/10448146?v=3&s=400')
+				.cam.u1
+					p Nicolas
+					video(poster='https://avatars2.githubusercontent.com/u/9198793?v=3&s=400')
+				.cam.u2
+					p Romain
+					video(poster='https://avatars0.githubusercontent.com/u/9745474?v=3&s=460')
+				.cam.u3
+					p Icare
+					video(poster='https://lh4.googleusercontent.com/-8gHlc5ItTC8/VFEbjVlcvfI/AAAAAAAAADo/vNvxbh8me5U/s258-no/image-rigolotes-batcat-begins-noir-big.jpg')
+			aside#files
+		footer footer
