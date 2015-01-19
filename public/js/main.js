@@ -5,7 +5,7 @@ var webrtc = new WebRTC({
 	localVideo: document.querySelector('#localVideo'),
 	remoteVideo: document.querySelector('#remoteVideo'),
 	localMember: function() {
-		return getMember();
+		return AUTH.getMember();
 	},
 	// definition des contraintes
 	constraints: {video: true},
@@ -106,7 +106,7 @@ function sendMessage(messageType, data){
 jQuery("#sendButton").click(function () {
 	var data = jQuery('#dataChannelSend').val();
 	sendMessage('messageChat', {
-		user: getMember(),
+		user: AUTH.getMember(),
 		message: data
 	});
 });
