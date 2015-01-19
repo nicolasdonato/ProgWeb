@@ -135,7 +135,7 @@ var WebRTC = Class.create({
 			// On ouvre peut-être la connexion p2p
 			console.log('Got user message and start the webrtc');
 		  	this.maybeStart(data);
-		}).bind(this.socketWebrtc)).on('offer', (function(data) {
+		}).bind(this)).on('offer', (function(data) {
 			console.log('Receive offer by Socket IO [data: '+data+']');
 			if (!data.isInitiatorOfTheConnection) {
 				// on a recu une "offre" on ouvre peut être la connexion so on
@@ -151,14 +151,14 @@ var WebRTC = Class.create({
 			
 			// On envoie une réponse à l'offre.
 			this.doAnswer(data);
-		}).bind(this.socketWebrtc)).on('answer', (function(data) {
+		}).bind(this)).on('answer', (function(data) {
 			console.log('Receive answer by Socket IO [data: '+data+']');
 			if (this.isStarted) {
 				// On a reçu une réponse à l'offre envoyée, on initialise la 
 			    // "remote description" du pair.
 				this.setRemoteDescription(data);
 			}
-		}).bind(this.socketWebrtc)).on('candidate', (function(data) {
+		}).bind(this)).on('candidate', (function(data) {
 			if (this.isStarted) {
 			    // On a recu un "ice candidate" et la connexion p2p est déjà ouverte
 			    // On ajoute cette candidature à la connexion p2p. 
@@ -166,11 +166,11 @@ var WebRTC = Class.create({
 			      candidate:data.candidate});
 			    this.getPC(data.member).pc.addIceCandidate(candidate);
 			}
-		}).bind(this.socketWebrtc)).on('bye', (function(data) {
+		}).bind(this)).on('bye', (function(data) {
 			if (this.isStarted) {
 				this.handleRemoteHangup(data);
 			}
-		}).bind(this.socketWebrtc));
+		}).bind(this));
 	},
 	
 	sendMessageWebRtc: function(messageType, data) {
@@ -270,15 +270,18 @@ var WebRTC = Class.create({
 	handleRemoteStreamAdded: function (event) {
 		console.log('Remote stream added.');
 		// reattachMediaStream(miniVideo, localVideo);
-		// attachMediaStream(this.webrtc.remoteVideo, event.stream);
+
 		var remoteVideo = document.createElement("video");
 		remoteVideo.autoplay = true;
 		attachMediaStream(remoteVideo, event.stream);
+		
+		// fill the nodePeerConnection for theremote user
+		event.target.nodePeerConnection.remoteStream = event.stream;
+		event.target.nodePeerConnection.remoteVideo = remoteVideo;
+		
 		if (this.addNewVideo && jQuery.isFunction(this.addNewVideo)) {
 			this.addNewVideo(remoteVideo);
 		}
-		// this.webrtc.remoteStream = event.stream;
-		//  waitForRemoteVideo();
 	},
 	
 	handleRemoteStreamRemoved: function (event) {

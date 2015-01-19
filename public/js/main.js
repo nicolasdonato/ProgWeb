@@ -31,7 +31,7 @@ var webrtc = new WebRTC({
 		jQuery("#videos").append(videoElement);
 	},
 	deleteVideo: function(videoElement) {
-		
+		jQuery(videoElement).remove();
 	}
 });
 
@@ -117,42 +117,3 @@ if (room !== '') {
 }
 
 ////////////////////////////////////////////////
-
-// Récépeiton de message générique.
-/*socket.on('message', function (message){
-  console.log('------------------ Received message:', message);
-  console.log('------------------ Received messagetype:', message.type);
-
-
-  if (message === 'got user media') {
-    // On ouvre peut-être la connexion p2p
-  	webrtc.maybeStart();
-  } else if (message.type === 'offer') {
-
-    if (!webrtc.isInitiator && !webrtc.isStarted) {
-      // on a recu une "offre" on ouvre peut être la connexion so on
-      // est pas appelant et si on ne l'a pas déjà ouverte...
-      webrtc.maybeStart();
-    }
-
-    // si on reçoit une offre, on va initialiser dans la connexion p2p
-    // la "remote Description", avec le message envoyé par l'autre pair 
-    // (et recu ici)
-    webrtc.getPC().setRemoteDescription(new RTCSessionDescription(message));
-
-    // On envoie une réponse à l'offre.
-    webrtc.doAnswer();
-  } else if (message.type === 'answer' && webrtc.isStarted) {
-    // On a reçu une réponse à l'offre envoyée, on initialise la 
-    // "remote description" du pair.
-	  webrtc.getPC().setRemoteDescription(new RTCSessionDescription(message));
-  } else if (message.type === 'candidate' && webrtc.isStarted) {
-    // On a recu un "ice candidate" et la connexion p2p est déjà ouverte
-    // On ajoute cette candidature à la connexion p2p. 
-    var candidate = new RTCIceCandidate({sdpMLineIndex:message.label,
-      candidate:message.candidate});
-    webrtc.getPC().addIceCandidate(candidate);
-  } else if (message === 'bye' && webrtc.isStarted) {
-	  webrtc.handleRemoteHangup();
-  }
-});*/
