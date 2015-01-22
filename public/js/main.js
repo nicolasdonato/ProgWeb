@@ -1,16 +1,16 @@
 'use strict';
 
-// initialisation des objets
+/////////////////////////////////////////
+// Objects initialization
+//
+
+// WebRTC Initialization
 var webrtc = new WebRTC({
-	localVideo: document.querySelector('#localVideo'),
-	localMember: function() {
-		return AUTH.getMember();
-	},
-	// definition des contraintes
+	// constraint definitions
 	constraints: {video: true},
-	// Configuration des serveurs stun...
+	// Stun servers configuration...
 	pc_config: webrtcDetectedBrowser === 'firefox' ?
-		{'iceServers':[{'url':'stun:23.21.150.121'}]} : // number IP
+		{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
 		{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
 	//Peer connection constraints
 	pc_constraints: {
@@ -25,6 +25,10 @@ var webrtc = new WebRTC({
 			'OfferToReceiveAudio':true,
 			'OfferToReceiveVideo':true
 		}
+	},
+	localVideo: document.querySelector('#localVideo'),
+	localMember: function() {
+		return AUTH.getMember();
 	},
 	addNewVideo: function(event) {
 		if (jQuery("#videos").length > 0) {
@@ -46,6 +50,7 @@ var webrtc = new WebRTC({
 	}
 });
 
+// Map initialization 
 var map = new Map({
 	divMap: document.getElementById("carte"),
 	localMember: function() {
@@ -59,65 +64,89 @@ var map = new Map({
 	}
 });
 
+
+/////////////////////////////////////////
+// Window events
+//
+
+/*
+ * Used when the user close the chat window
+ */
 window.onbeforeunload = function(e){
 	//sendMessage('bye');
+	map.closeLocation();
 	webrtc.hangup();
 }
 
-/////////////////////////////////////////////
+/////////////////////////////////////////
+// Chat component initialization
+//
 
-// Permet d'indiquer une "room" dans le path
-var room = location.pathname.substring(1);
-if (room === '') {
-//  room = prompt('Enter room name:');
-  room = 'foo';
-} else {
-  //
-}
+// init the chat socket and define the different events
+var chatMessage = new ChatMessage()
+	// Connection request to the socket server. Looking at the server code
+	// in server.js we will see that if you are the first customer is 
+	// connected will receive a message "created", otherwise the message "joined"
 
-// Demande de connexion au serveur de sockets. Si on regarde le code du
-// server dans server.js on verra que si on est le premier client connecté
-// on recevra un message "created", sinon un message "joined"
-chatMessage.on('created', function (room){ // Si on reçoit le message "created" alors on est l'initiateur du call
-	console.log('Created room ' + room);
-	webrtc.setInitiator(true);
-}).on('full', function (room){// On a essayé de rejoindre une salle qui est déjà pleine (avec deux personnes)
-	console.log('Room ' + room + ' is full');
-}).on('join', function (room){ // Jamais appelé, à mon avis une trace de la version nxn
-	console.log('Another peer made a request to join room ' + room);
-	console.log('This peer is the initiator of room ' + room + '!');
-	webrtc.setChannelReady(true);
-	map.sendPosition();
-}).on('joined', function (room){// Si on reçoit le message "joined" alors on a rejoint une salle existante
-								// on est pas l'initiateur, il y a déjà quelqu'un (l'appelant), donc
-								// on est prêt à communiquer...
-	console.log('This peer has joined room ' + room);
-	webrtc.setChannelReady(true);
-	console.log('Send my position');
-	map.sendPosition();
-}).on('log', function (array){ // Appelé par le serveur pour faire des traces chez les clients connectés
-	console.log.apply(console, array);
-}).on('messageChat', function(messageChat) {
-	console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
-	if (jQuery("#dataChannelReceive").length > 0) {
-		var outChat = jQuery("#dataChannelReceive");
-		var val = outChat.val();
-		val += messageChat.user + " says: " + messageChat.message;
-		outChat.val(val);
-	} else {
-		$('#out').append(messageChat.user + ' : ' + messageChat.message + '<br>');
-	}
-}).on('refreshFileList', function (fileToRefresh) {
-	// faire le refresh de la liste de fichiers git
-});
+	// If you receive the message "created" when it is the initiator of the call
+	.on('created', function (room){
+		console.log('Created room ' + room);
+		webrtc.setInitiator(true);
+	})
+	// We tried to get a room that is already full
+	.on('full', function (room){
+		console.log('Room ' + room + ' is full');
+	})
+	// Called when an other user join the chat room
+	.on('join', function (room){
+		console.log('Another peer made a request to join room ' + room);
+		console.log('This peer is the initiator of room ' + room + '!');
+		webrtc.setChannelReady(true);
+		map.sendPosition();
+	})
+	// If you receive the message "joined" then joined an existing room.
+	// We are not the initiator, there is already someone (the appellant),
+	// so it is ready to communicate ...
+	.on('joined', function (room){
+		console.log('This peer has joined room ' + room);
+		webrtc.setChannelReady(true);
+		console.log('Send my position');
+		map.sendPosition();
+	})
+	// Called by the server to make tracks in the connected clients
+	.on('log', function (array){
+		console.log.apply(console, array);
+	})
+	
+	.on('messageChat', function(messageChat) {
+		console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
+		if (jQuery("#dataChannelReceive").length > 0) {
+			var outChat = jQuery("#dataChannelReceive");
+			var val = outChat.val();
+			val += messageChat.user + " says: " + messageChat.message;
+			outChat.val(val);
+		} else {
+			$('#out').append(messageChat.user + ' : ' + messageChat.message + '<br>');
+		}
+	})
+	// do refresh the GitHub file list
+	.on('refreshFileList', function (fileToRefresh) {
+		console.log('Refresh the Gitub file list');
+	});
 
-//Envoi de message générique, le serveur broadcaste à tout le monde
-//par défaut (ce sevrait être que dans la salle courante...)
-//Il est important de regarder dans le code de ce fichier quand on envoit
-//des messages.
+/*
+ * Sending generic message, the server broadcasted to all members of the room.
+ */
 function sendMessage(messageType, data){
 	chatMessage.sendMessage(messageType, data);
 }
+
+/////////////////////////////////////////
+// Visual interactions & DOM events
+//
+
+//add member name to the local video
+jQuery('#localMember').text(AUTH.getMember());
 
 jQuery("#sendButton").click(function () {
 	var data;
@@ -147,9 +176,21 @@ $('#in').on('keyup', function(e) {
 	}
 });
 
-// ajout du local member en haut de la video
-jQuery('#localMember').text(AUTH.getMember());
 
+/////////////////////////////////////////
+// Start the chat room and the other components
+//
+
+// Can fill a room in the URL Path
+var room = location.pathname.substring(1);
+if (room === '') {
+//  room = prompt('Enter room name:');
+  room = 'foo';
+} else {
+  //
+}
+
+// initialization of the room or join the room
 if (room !== '') {
   console.log('Create or join room', room);
   sendMessage('create or join', room);

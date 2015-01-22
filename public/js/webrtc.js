@@ -338,7 +338,9 @@ var WebRTC = Class.create({
 				isInitiatorOfTheConnection: false
 			});
 			
-		}).bind(this), null, constraints);
+		}).bind(this), function(err) {
+			console.log('An error has occured when send an offer: ' + err);
+		}, constraints);
 	},
 	
 	setRemoteDescription: function(data) {
@@ -370,7 +372,9 @@ var WebRTC = Class.create({
 					socketIdReceiver: data.socketIdSender,
 				});
 				
-			}).bind(this), null, this.sdpConstraints);
+			}).bind(this), function(err) {
+				console.log('An error has occured when send an answer: ' + err);
+			}, this.sdpConstraints);
 		}
 		//this.pc.createAnswer(this.setLocalAndSendMessage, null, this.webrtc.sdpConstraints);
 	},
