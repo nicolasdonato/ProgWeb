@@ -5,7 +5,6 @@
 
 var WebRTC = Class.create({
 	
-	webrtc: null,
 	socketWebrtc: null,
 	
 	options: null,
@@ -33,8 +32,6 @@ var WebRTC = Class.create({
 	
 	initialize: function(options) {
 		
-		this.webrtc = this;
-		
 		this.localMember = options.localMember;
 		this.localVideo = options.localVideo;
 		this.constraints = options.constraints || {
@@ -52,11 +49,6 @@ var WebRTC = Class.create({
 		
 		this.createEventTask();
 		
-//		navigator.getUserMedia = ( navigator.getUserMedia ||
-//                navigator.webkitGetUserMedia ||
-//                navigator.mozGetUserMedia ||
-//                navigator.msGetUserMedia);
-//		navigator.getUserMedia(this.constraints, this.handleUserMedia, this.handleUserMediaError);
 		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
 		console.log('Getting user media with constraints', this.constraints);
 		
@@ -70,13 +62,15 @@ var WebRTC = Class.create({
     
     handleUserMedia: function (stream) {
 		this.localStream = stream;
-		attachMediaStream(this.localVideo, stream);
+		if (this.localVideo) {
+			attachMediaStream(this.localVideo, stream);
+		}
 		console.log('Adding local stream.');
 		
 		// On envoie un message à tout le monde disant qu'on a bien
 		// overt la connexion video avec la web cam.
 		this.sendMessageWebRtc('got user media', {
-			member: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
+			memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
 			isInitiatorOfTheConnection: true
 		});
 		
@@ -164,7 +158,7 @@ var WebRTC = Class.create({
 			    // On ajoute cette candidature à la connexion p2p. 
 			    var candidate = new RTCIceCandidate({sdpMLineIndex:data.label,
 			      candidate:data.candidate});
-			    this.getPC(data.member).pc.addIceCandidate(candidate);
+			    this.getPC(data.memberSender).pc.addIceCandidate(candidate);
 			}
 		}).bind(this)).on('bye', (function(data) {
 			if (this.isStarted) {
@@ -190,8 +184,9 @@ var WebRTC = Class.create({
 				
 		var nodePeerConnection = new WebRTCNode({
 			webrtc: this,
-			member: data.member,
-			isStarted: this.isStarted
+			member: data.memberSender,
+			isStarted: this.isStarted,
+			remoteSocketId: data.socketId
 		});
 		this.listPeerConnection.push(nodePeerConnection);
 		  
@@ -199,7 +194,7 @@ var WebRTC = Class.create({
 		this.createPeerConnection(nodePeerConnection);
 	    // on donne le flux video local à la connexion p2p. Va provoquer un événement 
 	    // onAddStream chez l'autre pair.
-		if (this.webrtc.localStream) { 
+		if (this.localStream) { 
 			nodePeerConnection.pc.addStream(this.localStream);
 		}
 	    // On a démarré, utile pour ne pas démarrer le call plusieurs fois
@@ -218,7 +213,6 @@ var WebRTC = Class.create({
 		try {
 			// Ouverture de la connexion p2p
 			nodePeerConnection.pc = new RTCPeerConnection(this.pc_config, this.pc_constraints);
-			nodePeerConnection.pc.webrtc = this;
 			nodePeerConnection.pc.nodePeerConnection = nodePeerConnection;
 			
 			// ecouteur en cas de réception de candidature
@@ -240,29 +234,7 @@ var WebRTC = Class.create({
 		nodePeerConnection.pc.onremovestream = this.handleRemoteStreamRemoved.bind(this);
 		
 		// Data channel. Si on est l'appelant on ouvre un data channel sur la connexion p2p
-//		if (this.isInitiator) {
-//			try {
-//				// Reliable Data Channels not yet supported in Chrome
-//				var sendChannel = nodePeerConnection.pc.createDataChannel("sendDataChannel", {reliable: false});
-//				
-//				// écouteur de message reçus
-//				sendChannel.onmessage = this.handleMessage;
-//				sendChannel.webrtc = this;
-//				
-//				trace('Created send data channel');
-//				
-//				// ecouteur appelé quand le data channel est ouvert
-//				sendChannel.onopen = this.handleSendChannelStateChange;
-//				// idem quand il est fermé.
-//				sendChannel.onclose = this.handleSendChannelStateChange;
-//			} catch (e) {
-//				alert('Failed to create data channel. You need Chrome M25 or later with RtpDataChannel enabled');
-//				trace('createDataChannel() failed with exception: ' + e.message);
-//			}
-//		} else {
-//			// ecouteur appelé quand le pair a enregistré le data channel sur la connexion p2p
-//			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel;
-//		}
+		//this.initDataChannel(nodePeerConnection);
 	},
 	
 	// Ecouteur de onremotestream : permet de voir la vidéo du pair distant dans 
@@ -280,7 +252,10 @@ var WebRTC = Class.create({
 		event.target.nodePeerConnection.remoteVideo = remoteVideo;
 		
 		if (this.addNewVideo && jQuery.isFunction(this.addNewVideo)) {
-			this.addNewVideo(remoteVideo);
+			this.addNewVideo({
+				remoteVideo: remoteVideo,
+				member: event.target.nodePeerConnection.member
+			});
 		}
 	},
 	
@@ -314,7 +289,7 @@ var WebRTC = Class.create({
 				label: event.candidate.sdpMLineIndex,
 				id: event.candidate.sdpMid,
 				candidate: event.candidate.candidate,
-				member: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember
+				memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember
 			});
 		} else {
 			console.log('End of candidates.');
@@ -356,7 +331,10 @@ var WebRTC = Class.create({
 			var localMember = jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember;
 			this.sendMessageWebRtc('offer', {
 				remoteSessionDescription: sessionDescription,
-				member: localMember,
+				memberSender: localMember,
+				socketIdSender: this.socketWebrtc.id,
+				memberReceiver: nodePeerConnection.member,
+				socketIdReceiver: nodePeerConnection.remoteSocketId,
 				isInitiatorOfTheConnection: false
 			});
 			
@@ -364,7 +342,7 @@ var WebRTC = Class.create({
 	},
 	
 	setRemoteDescription: function(data) {
-		var tmpPC = this.getPC(data.member);
+		var tmpPC = this.getPC(data.memberSender);
 		if (tmpPC) {
 			tmpPC.pc.setRemoteDescription(new RTCSessionDescription(data.remoteSessionDescription));
 		}
@@ -373,7 +351,7 @@ var WebRTC = Class.create({
 	// Exécuté par l'appelé uniquement...
 	doAnswer: function(data) {
 		console.log('Sending answer to peer.');
-		var tmpPC = this.getPC(data.member);
+		var tmpPC = this.getPC(data.memberSender);
 		if (tmpPC) {
 			tmpPC.pc.createAnswer((function(sessionDescription) {
 				// Set Opus as the preferred codec in SDP if Opus is present.
@@ -386,7 +364,10 @@ var WebRTC = Class.create({
 				console.log('Sending answer to peer.');
 				this.sendMessageWebRtc('answer', {
 					remoteSessionDescription: sessionDescription,
-					member: localMember
+					memberSender: localMember,
+					socketIdSender: data.socketIdReceiver,
+					memberReceiver: data.memberSender,
+					socketIdReceiver: data.socketIdSender,
 				});
 				
 			}).bind(this), null, this.sdpConstraints);
@@ -426,6 +407,32 @@ var WebRTC = Class.create({
 		trace('Sent data by RTCPeerConnection: ' + data);
 	},
 	
+	initDataChannel: function (nodePeerConnection) {
+		if (this.isInitiator) {
+			try {
+				// Reliable Data Channels not yet supported in Chrome
+				var sendChannel = nodePeerConnection.pc.createDataChannel("sendDataChannel", {reliable: false});
+				nodePeerConnection.sendChannel = sendChannel;
+				
+				// écouteur de message reçus
+				nodePeerConnection.sendChannel.onmessage = this.handleMessage.bind(this);
+				
+				trace('Created send data channel');
+				
+				// ecouteur appelé quand le data channel est ouvert
+				nodePeerConnection.sendChannel.onopen = this.handleSendChannelStateChange.bind(this);
+				// idem quand il est fermé.
+				nodePeerConnection.sendChannel.onclose = this.handleSendChannelStateChange.bind(this);
+			} catch (e) {
+				alert('Failed to create data channel. You need Chrome M25 or later with RtpDataChannel enabled');
+				trace('createDataChannel() failed with exception: ' + e.message);
+			}
+		} else {
+			// ecouteur appelé quand le pair a enregistré le data channel sur la connexion p2p
+			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel.bind(this);
+		}
+	},
+	
 	closeDataChannels: function() {
 //		trace('Closing data channels');
 //		sendChannel.close();
@@ -450,11 +457,11 @@ var WebRTC = Class.create({
 	//C'est qu'on est l'appelé. On se contente de le récupérer via l'événement
 	gotReceiveChannel: function (event) {
 		trace('Receive Channel Callback');
-		this.webrtc.sendChannel = event.channel;
+		sendChannel = event.channel;
 		//this.webrtc.sendChannel.webrtc = this.webrtc;
-		this.webrtc.sendChannel.onmessage = this.webrtc.handleMessage;
-		this.webrtc.sendChannel.onopen = this.webrtc.handleReceiveChannelStateChange;
-		this.webrtc.sendChannel.onclose = this.webrtc.handleReceiveChannelStateChange;
+		sendChannel.onmessage = this.handleMessage;
+		sendChannel.onopen = this.handleReceiveChannelStateChange;
+		sendChannel.onclose = this.handleReceiveChannelStateChange;
 	},
 	
 	handleMessage: function (event) {
@@ -502,7 +509,10 @@ var WebRTC = Class.create({
 		if (node) {
 			this.stop(node.pc);
 			if (this.deleteVideo && jQuery.isFunction(this.deleteVideo)) {
-				this.deleteVideo(node.remoteVideo);
+				this.deleteVideo({
+					remoteVideo: node.remoteVideo,
+					member: data.member
+				});
 			}
 			this.listPeerConnection.pop(node);
 		}
@@ -603,6 +613,7 @@ var WebRTCNode = Class.create({
 	pc: null, 
 	remoteStream: null,
 	remoteVideo: null,
+	remoteSocketId: null,
 	sendChannel: null,
 	
 	member: null,
@@ -611,6 +622,6 @@ var WebRTCNode = Class.create({
 		
 		this.webrtc = options.webrtc || null;
 		this.member = options.member || null;
-		
+		this.remoteSocketId = options.remoteSocketId || null;
     }
 });

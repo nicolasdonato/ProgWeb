@@ -3,7 +3,6 @@
 // initialisation des objets
 var webrtc = new WebRTC({
 	localVideo: document.querySelector('#localVideo'),
-	remoteVideo: document.querySelector('#remoteVideo'),
 	localMember: function() {
 		return AUTH.getMember();
 	},
@@ -27,11 +26,23 @@ var webrtc = new WebRTC({
 			'OfferToReceiveVideo':true
 		}
 	},
-	addNewVideo: function(videoElement) {
-		jQuery("#videos").append(videoElement);
+	addNewVideo: function(event) {
+		if (jQuery("#videos").length > 0) {
+			jQuery("#videos").append(event.remoteVideo);
+		} else if (jQuery("#cams").length > 0) {
+			var tagToAdd = jQuery("<div></div>")
+							.addClass("cam")
+							.append("<p>" + event.member + "</p>")
+							.append(event.remoteVideo);
+			jQuery("#cams").append(tagToAdd);
+		}
 	},
-	deleteVideo: function(videoElement) {
-		jQuery(videoElement).remove();
+	deleteVideo: function(event) {
+		if (jQuery("#videos").length > 0) {
+			jQuery(event.remoteVideo).remove();
+		} else if (jQuery("#cams").length > 0) {
+			jQuery(event.remoteVideo).parent().remove();
+		}
 	}
 });
 
@@ -88,9 +99,14 @@ chatMessage.on('created', function (room){ // Si on reçoit le message "created"
 	console.log.apply(console, array);
 }).on('messageChat', function(messageChat) {
 	console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
-	var val = jQuery("#dataChannelReceive").val();
-	val += messageChat.user + " says: " + messageChat.message;
-	jQuery("#dataChannelReceive").val(val);
+	if (jQuery("#dataChannelReceive").length > 0) {
+		var outChat = jQuery("#dataChannelReceive");
+		var val = outChat.val();
+		val += messageChat.user + " says: " + messageChat.message;
+		outChat.val(val);
+	} else {
+		$('#out').append(messageChat.user + ' : ' + messageChat.message + '<br>');
+	}
 }).on('refreshFileList', function (fileToRefresh) {
 	// faire le refresh de la liste de fichiers git
 });
@@ -104,12 +120,35 @@ function sendMessage(messageType, data){
 }
 
 jQuery("#sendButton").click(function () {
-	var data = jQuery('#dataChannelSend').val();
-	sendMessage('messageChat', {
-		user: AUTH.getMember(),
-		message: data
-	});
+	var data;
+	var inputChat = jQuery('#dataChannelSend');
+	if (inputChat && inputChat.length > 0) {
+		data = inputChat.val();
+	} else {
+		data = jQuery("#in").val();
+	}
+	if (data) {
+		sendMessage('messageChat', {
+			user: AUTH.getMember(),
+			message: data
+		});
+	}
 });
+
+$('#in').on('keyup', function(e) {
+	if ($(this).val() !== '' && e.keyCode === 13) {
+		$('#out').append('me : ' + $(this).val() + '<br>');
+		sendMessage('messageChat', {
+			user: AUTH.getMember(),
+			message: $(this).val()
+		});
+		$('#out').scrollTop($('#out')[0].scrollHeight);
+		return $(this).val('');
+	}
+});
+
+// ajout du local member en haut de la video
+jQuery('#localMember').text(AUTH.getMember());
 
 if (room !== '') {
   console.log('Create or join room', room);
