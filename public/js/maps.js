@@ -18,6 +18,7 @@ var Map = Class.create({
 	bounds: null,
 	socketMap: null,
 	localMember: null,
+	markers: [],
 	
 	initialize: function(options) {
 		this.divMap = options.divMap || null;
@@ -37,6 +38,17 @@ var Map = Class.create({
 			this.createPositionOnMap(data);
 		}).bind(this)).on('bye', function(data) {
 			// suppression du marker
+			var marker;
+			for (var idx=0; idx < this.markers.length -1; idx ++) {
+				marker = this.markers[idx];
+				if (data.member === marker.member) {
+					marker.marker.setMap(null);
+					break;
+				}
+			}
+			if (marker) {
+				this.markers.pop(marker);
+			}
 		});
 	},
 	
@@ -76,17 +88,33 @@ var Map = Class.create({
 			if (this.showMap && jQuery.isFunction(this.showMap)) {
 				this.showMap(this.divMap);
 			}
+			
+			this.isCarteEnable = true;
 		}
 		
 		var position = new google.maps.LatLng(crd.latitude, crd.longitude);
 		this.bounds.extend(position);
 		
 		//création du marqueur
-		var marker = new google.maps.Marker({
-			position: position,
-			map: this.map,
-			title: data.member
-		});
+		var createMarker = true;
+		for (var idx=0; idx < this.markers.length -1; idx ++) {
+			marker = this.markers[idx];
+			if (data.member === marker.member) {
+				createMarker = false;
+				break;
+			}
+		}
+		if (createMarker) {
+			var marker = new google.maps.Marker({
+				position: position,
+				map: this.map,
+				title: data.member
+			});
+			this.markers.push({
+				marker: marker,
+				member: data.member
+			});
+		}
 		
 		// Allow each marker to have an info window    
 //        google.maps.event.addListener(marker, 'click', (function(marker, i) {
