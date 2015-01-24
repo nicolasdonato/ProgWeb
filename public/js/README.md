@@ -3,8 +3,10 @@
 The different components in this folder are used to different works.
 Each files in this following document use Socket.IO of the NodeJS server. 
 
+To see all component initialization, see the file [main.js!](main.js)
 
-## chat.js File
+
+## [chat.js!](chat.js) File
 ### Description
 Interface corresponding to the management of events and send/receive messages from the server via NodeJS SocketIO.
 
@@ -64,14 +66,14 @@ Send message to NodeJS server using SocketIO
 chatMessage.sendMessage(messageType, data);
 ```
 
-## maps.js File
+## [maps.js!](maps.js) File
 Manage the localization of all people in the chat room with the GoogleMaps API.
 
 ### Initialization of the component
 Options to use to initialize the class: {
  		divMap --> The HTML element which is used by the map of Google. The element is found for example by this code: document.querySelector('#divMap')
 		showMap --> This property is filled with a function (callback) which is called by the class to show the map when the map is initialize.
-		localMember --> The local member which opened the browser. This property can be an attribut or a function
+		localMember --> The local member which opened the browser. This property can be an attribute or a function
 }
 
 Example:
@@ -91,7 +93,7 @@ var map = new Map({
 ```
 
 ### Implementation of the websocket event server
-On the NodeJS Server, the developper must be implemented 2 events on the 'lane' 'geolocalisation_component'.
+On the NodeJS Server, the developer must be implemented 2 events on the 'lane' 'geolocalisation_component'.
 This event is:
  - 'geolocation' using when a chat member send their location properties
  - 'bye' using when a chat member close his browser
@@ -111,10 +113,93 @@ socket.on('geolocalisation_component', function(message) {
 ```
 
 ### Public methods
-* closeLocation: Delete marker of local member on the remote map
+* Map#closeLocation(): Delete marker of local member on the remote map
 
-## webrtc.js File
-### Description
+## [webrtc.js!](webrtc.js) File
+Class using to display remote cams of people connected in the chat room.
+It manages all of cams on the chat window of the user.
+
 ### Initialization of the component
+Options to use to initialize the class: {
+ 		constraints --> constraint definitions for the HTML5 videos tag (using in the getUserMedia method)
+ 		pc_config --> Stun servers configuration...
+ 		pc_constraints --> Peer connection constraints
+ 		sdpConstraints --> Set up audio and video regardless of what devices are present.
+ 		localVideo --> fill the HTML5 video tag using for the local user cam
+ 		localMember --> fill the local user (can be use a function or a value)
+		addNewVideo --> method to add remote video (remote cams) of other members of the room (can be create the html dom)
+ 		deleteVideo --> method to delete remote video (remote cams) of other members of the room (can be create the html dom)
+}
+
+Example:
+```js
+var webrtc = new WebRTC({
+		constraints: {video: true},
+		pc_config: webrtcDetectedBrowser === 'firefox' ?
+			{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
+			{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+		pc_constraints: {
+			'optional': [
+		    	{'DtlsSrtpKeyAgreement': true},
+				{'RtpDataChannels': true}
+			]
+		},
+		sdpConstraints: {
+			'mandatory': {
+				'OfferToReceiveAudio':true,
+				'OfferToReceiveVideo':true
+			}
+		},
+		localVideo: document.querySelector('#localVideo'),
+		localMember: function() {
+			return getMember();
+		},
+		addNewVideo: function(event) {
+			jQuery("#videos").append(event.remoteVideo);
+		},
+		deleteVideo: function(event) {
+			jQuery(event.remoteVideo).remove();
+		}
+});
+```
+
 ### NodeJS Event for the component
-### Implementation of the websocket event server
+ On the NodeJS Server, the developer must be implemented 5 events on the 'lane' 'webrtc_component'.
+ * This event is:
+ 
+Example of code to use on the NodeJS server:
+```js
+socket.on('webrtc_component', function(message) {
+	if (message.type === 'got user media') {		
+		log('Got ' + message.type + ': ', message);
+		// add the socket id of the sender. The socket id is 
+		// used by the API to identify the remote user 
+		// which sending the message and return an other message
+		message.data.socketId = socket.id;
+		socket.broadcast.emit('webrtc_component', message);
+	} else if (message.type === 'offer') {	
+		log('Got ' + message.type + ': ', message);
+		// add the socket id of the sender. The socket id is 
+		// used by the API to identify the remote user 
+		// which sending the message and return an other message
+		message.data.socketIdSender = socket.id;
+		// send the message to the remote user sending an other message
+		io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
+	} else if (message.type === 'answer') {
+		log('Got ' + message.type + ': ', message);
+		// send the message to the remote user sending an other message
+		io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);	
+	} else if (message.type === 'candidate') {
+		log('Got ' + message.type + ': ', message);
+		socket.broadcast.emit('webrtc_component', message);	
+	} else if (message.type === 'bye') {
+		log('Got ' + message.type + ': ', message);
+		socket.broadcast.emit('webrtc_component', message);
+	} else {
+		logger.err('Unknown socket message type <' + message.type + '> for the webrtc_component'); 
+	}
+});
+```
+
+### Public methods
+* WebRTC#hangup(): Lets stop the video stream to the other chat room users. Sends a message to other participants to delete the locale video (cam).
