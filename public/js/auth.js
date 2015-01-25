@@ -1,4 +1,3 @@
-
 window.AUTH = {
 	//token: '',
 	auth: io.connect("/session/login"),
