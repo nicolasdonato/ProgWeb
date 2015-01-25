@@ -1,93 +1,45 @@
+window.AUTH = {
+	token: '',
+	auth: io.connect("/auth"),
+	users: {},
+	connectionData : {},
+	getMember: function() {
+		return AUTH.connectionData.userName;
+	},
+	authenticate: function(e) {
+		if(e.keyCode === 13){
+			$("#loginForm").hide();
 
-var token = ''; 
-
-
-var auth = io.connect("/session/login");
-
-//auth.emit('listUsers');
-
-var on_connectionApproved = function (data) {
-	var userName = $("#login").val();
-	$("#userName").val(userName);
-	$("#token").val(data.token);
-	
-	$("#loginInProgress").hide();
-	$("#connectionData").text("Hello "+userName+", your connection token is : "+ data.token);
-	
-	// Asynchronously Load the map API 
-	/*var script = document.createElement('script');
-	script.src = "js/main.js";
-	document.head.appendChild(script);*/
-	
-	$.getScript("js/main.js")
-	.done(function() {
-
-		$("#connectionData").show();
-		$("#container").show();
-	})
-	.fail(function() {
-
-});
-};
-
-var on_connectionRefused = function () {
-	$("#loginInProgress").hide();
-	$("#connectionData").text('LOGIN FAILED');
-	$("#connectionData").show();
-	$("#loginForm").show();
-};
-
-var on_connectionResult = function(data){
-	if(data.authenticated){
-		on_connectionApproved(data);
-	}
-	else {
-		on_connectionRefused();
+			AUTH.auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
+		}
+		return false;
 	}
 };
 
-auth.on("userList", function (list) {
-	
-	for (var index in list) {
-		var line = $("#users").text() + "\n" + list[index].name + " " + list[index].password; 
-		$("#users").text(line);
-	}
+AUTH.auth.emit('listUsers');
+
+AUTH.auth.on("userList", function (list) {
+	AUTH.users = list;
+	console.log('--- userList ---');
+	console.log(AUTH.users);
 });
 
-
-auth.on('log', function (array) {
+AUTH.auth.on('log', function (array) {
   console.log.apply(console, array);
 });
 
-
-auth.on('connectionApproved', on_connectionApproved);
-
-auth.on('connectionRefused', on_connectionRefused);
-
-
-function getMember() {
-	return jQuery("#userName").val();
-}
-
-var authBySocket = false;
-var authByAjax = true;
-
-var serverUrl = "session/login"
+AUTH.auth.on('connectionApproved', function (data) {
+	AUTH.connectionData.userName 	= data.userName;
+	AUTH.connectionData.token 		= data.token;
 	
-function authenticate() {
-	
-	$("#loginForm").hide();
-	$("#loginForm").hide();
-	$("#loginInProgress").show();
+	// TODO : load project in #main
 
-	var data = { login: $("#login").val(), password: $("#pwd").val() };
-	
-	if(authBySocket){
-		auth.emit("authentification", data);
-	}
-	if(authByAjax){
-		$.post(serverUrl, data , on_connectionResult, "json");
-	}
-	
-	return false;
-}
+	// Asynchronously Load the map API 
+	var script = document.createElement('script');
+	script.src = "js/main.js";
+	document.head.appendChild(script);
+});
+
+AUTH.auth.on('connectionRefused', function () {
+	// TODO handle login error
+});
