@@ -20,7 +20,7 @@ module.exports.configure = function (io, socketPath) {
 			mod_db_auth.list(function(err, userList) {
 				
 				for (var index in userList) {
-					log('Found user ' + userList[index].login);
+					log('Found user ' + userList[index].name);
 				}
 				
 				socket.emit('userList', userList);

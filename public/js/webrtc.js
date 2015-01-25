@@ -2,129 +2,38 @@
 
 // ou plutot ce lien il y a tout dessus --> https://github.com/muaz-khan/WebRTC-Experiment/ 
 
-/**
- * Class using to display remote cams of people connected in the chat room.
- * It manages all of cams on the chat window of the user.
- * This class uses the socket event with NodeJS socket and encapsulates the WebRTC API of the W3C consortium.
- * 
- * Options to use to initialize the class: {
- * 		constraints --> constraint definitions for the HTML5 videos tag (using in the getUserMedia method)
- * 		pc_config --> Stun servers configuration...
- * 		pc_constraints --> Peer connection constraints
- * 		sdpConstraints --> Set up audio and video regardless of what devices are present.
- * 		localVideo --> fill the HTML5 video tag using for the local user cam
- * 		localMember --> fill the local user (can be use a function or a value)
- * 		addNewVideo --> method to add remote video (remote cams) of other members of the room (can be create the html dom)
- * 		deleteVideo --> method to delete remote video (remote cams) of other members of the room (can be create the html dom)
- * }
- * 
- * Example: var options = {
- *		constraints: {video: true},
- *		pc_config: webrtcDetectedBrowser === 'firefox' ?
- *			{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
- *			{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
- *		pc_constraints: {
- *			'optional': [
- *		    	{'DtlsSrtpKeyAgreement': true},
- *				{'RtpDataChannels': true}
- *			]
- *		},
- *		sdpConstraints: {
- *			'mandatory': {
- *				'OfferToReceiveAudio':true,
- *				'OfferToReceiveVideo':true
- *			}
- *		},
- *		localVideo: document.querySelector('#localVideo'),
- *		localMember: function() {
- *			return getMember();
- *		},
- *		addNewVideo: function(event) {
- *			jQuery("#videos").append(event.remoteVideo);
- *		},
- *		deleteVideo: function(event) {
- *			jQuery(event.remoteVideo).remove();
- *		}
- * }
- * 
- * On the NodeJS Server, the developer must be implemented 5 events on the 'lane' 'webrtc_component'.
- * This event is:
- * 
- * Example of code to use on the NodeJS server:
- * 	socket.on('webrtc_component', function(message) {
- *		if (message.type === 'got user media') {		
- *			log('Got ' + message.type + ': ', message);
- *			// add the socket id of the sender. The socket id is 
- *			// used by the API to identify the remote user 
- *			// which sending the message and return an other message
- *			message.data.socketId = socket.id;
- *			socket.broadcast.emit('webrtc_component', message);
- *		} else if (message.type === 'offer') {	
- *			log('Got ' + message.type + ': ', message);
- *			// add the socket id of the sender. The socket id is 
- *			// used by the API to identify the remote user 
- *			// which sending the message and return an other message
- *			message.data.socketIdSender = socket.id;
- *			// send the message to the remote user sending an other message
- *			io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
- *		} else if (message.type === 'answer') {
- *			log('Got ' + message.type + ': ', message);
- *			// send the message to the remote user sending an other message
- *			io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);	
- *		} else if (message.type === 'candidate') {
- *			log('Got ' + message.type + ': ', message);
- *			socket.broadcast.emit('webrtc_component', message);	
- *		} else if (message.type === 'bye') {
- *			log('Got ' + message.type + ': ', message);
- *			socket.broadcast.emit('webrtc_component', message);
- *		} else {
- *			logger.err('Unknown socket message type <' + message.type + '> for the webrtc_component'); 
- *		}
- *	});
- */
+
 var WebRTC = Class.create({
 	
-	// Socket related component dedicated to communication with the server NodeJS
+	webrtc: null,
 	socketWebrtc: null,
 	
-	// Options initialization 
 	options: null,
 	
-	// Peer configuration
 	pc_config: null,
-	// Peer constraints
 	pc_constraints: null,
-	// SDP Constraints
 	sdpConstraints: null,
 	
-	// stream of the local webcam
-	localStream: null,
-	// video of the local webcam
+	localStream: null, // stream of the local webcam
 	localVideo: null,
-	// member of the local webcam
 	localMember: null,
 	
-	// can say if the WebRTC used the stun server
 	turnReady: false,
-	// can say if the WebRTC channel is ready
-	isChannelReady: false, setChannelReady: function(isReady) { this.isChannelReady = isReady; },
-	// can say if the local member is the initiator of the chat room
-	isInitiator: false, setInitiator: function(isInitiator) { this.isInitiator = isInitiator; },
-	// can say if the WebRTC is started
+	isChannelReady: false,
+	isInitiator: false, 
 	isStarted: false,
+	setChannelReady: function(isReady) { this.isChannelReady = isReady; },
+    setInitiator: function(isInitiator) { this.isInitiator = isInitiator; },
 	
-	// list of all PeerConnection with other members (remote members)
 	listPeerConnection: [],
 	
-	// method used to add video tag in the DOM
+	functionSendMessage: null,
 	addNewVideo: null,
-	// method used to delete video tag in the DOM
 	deleteVideo: null,
 	
-	/**
-	 * Initialization of the class
-	 */
 	initialize: function(options) {
+		
+		this.webrtc = this;
 		
 		this.localMember = options.localMember;
 		this.localVideo = options.localVideo;
@@ -135,6 +44,7 @@ var WebRTC = Class.create({
 		this.pc_constraints = options.pc_constraints;
 		this.sdpConstraints = options.sdpConstraints;
 		
+		this.functionSendMessage = options.functionSendMessage || null;
 		this.addNewVideo = options.addNewVideo || null;
 		this.deleteVideo = options.deleteVideo || null;
 		
@@ -142,11 +52,15 @@ var WebRTC = Class.create({
 		
 		this.createEventTask();
 		
-		// fill the local stream in the HTML DOM
+//		navigator.getUserMedia = ( navigator.getUserMedia ||
+//                navigator.webkitGetUserMedia ||
+//                navigator.mozGetUserMedia ||
+//                navigator.msGetUserMedia);
+//		navigator.getUserMedia(this.constraints, this.handleUserMedia, this.handleUserMediaError);
 		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
 		console.log('Getting user media with constraints', this.constraints);
 		
-		// It is checked whether there is a need of a TURN server if it is not in localhost
+		// On regarde si on a besoin d'un serveur TURN que si on est pas en localhost
 		if (location.hostname != "localhost") {
 		  this.requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
 		}
@@ -154,37 +68,32 @@ var WebRTC = Class.create({
 		return this;
     },
     
-    /**
-     * Callback used by the getUserMedia when the locale stream is founded
-     */
     handleUserMedia: function (stream) {
 		this.localStream = stream;
-		if (this.localVideo) {
-			// attach the video to the video tag
-			attachMediaStream(this.localVideo, stream);
-		}
+		attachMediaStream(this.localVideo, stream);
 		console.log('Adding local stream.');
 		
-		// It sends a message to everyone saying that the video has overt connection to the web cam.
+		// On envoie un message à tout le monde disant qu'on a bien
+		// overt la connexion video avec la web cam.
 		this.sendMessageWebRtc('got user media', {
-			memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
+			member: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
 			isInitiatorOfTheConnection: true
 		});
+		
+		// Si on est l'appelant on essaie d'ouvrir la connexion p2p
+//		if (this.webrtc.isInitiator) {
+//			this.webrtc.maybeStart();
+//		}
 	},
 	
-	/**
-     * Callback used by the getUserMedia when the locale stream is NOT founded
-     */
 	handleUserMediaError: function (error){
 	  console.log('getUserMedia error: ', error);
 	},
 	
-	/**
-	 * See if the turn server connection configuration (pc_config) exists,
-	 * otherwise grab the IP/host of a server returned by the web service
-	 * computeengineondemand.appspot.com google.
-	 * The request is made in Ajax, JSON result returned.
-	 */
+	// regarde si le serveur turn de la configuration de connexion
+	// (pc_config) existe, sinon récupère l'IP/host d'un serveur
+	// renvoyé par le web service computeengineondemand.appspot.com
+	// de google. La requête se fait en Ajax, résultat renvoyé en JSON.
 	requestTurn: function (turn_url) {
 		var turnExists = false;
 		for (var i in this.pc_config.iceServers) {
@@ -217,89 +126,83 @@ var WebRTC = Class.create({
 	/////////////////////////////////////////////////////////
 	// Event Task
 	/////////////////////////////////////////////////////////
-	/**
-     * Create the different event tasks to interact with the NodeJS server by socket.io
-     */
+	
 	createEventTask: function() {
 		this.socketWebrtc = new ChatMessage({
 			component: "webrtc_component"
 		});
 		this.socketWebrtc.on('got user media', (function(data) {
-			// Perhaps opening the p2p connection
+			// On ouvre peut-être la connexion p2p
 			console.log('Got user message and start the webrtc');
 		  	this.maybeStart(data);
-		}).bind(this)).on('offer', (function(data) {
+		}).bind(this.socketWebrtc)).on('offer', (function(data) {
 			console.log('Receive offer by Socket IO [data: '+data+']');
 			if (!data.isInitiatorOfTheConnection) {
-				// it has received an "offer" is opened can be connected
-				// so on is calling and if you did not already open ...
+				// on a recu une "offre" on ouvre peut être la connexion so on
+				// est pas appelant et si on ne l'a pas déjà ouverte...
 				this.maybeStart(data);
 			}
 			
-			// If it receives an offer, we will boot into the p2p connection
-			// "Remote Description" with the message sent by the other peer
-			// (and received by)
+			// si on reçoit une offre, on va initialiser dans la connexion p2p
+			// la "remote Description", avec le message envoyé par l'autre pair 
+			// (et recu ici)
+			// webrtc.getPC(data.member).setRemoteDescription(new RTCSessionDescription(message));
 			this.setRemoteDescription(data);
 			
-			// We send a response to the offer
+			// On envoie une réponse à l'offre.
 			this.doAnswer(data);
-		}).bind(this)).on('answer', (function(data) {
+		}).bind(this.socketWebrtc)).on('answer', (function(data) {
 			console.log('Receive answer by Socket IO [data: '+data+']');
 			if (this.isStarted) {
-				// We received a response to the offer sent,
-				// it initializes the "remote description" peer.
+				// On a reçu une réponse à l'offre envoyée, on initialise la 
+			    // "remote description" du pair.
 				this.setRemoteDescription(data);
 			}
-		}).bind(this)).on('candidate', (function(data) {
+		}).bind(this.socketWebrtc)).on('candidate', (function(data) {
 			if (this.isStarted) {
-			    // It has received an "ice candidate" and p2p connection is already open.
-				// This application is added to the p2p connection.
+			    // On a recu un "ice candidate" et la connexion p2p est déjà ouverte
+			    // On ajoute cette candidature à la connexion p2p. 
 			    var candidate = new RTCIceCandidate({sdpMLineIndex:data.label,
 			      candidate:data.candidate});
-			    this.getPC(data.memberSender).pc.addIceCandidate(candidate);
+			    this.getPC(data.member).pc.addIceCandidate(candidate);
 			}
-		}).bind(this)).on('bye', (function(data) {
+		}).bind(this.socketWebrtc)).on('bye', (function(data) {
 			if (this.isStarted) {
 				this.handleRemoteHangup(data);
 			}
-		}).bind(this));
+		}).bind(this.socketWebrtc));
 	},
 	
-	/**
-	 * send a message to the server with the component message of this class
-	 */
 	sendMessageWebRtc: function(messageType, data) {
 		this.socketWebrtc.sendMessage(messageType, data);
 	},
 	
-	/**
-	 * We can start the call (if you are calling) than when it was all conditons.
-	 * If one is called is opened only connection p2p isChannelReady = both peers
-	 * are in the same virtual room via websockets localStream = we have access to
-	 * the camera locally, !IsStarted = has not already started the connection.
-	 * Summary: p2p connection is established only if it has the camera and the
-	 * two peers in the same virtual room via WebSockets (so we can communicate
-	 * via WebSockets by sendMessage () ...)
-	 */
+	// On démarre peut être l'appel (si on est appelant) que quand on a toutes les 
+	// conditons. Si on est l'appelé on n'ouvre que la connexion p2p   
+	// isChannelReady = les deux pairs sont dans la même salle virtuelle via websockets
+	// localStream = on a bien accès à la caméra localement,
+	// !isStarted = on a pas déjà démarré la connexion.
+	// En résumé : on établit la connexion p2p que si on a la caméra et les deux
+	// pairs dans la même salle virtuelle via WebSockets (donc on peut communiquer
+	// via WebSockets par sendMessage()...)
 	maybeStart: function (data) {
 	  if (this.isChannelReady) {
 				
 		var nodePeerConnection = new WebRTCNode({
 			webrtc: this,
-			member: data.memberSender,
-			isStarted: this.isStarted,
-			remoteSocketId: data.socketId
+			member: data.member,
+			isStarted: this.isStarted
 		});
 		this.listPeerConnection.push(nodePeerConnection);
 		  
-	    // Open peer connection
+	    // Ouverture de la connexion p2p
 		this.createPeerConnection(nodePeerConnection);
-	    // we give the local video stream to the p2p connection.
-		// Will cause onAddStream event in the other hand.
-		if (this.localStream) { 
+	    // on donne le flux video local à la connexion p2p. Va provoquer un événement 
+	    // onAddStream chez l'autre pair.
+		if (this.webrtc.localStream) { 
 			nodePeerConnection.pc.addStream(this.localStream);
 		}
-	    // We started useful not to start the call several times
+	    // On a démarré, utile pour ne pas démarrer le call plusieurs fois
 		this.isStarted = true;
 		if (data.isInitiatorOfTheConnection) {
 			this.doCall(nodePeerConnection);
@@ -311,16 +214,14 @@ var WebRTC = Class.create({
 	// RTCPeerConnection
 	/////////////////////////////////////////////////////////
 	
-	/**
-	 * Create the PeerConnection with the remote user
-	 */
 	createPeerConnection: function (nodePeerConnection) {
 		try {
-			// Opening of the p2p connection
+			// Ouverture de la connexion p2p
 			nodePeerConnection.pc = new RTCPeerConnection(this.pc_config, this.pc_constraints);
+			nodePeerConnection.pc.webrtc = this;
 			nodePeerConnection.pc.nodePeerConnection = nodePeerConnection;
 			
-			// earphone in the case of applications received
+			// ecouteur en cas de réception de candidature
 			nodePeerConnection.pc.onicecandidate = this.handleIceCandidate.bind(this);
 		
 			console.log('Created RTCPeerConnnection with:\n' +
@@ -332,56 +233,58 @@ var WebRTC = Class.create({
 			return;
 		}
 		
-		// Earpiece called when the pair recorded in the video stream p2p connection.
+		// Ecouteur appelé quand le pair a enregistré dans la connexion p2p son stream vidéo.
 		nodePeerConnection.pc.onaddstream = this.handleRemoteStreamAdded.bind(this);
 		
-		// Earpiece called when the peer has removed the video stream of the p2p connection
+		// Ecouteur appelé quand le pair a retiré le stream vidéo de la connexion p2p
 		nodePeerConnection.pc.onremovestream = this.handleRemoteStreamRemoved.bind(this);
 		
-		// Data channel. If the caller is opening a data channel on the p2p connection
-		//this.initDataChannel(nodePeerConnection);
+		// Data channel. Si on est l'appelant on ouvre un data channel sur la connexion p2p
+//		if (this.isInitiator) {
+//			try {
+//				// Reliable Data Channels not yet supported in Chrome
+//				var sendChannel = nodePeerConnection.pc.createDataChannel("sendDataChannel", {reliable: false});
+//				
+//				// écouteur de message reçus
+//				sendChannel.onmessage = this.handleMessage;
+//				sendChannel.webrtc = this;
+//				
+//				trace('Created send data channel');
+//				
+//				// ecouteur appelé quand le data channel est ouvert
+//				sendChannel.onopen = this.handleSendChannelStateChange;
+//				// idem quand il est fermé.
+//				sendChannel.onclose = this.handleSendChannelStateChange;
+//			} catch (e) {
+//				alert('Failed to create data channel. You need Chrome M25 or later with RtpDataChannel enabled');
+//				trace('createDataChannel() failed with exception: ' + e.message);
+//			}
+//		} else {
+//			// ecouteur appelé quand le pair a enregistré le data channel sur la connexion p2p
+//			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel;
+//		}
 	},
 	
-	/**
-	 * Earpiece of onremotestream: To see the video of the remote peer in the HTML element remoteVideo
-	 */
+	// Ecouteur de onremotestream : permet de voir la vidéo du pair distant dans 
+	// l'élément HTML remoteVideo
 	handleRemoteStreamAdded: function (event) {
 		console.log('Remote stream added.');
-<<<<<<< HEAD
 		// reattachMediaStream(miniVideo, localVideo);
-=======
->>>>>>> 628b25ae75902bc3f5a94d16322cf838d2b23cac
-
+		// attachMediaStream(this.webrtc.remoteVideo, event.stream);
 		var remoteVideo = document.createElement("video");
 		remoteVideo.autoplay = true;
 		attachMediaStream(remoteVideo, event.stream);
-		
-<<<<<<< HEAD
-		// fill the nodePeerConnection for theremote user
-=======
-		// fill the nodePeerConnection for the remote user
->>>>>>> 628b25ae75902bc3f5a94d16322cf838d2b23cac
-		event.target.nodePeerConnection.remoteStream = event.stream;
-		event.target.nodePeerConnection.remoteVideo = remoteVideo;
-		
 		if (this.addNewVideo && jQuery.isFunction(this.addNewVideo)) {
-			this.addNewVideo({
-				remoteVideo: remoteVideo,
-				member: event.target.nodePeerConnection.member
-			});
+			this.addNewVideo(remoteVideo);
 		}
+		// this.webrtc.remoteStream = event.stream;
+		//  waitForRemoteVideo();
 	},
 	
-	/**
-	 * Earpiece of onremotestream: To remove the video of the remote peer in the HTML element remoteVideo
-	 */
 	handleRemoteStreamRemoved: function (event) {
 		console.log('Remote stream removed. Event: ', event);
 	},
 	
-	/**
-	 * Get the PeerConnection of the remote user
-	 */
 	getPC: function(member) {
 		if (this.listPeerConnection) {
 			for (var idx = 0; idx < this.listPeerConnection.length; idx++) {
@@ -396,28 +299,26 @@ var WebRTC = Class.create({
 	
 	//////////////////////////////////////////
 	
-	/**
-	 * We received a nomination, the STUN server that triggers the event when he was able to determine the host / external port.
-	 */
 	handleIceCandidate: function (event) {
+		// On a recu une candidature, c'est le serveur STUN qui déclenche l'event
+		// quand il a réussi à déterminer le host/port externe.
 		console.log('handleIceCandidate event: ', event);
 		
 		if (event.candidate) {
+			// On envoie cette candidature à tout le monde.
 			this.sendMessageWebRtc('candidate', {
 				type: 'candidate',
 				label: event.candidate.sdpMLineIndex,
 				id: event.candidate.sdpMid,
 				candidate: event.candidate.candidate,
-				memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember
+				member: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember
 			});
 		} else {
 			console.log('End of candidates.');
 		}
 	},
 	
-	/**
-	 * Executed by the appellant only
-	 */
+	// Exécuté par l'appelant uniquement
 	doCall: function(nodePeerConnection) {
 		// M.Buffa : les contraintes et les configurations (SDP) sont encore 
 		// supportées différements selon les browsers, et certaines propriétés du 
@@ -440,45 +341,36 @@ var WebRTC = Class.create({
 		constraints = this.mergeConstraints(constraints, this.sdpConstraints);
 		console.log('Sending offer to peer, with constraints: \n' +	'  \'' + JSON.stringify(constraints) + '\'.');
 	
-		// Sending the offer. Normally in return you will receive an "answer"
+		// Envoi de l'offre. Normalement en retour on doit recevoir une "answer"
+		//nodePeerConnection.pc.createOffer(this.setLocalAndSendMessage, null, constraints);
 		nodePeerConnection.pc.createOffer((function(sessionDescription) {
 			// Set Opus as the preferred codec in SDP if Opus is present.
 			// M.Buffa : là c'est de la tambouille compliquée pour modifier la 
 			// configuration SDP pour dire qu'on préfère un codec nommé OPUS (?)
 			sessionDescription.sdp = this.preferOpus(sessionDescription.sdp);
 			nodePeerConnection.pc.setLocalDescription(sessionDescription);
-			// Send by socket
+			// Envoi par WebSocket
 			var localMember = jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember;
 			this.sendMessageWebRtc('offer', {
 				remoteSessionDescription: sessionDescription,
-				memberSender: localMember,
-				socketIdSender: this.socketWebrtc.id,
-				memberReceiver: nodePeerConnection.member,
-				socketIdReceiver: nodePeerConnection.remoteSocketId,
+				member: localMember,
 				isInitiatorOfTheConnection: false
 			});
 			
-		}).bind(this), function(err) {
-			console.log('An error has occured when send an offer: ' + err);
-		}, constraints);
+		}).bind(this), null, constraints);
 	},
 	
-	/**
-	 * Set the remote description of the remote member
-	 */
 	setRemoteDescription: function(data) {
-		var tmpPC = this.getPC(data.memberSender);
+		var tmpPC = this.getPC(data.member);
 		if (tmpPC) {
 			tmpPC.pc.setRemoteDescription(new RTCSessionDescription(data.remoteSessionDescription));
 		}
 	},
 	
-	/**
-	 * Executed by the only known ...
-	 */
+	// Exécuté par l'appelé uniquement...
 	doAnswer: function(data) {
 		console.log('Sending answer to peer.');
-		var tmpPC = this.getPC(data.memberSender);
+		var tmpPC = this.getPC(data.member);
 		if (tmpPC) {
 			tmpPC.pc.createAnswer((function(sessionDescription) {
 				// Set Opus as the preferred codec in SDP if Opus is present.
@@ -486,21 +378,17 @@ var WebRTC = Class.create({
 				// configuration SDP pour dire qu'on préfère un codec nommé OPUS (?)
 				sessionDescription.sdp = this.preferOpus(sessionDescription.sdp);
 				tmpPC.pc.setLocalDescription(sessionDescription);
-				// send by socket
+				// Envoi par WebSocket
 				var localMember = jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember;
 				console.log('Sending answer to peer.');
 				this.sendMessageWebRtc('answer', {
 					remoteSessionDescription: sessionDescription,
-					memberSender: localMember,
-					socketIdSender: data.socketIdReceiver,
-					memberReceiver: data.memberSender,
-					socketIdReceiver: data.socketIdSender,
+					member: localMember
 				});
 				
-			}).bind(this), function(err) {
-				console.log('An error has occured when send an answer: ' + err);
-			}, this.sdpConstraints);
+			}).bind(this), null, this.sdpConstraints);
 		}
+		//this.pc.createAnswer(this.setLocalAndSendMessage, null, this.webrtc.sdpConstraints);
 	},
 	
 	mergeConstraints: function (cons1, cons2) {
@@ -512,38 +400,27 @@ var WebRTC = Class.create({
 		return merged;
 	},
 	
+//	// callback de createAnswer et createOffer, ajoute une configuration locale SDP
+//	// A la connexion p2p, lors de l'appel de createOffer/answer par un pair.
+//	// Envoie aussi la description par WebSocket. Voir le traitement de la réponse
+//	// au début du fichier sans socket.on("message" , ...) partie "answer" et "offer"
+//	setLocalAndSendMessage: function (sessionDescription) {
+//		// Set Opus as the preferred codec in SDP if Opus is present.
+//		// M.Buffa : là c'est de la tambouille compliquée pour modifier la 
+//		// configuration SDP pour dire qu'on préfère un codec nommé OPUS (?)
+//		sessionDescription.sdp = this.webrtc.preferOpus(sessionDescription.sdp);
+//		this.webrtc.pc.setLocalDescription(sessionDescription);
+//		
+//		// Envoi par WebSocket
+//		sendMessage(sessionDescription);
+//	},
+	
 	///////////////////////////////////////////
 	//////// Channel //////////////////////////
 	///////////////////////////////////////////
 	sendData: function (data) {
 		this.pc.sendChannel.send(data);
 		trace('Sent data by RTCPeerConnection: ' + data);
-	},
-	
-	initDataChannel: function (nodePeerConnection) {
-		if (this.isInitiator) {
-			try {
-				// Reliable Data Channels not yet supported in Chrome
-				var sendChannel = nodePeerConnection.pc.createDataChannel("sendDataChannel", {reliable: false});
-				nodePeerConnection.sendChannel = sendChannel;
-				
-				// écouteur de message reçus
-				nodePeerConnection.sendChannel.onmessage = this.handleMessage.bind(this);
-				
-				trace('Created send data channel');
-				
-				// ecouteur appelé quand le data channel est ouvert
-				nodePeerConnection.sendChannel.onopen = this.handleSendChannelStateChange.bind(this);
-				// idem quand il est fermé.
-				nodePeerConnection.sendChannel.onclose = this.handleSendChannelStateChange.bind(this);
-			} catch (e) {
-				alert('Failed to create data channel. You need Chrome M25 or later with RtpDataChannel enabled');
-				trace('createDataChannel() failed with exception: ' + e.message);
-			}
-		} else {
-			// ecouteur appelé quand le pair a enregistré le data channel sur la connexion p2p
-			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel.bind(this);
-		}
 	},
 	
 	closeDataChannels: function() {
@@ -570,10 +447,11 @@ var WebRTC = Class.create({
 	//C'est qu'on est l'appelé. On se contente de le récupérer via l'événement
 	gotReceiveChannel: function (event) {
 		trace('Receive Channel Callback');
-		sendChannel = event.channel;
-		sendChannel.onmessage = this.handleMessage;
-		sendChannel.onopen = this.handleReceiveChannelStateChange;
-		sendChannel.onclose = this.handleReceiveChannelStateChange;
+		this.webrtc.sendChannel = event.channel;
+		//this.webrtc.sendChannel.webrtc = this.webrtc;
+		this.webrtc.sendChannel.onmessage = this.webrtc.handleMessage;
+		this.webrtc.sendChannel.onopen = this.webrtc.handleReceiveChannelStateChange;
+		this.webrtc.sendChannel.onclose = this.webrtc.handleReceiveChannelStateChange;
 	},
 	
 	handleMessage: function (event) {
@@ -600,11 +478,6 @@ var WebRTC = Class.create({
 	///////////////////////////////////////////
 	
 	// bouton "on raccroche"
-	/**
-	 * Lets stop the video stream to the other chat room users.
-	 * Sends a message to other participants to delete
-	 * the locale video (cam)
-	 */
 	hangup: function () {
 		console.log('Hanging up.');
 		if (this.listPeerConnection) {
@@ -620,28 +493,20 @@ var WebRTC = Class.create({
 		});
 	},
 	
-	/**
-	 * Callback called when a remote user send the message 'bye' indicating that the remote user is offline
-	 * In more, the remote video is deleted in the HTML Dom 
-	 */
 	handleRemoteHangup: function (data) {
 		console.log('Session terminated.');
 		var node = this.getPC(data.member);
 		if (node) {
 			this.stop(node.pc);
 			if (this.deleteVideo && jQuery.isFunction(this.deleteVideo)) {
-				this.deleteVideo({
-					remoteVideo: node.remoteVideo,
-					member: data.member
-				});
+				this.deleteVideo(node.remoteVideo);
 			}
 			this.listPeerConnection.pop(node);
 		}
+		//webrtctmp.isInitiator = false;
 	},
 	
-	/**
-	 * Closing the p2p connection
-	 */
+	// Fermeture de la connexion p2p
 	stop: function(pc) {
 		// this.isStarted = false;
 		// isAudioMuted = false;
@@ -728,34 +593,21 @@ var WebRTC = Class.create({
 	}
 });
 
-/**
- * Node used for retrieving data related to the remote client
- */
 var WebRTCNode = Class.create({
 	
-	// the WebRTC instance
 	webrtc: null,
 	
-	// hte PeerConnection with the remote member
-	pc: null,
-	// remote stream
+	pc: null, 
 	remoteStream: null,
-	// remote video (HTML video tag)
 	remoteVideo: null,
-	// socket id of the remote member
-	remoteSocketId: null,
-	// the RTCChannel using to send data to the remote member
 	sendChannel: null,
-	// the remote member
+	
 	member: null,
 	
-	/**
-	 * Initialization of the class
-	 */
 	initialize: function(options) {
 		
 		this.webrtc = options.webrtc || null;
 		this.member = options.member || null;
-		this.remoteSocketId = options.remoteSocketId || null;
+		
     }
 });
