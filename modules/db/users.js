@@ -81,21 +81,28 @@ module.exports.create = function(req, res) {
 }
 
 
-module.exports.list = function(req, res) {
+module.exports.listUsers = function(callBack) {
 
 	mod_db.connect(function(db) {
 		
 		var cursor = db.collection(DbName).find();
 		
-		var users = []; 
-		cursor.toArray(function(user) {
-			delete user.password; 
-			users.push(user); 
+		cursor.toArray(function(err, data){
+			for(var i in data){
+				delete data[i].password; 
+			}
+			callBack(err, data);
 		});
 		
-		res.send(JSON.stringify(users)); 
+		
 	});
-};
+}
+
+module.exports.list = function(req, res) {
+	module.exports.listUsers(function(err, data){
+		res.send(JSON.stringify(data)); 
+	});
+}
 
 
 module.exports.get = function(req, res) {
