@@ -70,7 +70,6 @@ window.AUTH = {
 			$("#connectionData").show();
 		})
 		.fail(function() {
-
 		});
 	},
 	connectionRefused : function(data){
@@ -89,6 +88,9 @@ window.AUTH = {
 	}
 };
 
+
 $(document).ready(function(){
 	window.AUTH.initialize();
 });
+
+
