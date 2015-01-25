@@ -33,7 +33,7 @@ module.exports.connect = function(io) {
 					socket.join(room);
 					socket.emit('message', { type: 'created', data: room });
 
-				} else if (numClients == 1) {
+				} else if (numClients <= 5) { // TODO trouver un autre moyen pour produire la limite des rooms
 
 					io.sockets.in(room).emit('message', { type: 'join', data: room });
 					socket.join(room);
@@ -62,27 +62,32 @@ module.exports.connect = function(io) {
 			if (message.type === 'got user media') {
 				
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				// ajout de la session de la socket
+				message.data.socketId = socket.id;
+				socket.broadcast.emit('webrtc_component', message);
 				
 			} else if (message.type === 'offer') {
 				
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
+				message.data.socketIdSender = socket.id;
+				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 			
 			} else if (message.type === 'answer') {
 			
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
+				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 				
 			} else if (message.type === 'candidate') {
 			
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				socket.broadcast.emit('webrtc_component', message);
 				
 			} else if (message.type === 'bye') {
 				
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				socket.broadcast.emit('webrtc_component', message);
 				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '> for the webrtc_component'); 
@@ -93,7 +98,12 @@ module.exports.connect = function(io) {
 			if (message.type === 'geolocation') {
 				
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				socket.broadcast.emit('geolocalisation_component', message);
+				
+			} else if (message.type === 'bye') {
+				
+				log('Got ' + message.type + ': ', message);
+				socket.broadcast.emit('geolocalisation_component', message);
 				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '> for the geolocalisation_component'); 
