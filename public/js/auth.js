@@ -1,13 +1,20 @@
 window.AUTH = {
+<<<<<<< HEAD
 	//token: '',
 	auth: io.connect("/session/login"),
 	users: {},
 	enableSocketAuth : true,
 	enablePostAuth : false,
+=======
+	token: '',
+	auth: io.connect("/auth"),
+	users: {},
+>>>>>>> 628b25ae75902bc3f5a94d16322cf838d2b23cac
 	connectionData : {},
 	getMember: function() {
 		return AUTH.connectionData.userName;
 	},
+<<<<<<< HEAD
 	log : function (array) {
 		console.log.apply(console, array);
 	},
@@ -94,3 +101,42 @@ $(document).ready(function(){
 });
 
 
+=======
+	authenticate: function(e) {
+		if(e.keyCode === 13){
+			$("#loginForm").hide();
+
+			AUTH.auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
+		}
+		return false;
+	}
+};
+
+AUTH.auth.emit('listUsers');
+
+AUTH.auth.on("userList", function (list) {
+	AUTH.users = list;
+	console.log('--- userList ---');
+	console.log(AUTH.users);
+});
+
+AUTH.auth.on('log', function (array) {
+  console.log.apply(console, array);
+});
+
+AUTH.auth.on('connectionApproved', function (data) {
+	AUTH.connectionData.userName 	= data.userName;
+	AUTH.connectionData.token 		= data.token;
+	
+	// TODO : load project in #main
+
+	// Asynchronously Load the map API 
+	var script = document.createElement('script');
+	script.src = "js/main.js";
+	document.head.appendChild(script);
+});
+
+AUTH.auth.on('connectionRefused', function () {
+	// TODO handle login error
+});
+>>>>>>> 628b25ae75902bc3f5a94d16322cf838d2b23cac
