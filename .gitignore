@@ -3,4 +3,4 @@ build.sh
 .thrash/
 logs/
 node_modules
-.project/
+.project
