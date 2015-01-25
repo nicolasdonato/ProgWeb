@@ -1,0 +1,63 @@
+﻿doctype html
+html
+	head
+		title ProgWeb Project
+
+		meta(name='keywords',
+			content='WebRTC, HTML5, JavaScript')
+		meta(name='description',
+			content='WebRTC Reference App')
+		// meta(name='viewport',
+			content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1')
+
+		base(target='_blank')
+
+		link(rel='stylesheet', href='css/test.css')
+		link(rel='stylesheet', href='js/lib/jsTree/themes/default/style.min.css')
+
+		script(src='js/lib/jquery-2.1.3.js')
+		script(src='js/lib/jsTree/jstree.min.js')
+		script(src='js/lib/adapter.js')
+		script(src='js/lib/jquery.class.js')
+		script(src='http://maps.google.com/maps/api/js?sensor=false')
+		script(src='/socket.io/socket.io.js')
+
+		script(src='js/chat.js')
+		script(src='js/maps.js')
+		script(src='js/webrtc.js')
+		script(src='js/auth.js')
+		script(src='js/test.js')
+	body
+		header
+			form#loginForm(onkeyup='return AUTH.authenticate(event, \'auth\');')
+				input#login(type='text', placeholder='Login')
+				br
+				input#pwd(type='password', placeholder='Password')
+			input#userName(type='hidden')
+			input#token(type='hidden')
+			nav
+				a(href='#') Projet 1
+				a(href='#') Projet 2
+				a(href='#') Projet 3
+			button(type='text') Deco
+		main
+			aside#geochat
+				section#geo
+					img(src='https://mts1.googleapis.com/vt?pb=!1m4!1m3!1i6!2i33!3i21!2m3!1e0!2sm!3i285000000!3m9!2sen-US!3sUS!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0')
+				section#out
+				input#in(type='text')
+			section#cams
+				.cam.u0
+					p Damien
+					video(poster='https://avatars2.githubusercontent.com/u/10448146?v=3&s=400')
+				.cam.u1
+					p Nicolas
+					video(poster='https://avatars2.githubusercontent.com/u/9198793?v=3&s=400')
+				.cam.u2
+					p Romain
+					video(poster='https://avatars0.githubusercontent.com/u/9745474?v=3&s=460')
+				.cam.u3
+					p Icare
+					video(poster='https://lh4.googleusercontent.com/-8gHlc5ItTC8/VFEbjVlcvfI/AAAAAAAAADo/vNvxbh8me5U/s258-no/image-rigolotes-batcat-begins-noir-big.jpg')
+			aside#files
+		footer footer
