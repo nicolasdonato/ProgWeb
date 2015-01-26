@@ -47,6 +47,12 @@ var webrtc = new WebRTC({
 		} else if (jQuery("#cams").length > 0) {
 			jQuery(event.remoteVideo).parent().remove();
 		}
+	},
+	enableDataChannel: function (event) {
+		console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");
+	},
+	receiveMessageByDataChannel: function (event) {
+		console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
 	}
 });
 
@@ -64,6 +70,61 @@ var map = new Map({
 	}
 });
 
+/////////////////////////////////////////
+// File sharing events
+//
+
+//var progressHelper = {};
+//var outputPanel = document.body;
+//
+//var fileHelper = {
+//    onBegin: function (file) {
+//        var div = document.createElement('div');
+//        div.title = file.name;
+//        div.innerHTML = '&lt;label&gt;0%&lt;/label&gt; &lt;progress&gt;&lt;/progress&gt;';
+//        outputPanel.insertBefore(div, outputPanel.firstChild);
+//        progressHelper[file.uuid] = {
+//            div: div,
+//            progress: div.querySelector('progress'),
+//            label: div.querySelector('label')
+//        };
+//        progressHelper[file.uuid].progress.max = file.maxChunks;
+//    },
+//    onEnd: function (file) {
+//        progressHelper[file.uuid].div.innerHTML = '&lt;a href="' + file.url + '" target="_blank" download="' + file.name + '"&lt;' + file.name + '&lt;/a&gt;';
+//    },
+//    onProgress: function (chunk) {
+//        var helper = progressHelper[chunk.uuid];
+//        helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
+//        updateLabel(helper.progress, helper.label);
+//    }
+//};
+//
+//function updateLabel(progress, label) {
+//    if (progress.position == -1) return;
+//    var position = +progress.position.toFixed(2).split('.')[1] || 100;
+//    label.innerHTML = position + '%';
+//}
+//
+//// To Send a File
+//File.Send({
+//    file: file,
+//    channel: peer,
+//    interval: 100,
+//    chunkSize: 1000, // 1000 for RTP; or 16k for SCTP
+//                     // chrome's sending limit is 64k; firefox' receiving limit is 16k!
+//
+//    onBegin: fileHelper.onBegin,
+//    onEnd: fileHelper.onEnd,
+//    onProgress: fileHelper.onProgress
+//});
+//
+//// To Receive a File
+//var fleReceiver = new File.Receiver(fileHelper);
+//peer.onmessage = function (data) {
+//    fleReceiver.receive(data);
+//};
+
 
 /////////////////////////////////////////
 // Window events
@@ -74,8 +135,8 @@ var map = new Map({
  */
 window.onbeforeunload = function(e){
 	//sendMessage('bye');
-	map.closeLocation();
 	webrtc.hangup();
+	map.closeLocation();
 }
 
 /////////////////////////////////////////

@@ -120,6 +120,10 @@ var WebRTC = Class.create({
 	addNewVideo: null,
 	// method used to delete video tag in the DOM
 	deleteVideo: null,
+	// method used when the datachannel is enable/disable
+	enableDataChannel: null,
+	// method used when the user send a message by datachannel
+	receiveMessageByDataChannel: null,
 	
 	/**
 	 * Initialization of the class
@@ -137,6 +141,8 @@ var WebRTC = Class.create({
 		
 		this.addNewVideo = options.addNewVideo || null;
 		this.deleteVideo = options.deleteVideo || null;
+		this.enableDataChannel = options.enableDataChannel || null;
+		this.receiveMessageByDataChannel = options.receiveMessageByDataChannel || null;
 		
 		this.options = options;
 		
@@ -339,7 +345,7 @@ var WebRTC = Class.create({
 		nodePeerConnection.pc.onremovestream = this.handleRemoteStreamRemoved.bind(this);
 		
 		// Data channel. If the caller is opening a data channel on the p2p connection
-		//this.initDataChannel(nodePeerConnection);
+		this.initDataChannel(nodePeerConnection);
 	},
 	
 	/**
@@ -507,55 +513,38 @@ var WebRTC = Class.create({
 	///////////////////////////////////////////
 	//////// Channel //////////////////////////
 	///////////////////////////////////////////
-	sendData: function (data) {
-		this.pc.sendChannel.send(data);
-		trace('Sent data by RTCPeerConnection: ' + data);
-	},
+	
 	
 	initDataChannel: function (nodePeerConnection) {
-		if (this.isInitiator) {
+		if (!nodePeerConnection.isInitiator) {
 			try {
 				// Reliable Data Channels not yet supported in Chrome
 				var sendChannel = nodePeerConnection.pc.createDataChannel("sendDataChannel", {reliable: false});
 				nodePeerConnection.sendChannel = sendChannel;
 				
 				// écouteur de message reçus
-				nodePeerConnection.sendChannel.onmessage = this.handleMessage.bind(this);
+				nodePeerConnection.sendChannel.onmessage = this.handleMessage.bind(nodePeerConnection);
 				
 				trace('Created send data channel');
 				
 				// ecouteur appelé quand le data channel est ouvert
-				nodePeerConnection.sendChannel.onopen = this.handleSendChannelStateChange.bind(this);
+				nodePeerConnection.sendChannel.onopen = this.handleSendChannelStateChange.bind(nodePeerConnection);
 				// idem quand il est fermé.
-				nodePeerConnection.sendChannel.onclose = this.handleSendChannelStateChange.bind(this);
+				nodePeerConnection.sendChannel.onclose = this.handleSendChannelStateChange.bind(nodePeerConnection);
 			} catch (e) {
 				alert('Failed to create data channel. You need Chrome M25 or later with RtpDataChannel enabled');
 				trace('createDataChannel() failed with exception: ' + e.message);
 			}
 		} else {
 			// ecouteur appelé quand le pair a enregistré le data channel sur la connexion p2p
-			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel.bind(this);
+			nodePeerConnection.pc.ondatachannel = this.gotReceiveChannel.bind(nodePeerConnection);
 		}
 	},
 	
-	closeDataChannels: function() {
-//		trace('Closing data channels');
-//		sendChannel.close();
-//		trace('Closed data channel with label: ' + sendChannel.label);
-//		receiveChannel.close();
-//		trace('Closed data channel with label: ' + receiveChannel.label);
-//		localPeerConnection.close();
-//		remotePeerConnection.close();
-//		localPeerConnection = null;
-//		remotePeerConnection = null;
-//		trace('Closed peer connections');
-//		startButton.disabled = false;
-//		sendButton.disabled = true;
-//		closeButton.disabled = true;
-//		dataChannelSend.value = "";
-//		dataChannelReceive.value = "";
-//		dataChannelSend.disabled = true;
-//		dataChannelSend.placeholder = "Press Start, enter some text, then press Send.";
+	closeDataChannels: function(sendChannel) {
+		trace('Closing data channels');
+		sendChannel.close();
+		trace('Closed data channel with label: ' + sendChannel.label);
 	},
 	
 	//Le data channel est créé par l'appelant. Si on entre dans cet écouteur
@@ -563,28 +552,61 @@ var WebRTC = Class.create({
 	gotReceiveChannel: function (event) {
 		trace('Receive Channel Callback');
 		sendChannel = event.channel;
-		sendChannel.onmessage = this.handleMessage;
-		sendChannel.onopen = this.handleReceiveChannelStateChange;
-		sendChannel.onclose = this.handleReceiveChannelStateChange;
-	},
-	
-	handleMessage: function (event) {
-		trace('Received message: ' + event.data);
-		receiveTextarea.value = event.data;
+		sendChannel.onmessage = this.webrtc.handleMessage;
+		sendChannel.onopen = this.webrtc.handleReceiveChannelStateChange;
+		sendChannel.onclose = this.webrtc.handleReceiveChannelStateChange;
 	},
 	
 	handleSendChannelStateChange: function(event) {
-		var readyState = this.webrtc.pc.sendChannel.readyState;
+		var readyState = this.sendChannel.readyState;
 		trace('Send channel state is: ' + readyState);
-		if (this.webrtc.enableMessageInterface)
-			this.webrtc.enableMessageInterface(readyState == "open");
+		if (this.webrtc.enableDataChannel)
+			this.webrtc.enableDataChannel({
+				readyState: readyState == "open",
+				remoteMember: this.member,
+				remoteVideo: this.remoteVideo
+			});
 	},
 	
 	handleReceiveChannelStateChange: function(event) {
-		var readyState = this.webrtc.pc.sendChannel.readyState;
+		var readyState = this.sendChannel.readyState;
 		trace('Receive channel state is: ' + readyState);
-		if (this.webrtc.enableMessageInterface)
-			this.webrtc.enableMessageInterface(readyState == "open");
+		if (this.webrtc.enableDataChannel)
+			this.webrtc.enableDataChannel({
+				readyState: readyState == "open",
+				remoteMember: this.member,
+				remoteVideo: this.remoteVideo
+			});
+	},
+	
+	/**
+	 * method used when the user send a message by datachannel
+	 */
+	handleMessage: function (event) {
+		trace('Received message: ' + event.data);
+		
+		var data = JSON.parse(event.data);
+		var eventCallback = {
+			remoteMember: this.member,
+			remoteVideo: this.remoteVideo,
+			message: data.message
+		};
+		if (this.webrtc.receiveMessageByDataChannel) {
+			this.webrtc.receiveMessageByDataChannel(eventCallback);
+		}
+	},
+	
+	/**
+	 * method used when the user send a message by datachannel
+	 * @param member the member which the data is send
+	 * @param data the data to send
+	 */
+	sendDataByDataChannel: function (member, message) {
+		var data = {
+			message: message
+		};
+		this.getPC(member).sendChannel.send(JSON.stringify(data));
+		trace('Sent data by RTCPeerConnection: ' + data);
 	},
 	
 	///////////////////////////////////////////
@@ -603,7 +625,7 @@ var WebRTC = Class.create({
 			for (var idx = 0; idx < this.listPeerConnection.length; idx++) {
 				var tmpPC = this.listPeerConnection[idx];
 				if (tmpPC) {
-					this.stop(tmpPC.pc);
+					this.stop(tmpPC);
 				}
 			}
 		}
@@ -620,7 +642,7 @@ var WebRTC = Class.create({
 		console.log('Session terminated.');
 		var node = this.getPC(data.member);
 		if (node) {
-			this.stop(node.pc);
+			this.stop(node);
 			if (this.deleteVideo && jQuery.isFunction(this.deleteVideo)) {
 				this.deleteVideo({
 					remoteVideo: node.remoteVideo,
@@ -634,12 +656,13 @@ var WebRTC = Class.create({
 	/**
 	 * Closing the p2p connection
 	 */
-	stop: function(pc) {
+	stop: function(node) {
 		// this.isStarted = false;
 		// isAudioMuted = false;
 		// isVideoMuted = false;
-		pc.close();
-		pc = null;
+		this.closeDataChannels(node.sendChannel); // TODO an error has occured when the RTCDataChannel is closing
+		node.pc.close();
+		node.pc = null;
 	},
 	
 	///////////////////////////////////////////

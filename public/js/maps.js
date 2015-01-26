@@ -76,7 +76,7 @@ var Map = Class.create({
 				this.createPositionOnMap(data);
 			}).bind(this))
 			// fire event when a person send disconnected notification
-			.on('bye', function(data) {
+			.on('bye', (function(data) {
 				var marker;
 				// search the person marker
 				for (var idx=0; idx < this.markers.length -1; idx ++) {
@@ -90,7 +90,7 @@ var Map = Class.create({
 				if (marker) {
 					this.markers.pop(marker);
 				}
-			});
+			}).bind(this));
 	},
 	
 	/**
