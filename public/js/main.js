@@ -27,22 +27,14 @@ var webrtc = new WebRTC({
 		}
 	},
 	addNewVideo: function(event) {
-		if (jQuery("#videos").length > 0) {
-			jQuery("#videos").append(event.remoteVideo);
-		} else if (jQuery("#cams").length > 0) {
-			var tagToAdd = jQuery("<div></div>")
-							.addClass("cam")
-							.append("<p>" + event.member + "</p>")
-							.append(event.remoteVideo);
-			jQuery("#cams").append(tagToAdd);
-		}
+		var tagToAdd = jQuery("<div></div>")
+						.addClass("cam")
+						.append("<p>" + event.member + "</p>")
+						.append(event.remoteVideo);
+		jQuery("#cams").append(tagToAdd);
 	},
 	deleteVideo: function(event) {
-		if (jQuery("#videos").length > 0) {
-			jQuery(event.remoteVideo).remove();
-		} else if (jQuery("#cams").length > 0) {
-			jQuery(event.remoteVideo).parent().remove();
-		}
+		jQuery(event.remoteVideo).parent().remove();
 	}
 });
 
@@ -116,6 +108,7 @@ chatMessage.on('created', function (room){ // Si on reçoit le message "created"
 //Il est important de regarder dans le code de ce fichier quand on envoit
 //des messages.
 function sendMessage(messageType, data){
+	console.log('LA !!!!!!!')
 	chatMessage.sendMessage(messageType, data);
 }
 

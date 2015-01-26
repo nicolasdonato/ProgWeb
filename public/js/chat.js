@@ -7,6 +7,7 @@ var ChatMessage = Class.create({
 	initialize: function(options) {
 		this.socket = io.connect();
 		this.component = (options && options.component) ? options.component : "message";
+		console.log('socket')
 		this.socket.on(this.component, this.receiveMessage.bind(this));
 		this.mapFunctionOn = {};
     },

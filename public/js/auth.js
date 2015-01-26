@@ -8,7 +8,9 @@ window.AUTH = {
 	},
 	authenticate: function(e) {
 		if(e.keyCode === 13){
-			$("#loginForm").hide();
+			$("#loginForm").css('display', 'none');
+			$("#rooms").css('display', 'inline');
+			$("#deco").css('display', 'inline');
 
 			AUTH.auth.emit("authentification", { login: $("#login").val(), password: $("#pwd").val() });
 		}

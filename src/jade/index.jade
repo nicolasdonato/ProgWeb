@@ -33,31 +33,20 @@ html
 				input#login(type='text', placeholder='Login')
 				br
 				input#pwd(type='password', placeholder='Password')
-			input#userName(type='hidden')
-			input#token(type='hidden')
-			nav
+			nav#rooms(style='display:none')
 				a(href='#') Projet 1
 				a(href='#') Projet 2
 				a(href='#') Projet 3
-			button(type='text') Deco
+			button#deco(type='text', style='display:none') Deco
 		main
 			aside#geochat
 				section#geo
-					img(src='https://mts1.googleapis.com/vt?pb=!1m4!1m3!1i6!2i33!3i21!2m3!1e0!2sm!3i285000000!3m9!2sen-US!3sUS!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0')
+					#carte
 				section#out
 				input#in(type='text')
 			section#cams
-				.cam.u0
-					p Damien
-					video(poster='https://avatars2.githubusercontent.com/u/10448146?v=3&s=400')
-				.cam.u1
-					p Nicolas
-					video(poster='https://avatars2.githubusercontent.com/u/9198793?v=3&s=400')
-				.cam.u2
-					p Romain
-					video(poster='https://avatars0.githubusercontent.com/u/9745474?v=3&s=460')
-				.cam.u3
-					p Icare
-					video(poster='https://lh4.googleusercontent.com/-8gHlc5ItTC8/VFEbjVlcvfI/AAAAAAAAADo/vNvxbh8me5U/s258-no/image-rigolotes-batcat-begins-noir-big.jpg')
+				.cam
+					p#localMember
+					video#localVideo(autoplay='true', muted='true')
 			aside#files
 		footer footer

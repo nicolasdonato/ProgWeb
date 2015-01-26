@@ -5,6 +5,7 @@ $ ->
 			$('#out').append 'me : ' + $(this).val() + '<br>'
 			$('#out').scrollTop $('#out')[0].scrollHeight
 			$(this).val ''
+			sendMessage 'type', 'data'
 
 	data = data: [
 		text: 'Projet 1'
@@ -19,3 +20,4 @@ $ ->
 	]
 
 	$('#files').jstree core: data
+

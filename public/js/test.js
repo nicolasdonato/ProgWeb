@@ -6,7 +6,8 @@
       if ($(this).val() !== '' && e.keyCode === 13) {
         $('#out').append('me : ' + $(this).val() + '<br>');
         $('#out').scrollTop($('#out')[0].scrollHeight);
-        return $(this).val('');
+        $(this).val('');
+        return sendMessage('type', 'data');
       }
     });
     data = {

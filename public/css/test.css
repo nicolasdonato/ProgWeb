@@ -14,6 +14,11 @@ html body {
 html body header {
   flex: 1 0 100px;
   display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   background-color: #f00;
 }
 html body main {
@@ -34,7 +39,7 @@ html body main #geochat #geo {
   max-height: 200px;
   background-color: #00f;
 }
-html body main #geochat #geo img {
+html body main #geochat #geo #carte {
   height: 100%;
 }
 html body main #geochat #out {
@@ -51,7 +56,7 @@ html body main #cams {
   flex: 10 0 256px;
   display: flex;
   flex-wrap: wrap;
-  align-item: center;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
   background-color: #9f9;
