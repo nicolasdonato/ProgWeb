@@ -37,6 +37,7 @@ module.exports.connect = function(cb) {
 	});
 };
 
+
 module.exports.clear = function(db){
 
 	db.collection(mod_db_classes.getCollectionName()).remove();
@@ -44,6 +45,7 @@ module.exports.clear = function(db){
 	db.collection(mod_db_sessions.getCollectionName()).remove();
 	db.collection(mod_db_users.getCollectionName()).remove();
 }
+
 
 module.exports.initialize = function(databaseName) {
 	

@@ -5,6 +5,7 @@ var mod_utils = require('../utils');
 
 var DbName = 'courses'; 
 
+
 /*
  * Template of document 'Course' in database. 
  */
@@ -18,9 +19,11 @@ Course = function(name, description) {
 
 module.exports.Course = Course; 
 
+
 module.exports.getCollectionName = function() {
 	return DbName; 
 }
+
 
 module.exports.initialize = function(db) {
 
@@ -39,6 +42,7 @@ module.exports.initialize = function(db) {
 	}
 }
 
+
 module.exports.create = function(req, res) {
 
 	var data = { name : req.body.name, description : req.body.description };
@@ -49,7 +53,7 @@ module.exports.create = function(req, res) {
 		var cursor = db.collection(DbName).find(query);
 		cursor.toArray(function(err, data){
 			var result = { name : course.name, newlyCreated : false }
-			if(data.length == 0){
+			if (data.length == 0) {
 				db.collection(DbName).insert(course);
 				result.newlyCreated = true;
 			}
@@ -73,6 +77,7 @@ module.exports.list = function(req, res) {
 		});
 	});
 }
+
 
 module.exports.get = function(req, res) {
 	// TODO
