@@ -35,7 +35,6 @@ var ChatMessage = Class.create({
 		
 		if (this.mapFunctionOn) {
 			jQuery.each(this.mapFunctionOn, function(messageType, functionToExecute) {
-				//console.log( messageType + ": " + functionToExecute );
 				if (message.type === messageType
 						&& jQuery.isFunction(functionToExecute)) {
 					functionToExecute(message.data);
