@@ -558,6 +558,11 @@ var WebRTC = Class.create({
 	},
 	
 	handleSendChannelStateChange: function(event) {
+		this.sendChannel.push = this.sendChannel.send;
+		this.sendChannel.send = (function (data) {
+			this.push(JSON.stringify(data));
+		}).bind(this.sendChannel);
+		
 		var readyState = this.sendChannel.readyState;
 		trace('Send channel state is: ' + readyState);
 		if (this.webrtc.enableDataChannel)
@@ -586,11 +591,11 @@ var WebRTC = Class.create({
 		trace('Received message: ' + event.data);
 		
 		var data = JSON.parse(event.data);
-		var eventCallback = {
+		var eventCallback = jQuery.extend({
 			remoteMember: this.member,
-			remoteVideo: this.remoteVideo,
-			message: data.message
-		};
+			remoteVideo: this.remoteVideo
+			//message: data.message
+		}, data);
 		if (this.webrtc.receiveMessageByDataChannel) {
 			this.webrtc.receiveMessageByDataChannel(eventCallback);
 		}
@@ -605,7 +610,7 @@ var WebRTC = Class.create({
 		var data = {
 			message: message
 		};
-		this.getPC(member).sendChannel.send(JSON.stringify(data));
+		this.getPC(member).sendChannel.send(data);
 		trace('Sent data by RTCPeerConnection: ' + data);
 	},
 	
