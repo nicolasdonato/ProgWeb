@@ -4,7 +4,7 @@
 
 
 var mod_db = require('./manager');
-var mod_db_users = require('./users');
+var mod_db_users = require('./users'); 
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
 

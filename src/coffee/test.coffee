@@ -2,10 +2,11 @@ $ ->
 	
 	$('#in').on 'keyup', (e) ->
 		if $(this).val() isnt '' and e.keyCode is 13
-			$('#out').append 'me : ' + $(this).val() + '<br>'
+			val = $(this).val()
+			$('#out').append 'me : ' + val + '<br>'
 			$('#out').scrollTop $('#out')[0].scrollHeight
 			$(this).val ''
-			sendMessage 'type', 'data'
+			sendMessage 'messageChat', {user: AUTH.connectionData.userName, message: val}
 
 	data = data: [
 		text: 'Projet 1'
