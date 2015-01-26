@@ -28,7 +28,7 @@ window.AUTH = {
 		console.log(AUTH.users);
 	},
 	authenticate: function(e) {
-		if(e.keyCode === 13){
+		if (e.keyCode === 13) {
 			$("#loginForm").css('display', 'none');
 			$("#rooms").css('display', 'inline');
 			$("#deco").css('display', 'inline');
@@ -39,11 +39,11 @@ window.AUTH = {
 		AUTH.connectionData.userName = data.login;
 		if(AUTH.enableSocketAuth)
 		{
-			AUTH.auth.emit("authentification", data);
+			AUTH.auth.emit("authentication", data);
 		}
 		if(AUTH.enablePostAuth)
 		{
-			$.post("/session/login", data , AUTH.authentificationResult, "json");
+			$.post("/session/login", data , AUTH.authenticationResult, "json");
 		}
 		e.preventDefault();
 		return false;
@@ -65,8 +65,6 @@ window.AUTH = {
 		.done(function() {
 			AUTH.connectionData.userName 	= userName;
 			AUTH.connectionData.token 		= token;
-			$("#userName").val(userName);
-			$("#token").val(token);
 			
 			$("#loginInProgress").hide();
 			$("#connectionData").text("Hello "+userName+", your connection token is : "+ token);
@@ -81,7 +79,7 @@ window.AUTH = {
 		$("#connectionData").show();
 		$("#loginForm").show();
 	},
-	authentificationResult : function(data){
+	authenticationResult : function(data){
 		if(data.authenticated){
 			AUTH.connectionApproved(data);
 		}

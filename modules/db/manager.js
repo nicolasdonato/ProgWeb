@@ -38,33 +38,24 @@ module.exports.connect = function(cb) {
 };
 
 
+module.exports.clear = function(db){
+
+	db.collection(mod_db_classes.getCollectionName()).remove();
+	db.collection(mod_db_courses.getCollectionName()).remove();
+	db.collection(mod_db_sessions.getCollectionName()).remove();
+	db.collection(mod_db_users.getCollectionName()).remove();
+}
+
+
 module.exports.initialize = function(databaseName) {
 	
 	url = mongoDbUrlBase + databaseName;
 
 	module.exports.connect(function(db) {
+		module.exports.clear(db);
 
-		db.collection(mod_db_classes.getCollectionName()).remove();
-		db.collection(mod_db_courses.getCollectionName()).remove();
-		db.collection(mod_db_sessions.getCollectionName()).remove();
-		
-		var collection = db.collection(mod_db_users.getCollectionName());
-
-		// Réinitialiser la collection
-		collection.remove();
-		
-		// Définir les utilisateurs de base
-		var damien = new mod_db_users.User('damien', 'lepiller'); 
-		var nicolas = new mod_db_users.User('nicolas', 'donato'); 
-		var romain = new mod_db_users.User('romain', 'truchi'); 
-		var initializationUsers = [damien, nicolas, romain];
-
-		// Ajout des utilisateurs prédéfinis
-		for (var index in initializationUsers) {
-			var hash = mod_utils.getHash(initializationUsers[index].password); 
-			initializationUsers[index].password = hash; 
-			collection.insert(initializationUsers[index]); 
-		}
+		mod_db_users.initialize(db);
+		mod_db_courses.initialize(db);
 	});
 };
 

@@ -7,6 +7,9 @@ var mod_utils = require('../utils');
 var DbName = 'sessions'; 
 
 
+/*
+ * Template of document 'Session' in database. 
+ */
 function Session(login, token, begin) {
 
 	// Mandatory information
@@ -29,7 +32,7 @@ module.exports.getCollectionName = function() {
 module.exports.login = function(login, password, callback) {
 
 	mod_db_users.authenticate(login, password, function(user) {
-		var result = null;
+		var result = { authenticated: false, token: '' }; 
 
 		if (user.login == '') {
 			result = { authenticated: false, token: ''}; 
@@ -57,6 +60,7 @@ module.exports.requestLogin = function(req, res) {
 		res.send(JSON.stringify(result));
 	}); 
 };
+
 /*
 var authenticate = function(data, res){
 	
@@ -65,12 +69,14 @@ var authenticate = function(data, res){
 	});
 };
 
+
 var authenticate_post = function(req, res){
 
 	var data = {login : req.body.login, password : req.body.password };
 	
 	authenticate(data, res);
 };*/
+
 
 module.exports.join = function(req, res) {
 	// TODO
