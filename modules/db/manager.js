@@ -38,7 +38,7 @@ module.exports.connect = function(cb) {
 };
 
 
-module.exports.clear = function(db){
+module.exports.clear = function(db) {
 
 	db.collection(mod_db_classes.getCollectionName()).remove();
 	db.collection(mod_db_courses.getCollectionName()).remove();
@@ -52,6 +52,7 @@ module.exports.initialize = function(databaseName) {
 	url = mongoDbUrlBase + databaseName;
 
 	module.exports.connect(function(db) {
+		
 		module.exports.clear(db);
 
 		mod_db_users.initialize(db);

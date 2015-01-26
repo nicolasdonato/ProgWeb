@@ -1,15 +1,21 @@
 
+// Imports and constants
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 var mod_db = require('./manager');
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
 
-
 var DbName = 'users'; 
 
 
-/*
- * Template of document 'User' in database. 
- */
+// Objects
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+// Template of document 'User' in database
+
 User = function(login, password) {
 	
 	// Mandatory information
@@ -36,6 +42,8 @@ User = function(login, password) {
 module.exports.User = User; 
 
 
+// Role level for users
+
 Roles = {
 	STUDENT: 1, 
 	TEACHER: 2, 
@@ -43,6 +51,44 @@ Roles = {
 }; 
 
 module.exports.Roles = Roles; 
+
+
+// External API
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+module.exports.create = function(req, res) {
+	
+	
+}
+
+
+module.exports.list = function(req, res) {
+	module.exports.listUsers(function(err, data){
+		res.send(JSON.stringify(data)); 
+	});
+}
+
+
+module.exports.get = function(req, res) {
+	// TODO
+}
+
+
+
+module.exports.update = function(req, res) {
+	// TODO
+}
+
+
+
+module.exports.remove = function(req, res) {
+	// TODO
+}
+
+
+// Local API
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 module.exports.getCollectionName = function() {
@@ -69,7 +115,7 @@ module.exports.initialize = function(db) {
 }
 
 
-module.exports.authenticate = function(login, password, callBack) {
+module.exports.authenticate = function(login, password, callback) {
 	
 	mod_db.connect(function(db) {
 
@@ -83,34 +129,24 @@ module.exports.authenticate = function(login, password, callBack) {
 				logger.err(err);
 				callBack(new User('', '')); 
 				return;
-			}
-
-			if (result.length == 0) {
+			} else if (result.length == 0) {
 				callBack(new User('', '')); 
 				return;
-			}
-
-			if (result.length > 1) {
+			} else if (result.length > 1) {
 				throw new Exception("More than one user with the same login/password were found");
 			}
 			
 			var user = result[0];
-			
 			var cleanUser = new User(user.login, ''); 
 			cleanUser.cleanCopy(user); 
-			callBack(cleanUser); 
+			
+			callback(cleanUser); 
 		});
 	});
 }
 
 
-module.exports.create = function(req, res) {
-	
-	
-}
-
-
-module.exports.listUsers = function(callBack) {
+module.exports.listUsers = function(callback) {
 
 	mod_db.connect(function(db) {
 		
@@ -120,7 +156,7 @@ module.exports.listUsers = function(callBack) {
 			for(var i in data){
 				delete data[i].password; 
 			}
-			callBack(err, data);
+			callback(err, data);
 		});
 		
 		
@@ -128,27 +164,32 @@ module.exports.listUsers = function(callBack) {
 }
 
 
-module.exports.list = function(req, res) {
-	module.exports.listUsers(function(err, data){
-		res.send(JSON.stringify(data)); 
-	});
-}
+module.exports.getUser = function(login, callback) {
 
-
-
-module.exports.get = function(req, res) {
-	// TODO
-}
-
-
-
-module.exports.update = function(req, res) {
-	// TODO
-}
-
-
-
-module.exports.remove = function(req, res) {
-	// TODO
+	mod_db.connect(function(db) {
+		
+		var query = { "login":login }; 
+		var cursor = db.collection(DbName).find(query);
+		
+		cursor.toArray(function(err, result) {
+			
+			if (err) {
+				logger.err(err);
+				callBack(new User('', '')); 
+				return;
+			} else if (result.length == 0) {
+				callBack(new User('', '')); 
+				return;
+			} else if (result.length > 1) {
+				throw new Exception("More than one user with the same login were found");
+			}
+			
+			var user = result[0];
+			var cleanUser = new User(user.login, ''); 
+			cleanUser.cleanCopy(user); 
+			
+			callback(cleanUser); 
+		});
+	}); 
 }
 
