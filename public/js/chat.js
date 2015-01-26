@@ -113,3 +113,5 @@ var ChatMessage = Class.create({
 		}
 	}
 });
+
+var chatMessage = new ChatMessage();

@@ -1,7 +1,7 @@
 
 var node_hash = require('es-hash'); 
 
-var mod_db_connect = require('./connection');
+var mod_db = require('./manager');
 var mod_utils = require('../utils'); 
 
 
@@ -10,7 +10,7 @@ var DbName = 'user';
 
 module.exports.login = function(userName, userPassword, callBack) {
 	
-	mod_db_connect.connect(function(db) {
+	mod_db.connect(function(db) {
 		
 		var hash = node_hash(userPassword, 'sha256'); 
 		var query = { name : userName,  password : hash}; 
@@ -20,12 +20,16 @@ module.exports.login = function(userName, userPassword, callBack) {
 			
 			var token = node_hash({ name : userName, stamp: mod_utils.getTimeStamp() }, 'sha256'); 
 			
-			data['token'] = token; 
-			db.collection(DbName).update(query, data); 
+			var validUser = data.length > 0;
 			
-			callBack(data.length, {
+			if(validUser){
+				data[0].token = token; 
+				db.collection(DbName).update(query, data[0]); 
+			}
+			
+			callBack(validUser, {
 				userName: userName,
-				token: token
+				token: validUser ? token : ''
 			});
 		});
 	});
@@ -34,7 +38,7 @@ module.exports.login = function(userName, userPassword, callBack) {
 
 module.exports.list = function(callBack) {
 	
-	mod_db_connect.connect(function(db) {
+	mod_db.connect(function(db) {
 		var cursor = db.collection(DbName).find();
 		cursor.toArray(callBack);
 	});

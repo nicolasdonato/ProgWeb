@@ -53,6 +53,7 @@ var Map = Class.create({
 	initialize: function(options) {
 		this.divMap = options.divMap || null;
 		this.bounds = new google.maps.LatLngBounds();
+		//this.isCarteEnable = options.isCarteEnable || false;
 		this.showMap = options.showMap || null;
 		this.localMember = options.localMember || null;
 		this.createEventTask();
