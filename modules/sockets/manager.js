@@ -100,6 +100,11 @@ module.exports.connect = function(io) {
 				log('Got ' + message.type + ': ', message);
 				socket.broadcast.emit('geolocalisation_component', message);
 				
+			} else if (message.type === 'bye') {
+				
+				log('Got ' + message.type + ': ', message);
+				socket.broadcast.emit('geolocalisation_component', message);
+				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '> for the geolocalisation_component'); 
 			}
