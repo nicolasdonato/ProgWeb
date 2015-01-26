@@ -55,6 +55,16 @@ module.exports.requestLogout = function(req, res) {
 }
 
 
+module.exports.join = function(req, res) {
+	// TODO
+}; 
+
+
+module.exports.leave = function(req, res) {
+	// TODO
+}; 
+
+
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,11 +78,11 @@ module.exports.login = function(login, password, callback) {
 
 	mod_db_users.authenticate(login, password, function(user) {
 
-		var result; 
+		var actionResult; 
 		if (user.login == '') {
 
 			logger.out("Failed login <" + login + ";" + password + ">"); 
-			result = { authenticated: false, token: ''}; 
+			actionResult = { authenticated: false, token: ''}; 
 
 		} else {
 
@@ -84,10 +94,10 @@ module.exports.login = function(login, password, callback) {
 				db.collection(DbName).insert(session); 
 			}); 
 
-			result = { authenticated: true, token: token }; 
+			actionResult = { authenticated: true, token: token }; 
 		}
 
-		callback(result);
+		callback(actionResult);
 	}); 
 }; 
 
@@ -97,11 +107,12 @@ module.exports.logout = function(token, callback) {
 	// Authentication to be allowed to logout
 	module.exports.authenticate(token, function(user) {
 
-		var result = { logout: false}; 
+		var actionResult = { logout: false}; 
+
 		if (user.login == '') {
 
 			// Authentication failed
-			callback(result); 
+			callback(actionResult); 
 
 		} else {
 
@@ -110,8 +121,7 @@ module.exports.logout = function(token, callback) {
 
 				// Find session
 				var query = { "token":token }; 
-				var cursor = db.collection(DbName).remove(query); 
-
+				var cursor = db.collection(DbName).find(query); 
 				cursor.toArray(function(err, result) {
 
 					if (err) {
@@ -121,11 +131,13 @@ module.exports.logout = function(token, callback) {
 					} else if (result.length > 1) {
 						throw new Exception('More than one session with token <' + token + '> found');
 					} else {
-						logger.out('User <' + user + ';' + login + '> logging out'); 
-						result.logout = true ; 
+
+						logger.out('User <' + result[0].login + '> logging out'); 
+						db.collection(DbName).remove(query);
+						actionResult.logout = true ; 
 					}
 
-					callback(result); 
+					callback(actionResult); 
 				}); 
 			}); 
 		}
@@ -163,13 +175,7 @@ module.exports.authenticate = function(token, callback) {
 };
 
 
-module.exports.join = function(req, res) {
-	// TODO
-}; 
-
-
-module.exports.leave = function(req, res) {
-	// TODO
-}; 
+//Useful functions
+/////////////////////////////////////////////////////////////////////////////////////
 
 

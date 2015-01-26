@@ -1,53 +1,93 @@
 <!DOCTYPE html>
+
 <html>
-  <head>
-    <title>ProgWeb Project</title>
-    <meta name="keywords" content="WebRTC, HTML5, JavaScript">
-    <meta name="description" content="WebRTC Reference App">
-    <!-- meta(name='viewport',
+
+
+
+<head>
+
+<title>ProgWeb Project</title>
+
+<meta name="keywords" content="WebRTC, HTML5, JavaScript">
+<meta name="description" content="WebRTC Reference App">
+<!-- meta(name='viewport',
     content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1')
     
     -->
-    <base target="_blank">
-    <link rel="stylesheet" href="css/test.css">
-    <link rel="stylesheet" href="js/lib/jsTree/themes/default/style.min.css">
-    <script src="js/lib/jquery-2.1.3.js"></script>
-    <script src="js/lib/jsTree/jstree.min.js"></script>
-    <script src="js/lib/adapter.js"></script>
-    <script src="js/lib/jquery.class.js"></script>
-    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/maps.js"></script>
-    <script src="js/webrtc.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/test.js"></script>
-  </head>
-  <body>
-    <header>
-      <form id="loginForm" onkeyup="return AUTH.authenticate(event, 'auth');">
-        <input id="login" type="text" placeholder="Login"><br>
+<base target="_blank">
+
+<link rel="stylesheet" href="css/test.css">
+<link rel="stylesheet" href="js/lib/jsTree/themes/default/style.min.css">
+
+<script src="js/lib/jquery-2.1.3.js"></script>
+<script src="js/lib/jsTree/jstree.min.js"></script>
+<script src="js/lib/adapter.js"></script>
+<script src="js/lib/jquery.class.js"></script>
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/webrtc.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/test.js"></script>
+
+</head>
+
+
+
+<body>
+
+  <header>
+  
+     <div id="loginHeader">
+       <form id="loginForm">
+        <input id="login" type="text" placeholder="Login">
         <input id="pwd" type="password" placeholder="Password">
+        <input id="login_submit" type="submit" value="sign in">
       </form>
-      <nav id="rooms" style="display:none"><a href="#">Projet 1</a><a href="#">Projet 2</a><a href="#">Projet 3</a></nav>
-      <button id="deco" type="text" style="display:none">Deco</button>
-    </header>
-    <main>
-      <aside id="geochat">
-        <section id="geo">
-          <div id="carte"></div>
-        </section>
-        <section id="out"></section>
-        <input id="in" type="text">
-      </aside>
-      <section id="cams">
-        <div class="cam">
-          <p id="localMember"></p>
-          <video id="localVideo" autoplay="true" muted="true"></video>
-        </div>
+    </div>
+    <div id="logoutHeader" style="display: none">
+      <form id="logoutForm">
+        <span id="user"></span>
+        <input id="logout_submit" type="submit" value="logout">
+      </form>
+    </div>
+    <div id="logMessage" style="display: none"></div>
+     
+    <nav id="rooms" style="display: none">
+      <a href="#">Projet 1</a><a href="#">Projet 2</a><a href="#">Projet 3</a>
+    </nav>
+    
+    <button id="deco" type="text" style="display: none">Deco</button>
+    
+  </header>
+  
+  
+  <main>
+  
+    <aside id="geochat">
+      <section id="geo">
+        <div id="carte"></div>
       </section>
-      <aside id="files"></aside>
-    </main>
-    <footer>footer</footer>
-  </body>
+      <section id="out"></section>
+      <input id="in" type="text">
+    </aside>
+    
+    <section id="cams">
+      <div class="cam">
+        <p id="localMember"></p>
+        <video id="localVideo" autoplay="true" muted="true"></video>
+      </div>
+    </section>
+    
+    <aside id="files"></aside>
+    
+  </main>
+  
+  <footer>footer</footer>
+  
+</body>
+
+
+
 </html>
