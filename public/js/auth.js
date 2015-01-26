@@ -28,11 +28,10 @@ window.AUTH = {
 		console.log(AUTH.users);
 	},
 	authenticate: function(e) {
-		if(e.keyCode === 13){
+		if (e.keyCode === 13) {
 			$("#loginForm").css('display', 'none');
 			$("#rooms").css('display', 'inline');
 			$("#deco").css('display', 'inline');
-
 
 			var data = { login: $("#login").val(), password: $("#pwd").val() };
 
@@ -66,8 +65,6 @@ window.AUTH = {
 		.done(function() {
 			AUTH.connectionData.userName 	= userName;
 			AUTH.connectionData.token 		= token;
-			$("#userName").val(userName);
-			$("#token").val(token);
 			
 			$("#loginInProgress").hide();
 			$("#connectionData").text("Hello "+userName+", your connection token is : "+ token);
@@ -82,7 +79,7 @@ window.AUTH = {
 		$("#connectionData").show();
 		$("#loginForm").show();
 	},
-	authentificationResult : function(data){
+	authenticationResult : function(data){
 		if(data.authenticated){
 			AUTH.connectionApproved(data);
 		}

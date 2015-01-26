@@ -6,6 +6,7 @@ var mod_db_classes = require('../db/classes');
 
 
 exports.setup = function(app) {
+	
 	// User management
 	
 	app.post(  '/manage/users',        mod_db_users.create);

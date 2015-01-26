@@ -1,1 +1,20 @@
 @CHARSET "UTF-8";
+
+.libelle {
+    color: #4183c4;
+    text-decoration: none;
+}
+
+.data {
+ 	color: #888;
+    text-decoration: none;
+}
+
+.text-simple {
+	width:100%;
+}
+
+.text-area {
+	width:100%;
+	height: 100px;
+}

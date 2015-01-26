@@ -252,3 +252,7 @@ if (room !== '') {
 }
 
 ////////////////////////////////////////////////
+
+$(document).ready(function(){
+	window.COURSES.initialize();
+});
