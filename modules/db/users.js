@@ -101,10 +101,19 @@ module.exports.initialize = function(db) {
 	var collection = db.collection(module.exports.getCollectionName());
 	
 	// Définir les utilisateurs de base
+	var admin = new User('admin', 'root'); 
+	admin.role = Roles.ADMIN; 
 	var damien = new User('damien', 'lepiller'); 
+	damien.role = Roles.STUDENT; 
 	var nicolas = new User('nicolas', 'donato'); 
+	nicolas.role = Roles.STUDENT; 
 	var romain = new User('romain', 'truchi'); 
-	var initializationData = [damien, nicolas, romain];
+	romain.role = Roles.STUDENT; 
+	var sander = new User('peter', 'sander'); 
+	romain.role = Roles.TEACHER; 
+	var buffa = new User('michel', 'buffa'); 
+	romain.role = Roles.TEACHER; 
+	var initializationData = [admin, damien, nicolas, romain, sander, buffa];
 
 	// Ajout des utilisateurs prédéfinis
 	for (var index in initializationData) {
@@ -192,4 +201,9 @@ module.exports.getUser = function(login, callback) {
 		});
 	}); 
 }
+
+
+//Useful functions
+/////////////////////////////////////////////////////////////////////////////////////
+
 
