@@ -40,6 +40,23 @@ module.exports.getCollectionName = function() {
 	return DbName; 
 }
 
+module.exports.initialize = function(db) {
+
+	var collection = db.collection(module.exports.getCollectionName());
+	
+	// Définir les utilisateurs de base
+	var damien = new User('damien', 'lepiller'); 
+	var nicolas = new User('nicolas', 'donato'); 
+	var romain = new User('romain', 'truchi'); 
+	var initializationData = [damien, nicolas, romain];
+
+	// Ajout des utilisateurs prédéfinis
+	for (var index in initializationData) {
+		var hash = mod_utils.getHash(initializationData[index].password); 
+		initializationData[index].password = hash; 
+		collection.insert(initializationData[index]); 
+	}
+}
 
 module.exports.authenticate = function(login, password, callBack) {
 	

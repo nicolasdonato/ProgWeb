@@ -31,7 +31,7 @@ module.exports.configure = function (io, socketPath) {
 		});
 
 		
-		socket.on('authentification', function (data) {
+		socket.on('authentication', function (data) {
 			log('Client asked for auth with credentials <' + data.login + "," + data.password + ">");
 			
 			mod_db_sessions.login(data.login, data.password, function (result) {

@@ -29,7 +29,7 @@ module.exports.getCollectionName = function() {
 module.exports.login = function(login, password, callback) {
 
 	mod_db_users.authenticate(login, password, function(user) {
-		var result = null;
+		var result = { authenticated: false, token: '' }; 
 
 		if (user.login == '') {
 			result = { authenticated: false, token: ''}; 
