@@ -32,20 +32,21 @@ window.AUTH = {
 			$("#loginForm").css('display', 'none');
 			$("#rooms").css('display', 'inline');
 			$("#deco").css('display', 'inline');
-		}
 
-		var data = { login: $("#login").val(), password: $("#pwd").val() };
 
-		AUTH.connectionData.userName = data.login;
-		if(AUTH.enableSocketAuth)
-		{
-			AUTH.auth.emit("authentification", data);
+			var data = { login: $("#login").val(), password: $("#pwd").val() };
+
+			AUTH.connectionData.userName = data.login;
+			if(AUTH.enableSocketAuth)
+			{
+				AUTH.auth.emit("authentification", data);
+			}
+			if(AUTH.enablePostAuth)
+			{
+				$.post("/session/login", data , AUTH.authentificationResult, "json");
+			}
+			e.preventDefault();
 		}
-		if(AUTH.enablePostAuth)
-		{
-			$.post("/session/login", data , AUTH.authentificationResult, "json");
-		}
-		e.preventDefault();
 		return false;
 	},
 	connectionApproved : function(data){

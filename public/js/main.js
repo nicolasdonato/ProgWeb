@@ -172,6 +172,7 @@ var chatMessage = new ChatMessage()
 	})
 	
 	.on('messageChat', function(messageChat) {
+		console.log(messageChat)
 		console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
 		if (jQuery("#dataChannelReceive").length > 0) {
 			var outChat = jQuery("#dataChannelReceive");
@@ -179,6 +180,7 @@ var chatMessage = new ChatMessage()
 			val += messageChat.user + " says: " + messageChat.message;
 			outChat.val(val);
 		} else {
+			console.log('il est temps de printer')
 			$('#out').append(messageChat.user + ' : ' + messageChat.message + '<br>');
 		}
 	})

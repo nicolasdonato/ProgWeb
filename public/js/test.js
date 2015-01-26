@@ -3,11 +3,16 @@
   $(function() {
     var data;
     $('#in').on('keyup', function(e) {
+      var val;
       if ($(this).val() !== '' && e.keyCode === 13) {
-        $('#out').append('me : ' + $(this).val() + '<br>');
+        val = $(this).val();
+        $('#out').append('me : ' + val + '<br>');
         $('#out').scrollTop($('#out')[0].scrollHeight);
         $(this).val('');
-        return sendMessage('type', 'data');
+        return sendMessage('messageChat', {
+          user: AUTH.connectionData.userName,
+          message: val
+        });
       }
     });
     data = {
