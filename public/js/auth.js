@@ -2,8 +2,8 @@ window.AUTH = {
 	//token: '',
 	auth: io.connect("/session/login"),
 	users: {},
-	enableSocketAuth : true,
-	enablePostAuth : false,
+	enableSocketAuth : false,
+	enablePostAuth : true,
 	connectionData : {},
 	getMember: function() {
 		return AUTH.connectionData.userName;
@@ -36,20 +36,20 @@ window.AUTH = {
 			var data = { login: $("#login").val(), password: $("#pwd").val() };
 
 			AUTH.connectionData.userName = data.login;
+			console.log(data)
 			if(AUTH.enableSocketAuth)
 			{
 				AUTH.auth.emit("authentification", data);
 			}
 			if(AUTH.enablePostAuth)
 			{
-				$.post("/session/login", data , AUTH.authentificationResult, "json");
+				$.post("/session/login", data , AUTH.authenticationResult, "json");
 			}
-			e.preventDefault();
+		e.preventDefault();
 		}
 		return false;
 	},
 	connectionApproved : function(data){
-		
 		if(!data.authenticated){
 			AUTH.connectionRefused();
 			return;
@@ -80,6 +80,7 @@ window.AUTH = {
 		$("#loginForm").show();
 	},
 	authenticationResult : function(data){
+		alert(data)
 		if(data.authenticated){
 			AUTH.connectionApproved(data);
 		}

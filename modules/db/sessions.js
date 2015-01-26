@@ -56,7 +56,6 @@ module.exports.login = function(login, password, callback) {
 module.exports.requestLogin = function(req, res) {
 
 	module.exports.login(req.body.login, req.body.password, function(result) {
-
 		res.send(JSON.stringify(result));
 	}); 
 };
