@@ -16,7 +16,7 @@
     <script src="js/lib/adapter.js"></script>
     <script src="js/lib/jquery.class.js"></script>
     <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="../socket.io/socket.io.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/maps.js"></script>
     <script src="js/webrtc.js"></script>
@@ -26,7 +26,7 @@
   </head>
   <body>
     <header>
-      <form id="loginForm" onkeyup="return AUTH.authenticate(event, 'auth');">
+      <form id="loginForm" onkeyup="return AUTH.authenticate(event);">
         <input id="login" type="text" placeholder="Login"><br>
         <input id="pwd" type="password" placeholder="Password">
       </form>
