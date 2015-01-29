@@ -66,7 +66,7 @@ module.exports.create = function(req, res) {
 
 module.exports.list = function(req, res) {
 	module.exports.listUsers(function(err, data){
-		res.send(JSON.stringify(data)); 
+		res.send(data); 
 	});
 }
 

@@ -49,18 +49,18 @@ var webrtc = new WebRTC({
 });
 
 // Map initialization 
-var map = new Map({
-	divMap: document.getElementById("carte"),
-	localMember: function() {
-		return AUTH.getMember();
-	},
-	showMap: function(mapElement) {
-		jQuery(mapElement).css({
-			height: "150px",
-			width: "150px"
-		});
-	}
-});
+//var map = new Map({
+//	divMap: document.getElementById("carte"),
+//	localMember: function() {
+//		return AUTH.getMember();
+//	},
+//	showMap: function(mapElement) {
+//		jQuery(mapElement).css({
+//			height: "150px",
+//			width: "150px"
+//		});
+//	}
+//});
 
 /////////////////////////////////////////
 // File sharing events
@@ -128,7 +128,7 @@ var map = new Map({
 window.onbeforeunload = function(e){
 	//sendMessage('bye');
 	webrtc.hangup();
-	map.closeLocation();
+//	map.closeLocation();
 }
 
 /////////////////////////////////////////
@@ -155,7 +155,7 @@ var chatMessage = new ChatMessage()
 		console.log('Another peer made a request to join room ' + room);
 		console.log('This peer is the initiator of room ' + room + '!');
 		webrtc.setChannelReady(true);
-		map.sendPosition();
+//		map.sendPosition();
 	})
 	// If you receive the message "joined" then joined an existing room.
 	// We are not the initiator, there is already someone (the appellant),
@@ -164,7 +164,7 @@ var chatMessage = new ChatMessage()
 		console.log('This peer has joined room ' + room);
 		webrtc.setChannelReady(true);
 		console.log('Send my position');
-		map.sendPosition();
+//		map.sendPosition();
 	})
 	// Called by the server to make tracks in the connected clients
 	.on('log', function (array){

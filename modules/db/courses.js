@@ -29,24 +29,31 @@ Course = function(name, teacher, description) {
 module.exports.Course = Course; 
 
 
-function CourseInfo(course, error) {
+function CourseInfo(success, message, data) {
 
-	this.course = course; 
+	var course = null; 
+	if (data != undefined && data != null) {
 
-	if (error == null) {
-		this.error = ''; 
-	} else {
-		this.error = error; 
+		if (data instanceof Array) {
+
+			course = []; 
+			for (var i = 0; i < data.length; i++) {
+
+				var item = data[i]; 
+				if (item != undefined && item != null) {
+					course.push(dbToCourse(item)); 
+				}
+			}
+
+		} else {
+			course = dbToCourse(data); 
+		}
 	}
 
-	this.hasError = function() {
-		return this.error != ''; 
-	}
-
-	this.getError = function() {
-		return this.error; 
-	}
+	mod_db.ServerInfo.call(this, success, message, course); 
 }
+
+CourseInfo.prototype = mod_db.ServerInfo; 
 
 
 //External API
@@ -55,7 +62,15 @@ function CourseInfo(course, error) {
 
 module.exports.createRequest = function(req, res) {
 
-	module.exports.create(req.body.token, req.body.name, req.body.description, function(info) {
+	var parameters = ['token', 'name', 'description']; 
+	for (var i = 0; i < parameters.length; i++) {
+		if (req.param(parameters[i]) == null) {
+			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
+			return; 
+		} 
+	}
+
+	module.exports.create(req.param('token'), req.param('name'), req.param('description'), function(info) {
 		res.send(info); 
 	}); 
 }
@@ -63,7 +78,15 @@ module.exports.createRequest = function(req, res) {
 
 module.exports.listRequest = function(req, res) {
 
-	module.exports.list(function(infos) {
+	var parameters = ['token']; 
+	for (var i = 0; i < parameters.length; i++) {
+		if (req.param(parameters[i]) == null) {
+			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
+			return; 
+		} 
+	}
+
+	module.exports.list(req.param('token'), function(infos) {
 		res.send(infos); 
 	}); 
 }
@@ -71,7 +94,15 @@ module.exports.listRequest = function(req, res) {
 
 module.exports.getRequest = function(req, res) {
 
-	module.exports.get(req.param('token'), req.params.id, function(info) {
+	var parameters = ['token', 'id']; 
+	for (var i = 0; i < parameters.length; i++) {
+		if (req.param(parameters[i]) == null) {
+			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
+			return; 
+		} 
+	}
+
+	module.exports.get(req.param('token'), req.param('id'), function(info) {
 		res.send(info); 
 	}); 
 }
@@ -85,7 +116,15 @@ module.exports.updateRequest = function(req, res) {
 
 module.exports.removeRequest = function(req, res) {
 
-	module.exports.remove(req.param('token'), req.params.id, function(info) {
+	var parameters = ['token', 'id']; 
+	for (var i = 0; i < parameters.length; i++) {
+		if (req.param(parameters[i]) == null) {
+			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
+			return; 
+		} 
+	}
+
+	module.exports.remove(req.param('token'), req.param('id'), function(info) {
 		res.send(info); 
 	}); 
 }
@@ -127,17 +166,17 @@ module.exports.findByName = function(name, callback) {
 
 			if (err) {
 				logger.err('Lookup for course named <' + name + '> failed: ' + err);
-				callback(new CourseInfo(null, 'Course lookup process failed')); 
+				callback(new CourseInfo(false, 'Course lookup process failed')); 
 				return;
 			} else if (result.length == 0) {
 				logger.out('No course named <' + token + '> found')
-				callback(new CourseInfo(null, 'Course unknown')); 
+				callback(new CourseInfo(false, 'Course unknown')); 
 				return;
 			} else if (result.length > 1) {
 				throw new Exception('More than one course with the same name were found');
 			}
 
-			callback(new CourseInfo(result[0])); 
+			callback(new CourseInfo(true, '', result[0])); 
 		});
 	});
 }
@@ -148,11 +187,9 @@ module.exports.get = function(token, name, callback) {
 	mod_db_sessions.authenticate(token, function( info ) {
 
 		if ( info.hasError() || ! info.isActive() ) {
-			callback({ success: false, message: info.error }); 
+			callback(new CourseInfo(false, info.error)); 
 			return;
 		}
-
-		var user = info.user;
 
 		mod_db.connect(function(db) {
 
@@ -161,43 +198,51 @@ module.exports.get = function(token, name, callback) {
 
 				if (err) {
 					logger.err('Lookup for course named <' + name + '> failed: ' + err);
-					callback(new CourseInfo(null, 'Course lookup process failed')); 
+					callback(new CourseInfo(false, 'Course lookup process failed')); 
 					return;
 				} else if (result.length == 0) {
 					logger.out('No course named <' + token + '> found')
-					callback(new CourseInfo(null, 'Course unknown')); 
+					callback(new CourseInfo(false, 'Course unknown')); 
 					return;
 				} else if (result.length > 1) {
 					throw new Exception('More than one course with the same name were found');
 				}
 
-				callback(new CourseInfo(result[0])); 
+				callback(new CourseInfo(true, '', result[0])); 
 			});
 		});
 	}); 
 }
 
 
-module.exports.list = function(callback) {
+module.exports.list = function(token, callback) {
 
-	mod_db.connect(function(db) {
+	mod_db_sessions.authenticate(token, function( info ) {
 
-		var cursor = db.collection(DbName).find();
-		cursor.toArray(function(err, result){
+		if ( info.hasError() || ! info.isActive() ) {
+			callback(new CourseInfo(false, info.error)); 
+			return;
+		}
 
-			if (err) {
-				logger.err('Lookup for all courses failed: ' + err);
-				callback(new CourseInfo(null, 'Courses lookup process failed')); 
-				return;
-			} else if (result.length == 0) {
-				logger.out('No course found')
-				callback(new CourseInfo(null, 'No course found')); 
-				return;
-			}
+		mod_db.connect(function(db) {
 
-			callback(result); 
+			var cursor = db.collection(DbName).find();
+			cursor.toArray(function(err, result){
+
+				if (err) {
+					logger.err('Lookup for all courses failed: ' + err);
+					callback(new CourseInfo(false, 'Courses lookup process failed')); 
+					return;
+				} else if (result.length == 0) {
+					logger.out('No course found')
+					callback(new CourseInfo(false, 'No course found')); 
+					return;
+				}
+
+				callback(new CourseInfo(true, '', result)); 
+			});
 		});
-	});
+	}); 
 }
 
 
@@ -206,14 +251,13 @@ module.exports.create = function(token, name, description, callback) {
 	mod_db_sessions.authenticate(token, function( info ) {
 
 		if ( info.hasError() || ! info.isActive() ) {
-			callback({ success: false, message: info.error }); 
+			callback(new CourseInfo(false, info.error)); 
 			return;
 		}
 
 		var user = info.user;
-
 		if (user.role < mod_db_users.Roles.TEACHER) {
-			callback({ success: false, message: 'The user <' + user.login + '> doesn\'t have permission to create a course' }); 
+			callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to create a course')); 
 			return; 
 		} 
 
@@ -225,10 +269,10 @@ module.exports.create = function(token, name, description, callback) {
 
 					var course = new Course(name, user.login, description); 
 					db.collection(DbName).insert(course);
-					callback({ success: true }); 
+					callback(new CourseInfo(true, '', course)); 
 
 				} else {
-					callback({ success: false, message: 'A course with the same name <' + name + '> already exists' });
+					callback(new CourseInfo(false, 'A course with the same name <' + name + '> already exists'));
 				}
 			});
 		});
@@ -241,14 +285,14 @@ module.exports.remove = function(token, name, callback) {
 	mod_db_sessions.authenticate(token, function( info ) {
 
 		if ( info.hasError() || ! info.isActive() ) {
-			callback({ success: false, message: info.error }); 
+			callback(new CourseInfo(false, info.error)); 
 			return;
 		}
 
 		var user = info.user;
 
 		if (user.role < mod_db_users.Roles.ADMIN) {
-			callback({ success: false, message: 'The user <' + user.login + '> doesn\'t have permission to delete a course' }); 
+			callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to delete a course')); 
 			return; 
 		} 
 
@@ -265,11 +309,24 @@ module.exports.remove = function(token, name, callback) {
 			//		mais pas une proxy spécifique à chaque entité car ça ne permet pas d'être générique sur tous les appels vers le serveur et entre les modules du serveur 
 			//
 			mod_db.connect(function(db) {
-				db.collection(DbName).findAndRemove({ name : courseInfo.course.name });
-				callback({ success : true}); 
+				db.collection(DbName).findAndRemove({ name : courseInfo.data.name });
+				callback(new CourseInfo(true, '', courseInfo.data)); 
 			});
 
 		});
 	});
 }
+
+
+//Useful functions
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+function dbToCourse(c) {
+
+	var course = new Course(c.name, c.teacher, c.description); 
+	return course; 
+}
+
+
 

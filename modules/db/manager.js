@@ -1,4 +1,8 @@
 
+//Imports and constants
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 var node_mongodb = require('mongodb');
 
 var mod_db_classes = require('./classes');
@@ -15,6 +19,24 @@ var mongoDbUrlBase = "mongodb://localhost:27017/";
 var url = "";
 var db = null;
 var cleanDb = true;
+
+
+//Objects
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+ServerInfo = function(success, message, result) {
+	
+	this.success = success; 
+	this.message = message; 
+	this.result = result; 
+}
+
+module.exports.ServerInfo = ServerInfo; 
+
+
+//External API
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 module.exports.connect = function(cb) {
@@ -54,7 +76,7 @@ module.exports.initialize = function(databaseName) {
 
 	module.exports.connect(function(db) {
 		
-		if(cleanDb){
+		if (cleanDb) {
 			
 			module.exports.clear(db);
 
@@ -64,5 +86,15 @@ module.exports.initialize = function(databaseName) {
 		}
 	});
 };
+
+
+//Local API
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+//Useful functions
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
