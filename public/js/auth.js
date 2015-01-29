@@ -3,15 +3,25 @@ window.AUTH = {
 
 		session: {},
 
+		autoAuthenticationInProgress : false,
 
 		getMember: function() {
 			return AUTH.session.user;
 		},
 
-
+		
 		initialize: function() {
+			
 			$("#loginForm").submit(AUTH.requestLogin);
 			$("#logoutForm").submit(AUTH.requestLogout);
+			
+			if (AUTH.session.token == undefined) {
+				if (localStorage.token != undefined) {
+					AUTH.autoAuthenticationInProgress = true;
+					AUTH.session.user = localStorage.user;
+					$.post("/session/login", { token: localStorage.token }, AUTH.login, "json");
+				}
+			}
 		},
 
 
@@ -20,6 +30,7 @@ window.AUTH = {
 			var data = { login: $("#login").val(), password: $("#pwd").val() };
 			$.post("/session/login", data, AUTH.login, "json");
 			AUTH.session.user = data.login; 
+			localStorage.user = data.login; 
 
 			e.preventDefault();
 		},
@@ -34,14 +45,14 @@ window.AUTH = {
 		},
 
 
-		loginAccepted: function(data) {
+		loginAccepted: function(info) {
 
-			// TODO : load project in #main
-
-			// Asynchronously Load the map API 
 			$.getScript("js/main.js").done(function() {
 
-				AUTH.session.token = data.token;
+				AUTH.session.token = info.token;
+				localStorage.token = info.token; 
+				AUTH.session.user = info.user.login; 
+				localStorage.user = info.user.login; 
 
 				$("#user").text(AUTH.session.user);
 				$("#loginHeader").hide();
@@ -49,6 +60,8 @@ window.AUTH = {
 				$("#pwd").val('');
 				$("#logoutHeader").show();
 				$("#logMessage").hide(); 
+				
+				COURSES.initialize(); 
 
 			}).fail(function() {
 				console.error('Failed to find <js/main.js>'); 
@@ -57,31 +70,43 @@ window.AUTH = {
 
 
 		loginRefused: function() {
+			
 			$("#loginHeader").show();
 			$("#login").val('');
 			$("#pwd").val('');
 			$("#logoutHeader").hide();
-			$("#logMessage").text('Wrong login/password !');
-			$("#logMessage").show(); 
+			if(! AUTH.autoAuthenticationInProgress){
+				$("#logMessage").text('Wrong login/password !');
+				$("#logMessage").show(); 
+			}
+			
+			AUTH.session = {}; 
+			delete localStorage.token; 
+			delete localStorage.user; 	
 		},
 
 
-		login: function(data) {
-			if (data.authenticated) {
-				AUTH.loginAccepted(data);
+		login: function(info) {
+			if (info.token != '' && info.error == '') {
+				AUTH.loginAccepted(info);
 			} else {
 				AUTH.loginRefused();
 			}
+			AUTH.autoAuthenticationInProgress = false;
 		},
 
 
-		logout: function(data) {
+		logout: function(info) {
 
-			this.session = {}; 
+			AUTH.session = {}; 
+			delete localStorage.token; 
+			delete localStorage.user; 
 
 			$("#loginHeader").show();
 			$("#logoutHeader").hide();
 			$("#logMessage").hide(); 
+			
+			COURSES.disconnect(); 	
 		}
 };
 

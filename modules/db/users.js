@@ -29,13 +29,14 @@ User = function(login, password) {
 	this.organization = ''; 
 	this.country = ''; 
 
-	this.cleanCopy = function(user) {
-		this.role = user.role; 
-		this.firstname = user.firstname; 
-		this.lastname = user.lastname; 
-		this.organization = user.organization; 
-		this.country = user.country; 
-		this.courses = user.courses; 
+	this.clean = function() {
+		user = new User(this.login, ''); 
+		user.role = this.role; 
+		user.firstname = this.firstname; 
+		user.lastname = this.lastname; 
+		user.organization = this.organization; 
+		user.country = this.country; 
+		user.courses = this.courses; 
 	}
 }
 
@@ -145,11 +146,7 @@ module.exports.authenticate = function(login, password, callback) {
 				throw new Exception("More than one user with the same login/password were found");
 			}
 
-			var user = result[0];
-			var cleanUser = new User(user.login, ''); 
-			cleanUser.cleanCopy(user); 
-
-			callback(cleanUser); 
+			callback(dbToUser(result[0])); 
 		});
 	});
 }
@@ -160,15 +157,14 @@ module.exports.listUsers = function(callback) {
 	mod_db.connect(function(db) {
 
 		var cursor = db.collection(DbName).find();
-
-		cursor.toArray(function(err, data){
-			for(var i in data){
-				delete data[i].password; 
+		cursor.toArray(function(err, users) {
+			
+			for (var i in users){
+				users[i] = dbToUser(users[i]);  
 			}
-			callback(err, data);
+			
+			callback(err, users);
 		});
-
-
 	});
 }
 
@@ -193,11 +189,7 @@ module.exports.getUser = function(login, callback) {
 				throw new Exception("More than one user with the same login were found");
 			}
 
-			var user = result[0];
-			var cleanUser = new User(user.login, ''); 
-			cleanUser.cleanCopy(user); 
-
-			callback(cleanUser); 
+			callback(dbToUser(result[0])); 
 		});
 	}); 
 }
@@ -205,5 +197,19 @@ module.exports.getUser = function(login, callback) {
 
 //Useful functions
 /////////////////////////////////////////////////////////////////////////////////////
+
+
+function dbToUser(u) {
+	
+	var user = new User(u.login, ''); 
+	user.role = u.role; 
+	user.firstname = u.firstname; 
+	user.lastname = u.lastname; 
+	user.organization = u.organization; 
+	user.country = u.country; 
+	user.courses = u.courses; 
+
+	return user; 
+}
 
 

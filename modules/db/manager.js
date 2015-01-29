@@ -14,6 +14,7 @@ var mongo = node_mongodb.MongoClient;
 var mongoDbUrlBase = "mongodb://localhost:27017/";
 var url = "";
 var db = null;
+var cleanDb = true;
 
 
 module.exports.connect = function(cb) {
@@ -53,10 +54,14 @@ module.exports.initialize = function(databaseName) {
 
 	module.exports.connect(function(db) {
 		
-		module.exports.clear(db);
+		if(cleanDb){
+			
+			module.exports.clear(db);
 
-		mod_db_users.initialize(db);
-		mod_db_courses.initialize(db);
+			mod_db_users.initialize(db);
+			mod_db_courses.initialize(db);
+			
+		}
 	});
 };
 
