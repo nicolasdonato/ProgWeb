@@ -28,6 +28,7 @@ Course = function(name, teacher, description) {
 
 module.exports.Course = Course; 
 
+
 function CourseInfo(course, error) {
 
 	this.course = course; 
@@ -52,6 +53,48 @@ function CourseInfo(course, error) {
 /////////////////////////////////////////////////////////////////////////////////////
 
 
+module.exports.createRequest = function(req, res) {
+
+	module.exports.create(req.body.token, req.body.name, req.body.description, function(info) {
+		res.send(info); 
+	}); 
+}
+
+
+module.exports.listRequest = function(req, res) {
+
+	module.exports.list(function(infos) {
+		res.send(infos); 
+	}); 
+}
+
+
+module.exports.getRequest = function(req, res) {
+
+	module.exports.get(req.param('token'), req.params.id, function(info) {
+		res.send(info); 
+	}); 
+}
+
+
+//Update marchera en mélangeant create et remove mais  il y a un problème avec l'utilisation de name comme seule clé transmise au client car il peut la modifier et donc faire un update d'un truc qui n'existe pas
+module.exports.updateRequest = function(req, res) {
+	// TODO
+}
+
+
+module.exports.removeRequest = function(req, res) {
+
+	module.exports.remove(req.param('token'), req.params.id, function(info) {
+		res.send(info); 
+	}); 
+}
+
+
+//Local API
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 module.exports.getCollectionName = function() {
 	return DbName; 
 }
@@ -73,7 +116,6 @@ module.exports.initialize = function(db) {
 		collection.insert(initializationData[index]); 
 	}
 }
-
 
 
 module.exports.findByName = function(name, callback) {
@@ -101,71 +143,18 @@ module.exports.findByName = function(name, callback) {
 }
 
 
-module.exports.create = function(req, res) {
+module.exports.get = function(token, name, callback) {
 
-	mod_db_sessions.authenticate(req.body.token, function( info ) {
-
-		if ( info.hasError() || ! info.isActive() ) {
-			res.send({ success: false, message: info.error }); 
-			return;
-		}
-		
-		var user = info.user;
-
-		if (user.role < mod_db_users.Roles.TEACHER) {
-			res.send({ success: false, message: 'The user <' + user.login + '> doesn\'t have permission to create a course' }); 
-			return; 
-		} 
-
-		mod_db.connect(function(db) {
-
-			var cursor = db.collection(DbName).find({ name : req.body.name });
-			cursor.toArray(function(err, data) {
-				if (data.length == 0) {
-					
-					var course = new Course(req.body.name, user.login, req.body.description); 
-					db.collection(DbName).insert(course);
-					res.send({ success: true }); 
-					
-				} else {
-					res.send({ success: false, message: 'A course with the same name <' + req.body.name + '> already exists' });
-				}
-			});
-		});
-	}); 
-}
-
-
-module.exports.list = function(req, res) {
-	//
-	//TODO mettre en place le token dans les données envoyées pour authentifier la requete
-	//
-	mod_db.connect(function(db) {
-		var cursor = db.collection(DbName).find();
-		cursor.toArray(function(err, data){
-//			for(var i in data){
-//			delete data[i].password; 
-//			}
-			res.send(data); 
-		});
-	});
-}
-
-
-module.exports.get = function(req, res) {
-
-	mod_db_sessions.authenticate(req.param('token'), function( info ) {
+	mod_db_sessions.authenticate(token, function( info ) {
 
 		if ( info.hasError() || ! info.isActive() ) {
-			res.send({ success: false, message: info.error }); 
+			callback({ success: false, message: info.error }); 
 			return;
 		}
-		
+
 		var user = info.user;
 
 		mod_db.connect(function(db) {
-			
-			var name = req.params.id;
 
 			var cursor = db.collection(DbName).find({ name : name });
 			cursor.toArray(function(err, result) {
@@ -182,34 +171,88 @@ module.exports.get = function(req, res) {
 					throw new Exception('More than one course with the same name were found');
 				}
 
-				res.send(new CourseInfo(result[0])); 
+				callback(new CourseInfo(result[0])); 
 			});
 		});
 	}); 
 }
 
-//
-// Update marchera en mélangeant create et remove mais  il y a un problème avec l'utilisation de name comme seule clé transmise au client car il peut la modifier et donc faire un update d'un truc qui n'existe pas
-//
-module.exports.update = function(req, res) {
-	// TODO
+
+module.exports.list = function(callback) {
+
+	mod_db.connect(function(db) {
+
+		var cursor = db.collection(DbName).find();
+		cursor.toArray(function(err, result){
+
+			if (err) {
+				logger.err('Lookup for all courses failed: ' + err);
+				callback(new CourseInfo(null, 'Courses lookup process failed')); 
+				return;
+			} else if (result.length == 0) {
+				logger.out('No course found')
+				callback(new CourseInfo(null, 'No course found')); 
+				return;
+			}
+
+			callback(result); 
+		});
+	});
 }
 
 
-module.exports.remove = function(req, res) {
+module.exports.create = function(token, name, description, callback) {
 
-	mod_db_sessions.authenticate(req.param('token'), function( info ) {
+	mod_db_sessions.authenticate(token, function( info ) {
 
 		if ( info.hasError() || ! info.isActive() ) {
-			res.send({ success: false, message: info.error }); 
+			callback({ success: false, message: info.error }); 
 			return;
 		}
-		
+
 		var user = info.user;
 
-		var name = req.params.id;
-		
-		module.exports.findByName(name, function(courseInfo){
+		if (user.role < mod_db_users.Roles.TEACHER) {
+			callback({ success: false, message: 'The user <' + user.login + '> doesn\'t have permission to create a course' }); 
+			return; 
+		} 
+
+		mod_db.connect(function(db) {
+
+			var cursor = db.collection(DbName).find({ name : name });
+			cursor.toArray(function(err, data) {
+				if (data.length == 0) {
+
+					var course = new Course(name, user.login, description); 
+					db.collection(DbName).insert(course);
+					callback({ success: true }); 
+
+				} else {
+					callback({ success: false, message: 'A course with the same name <' + name + '> already exists' });
+				}
+			});
+		});
+	}); 
+}
+
+
+module.exports.remove = function(token, name, callback) {
+
+	mod_db_sessions.authenticate(token, function( info ) {
+
+		if ( info.hasError() || ! info.isActive() ) {
+			callback({ success: false, message: info.error }); 
+			return;
+		}
+
+		var user = info.user;
+
+		if (user.role < mod_db_users.Roles.ADMIN) {
+			callback({ success: false, message: 'The user <' + user.login + '> doesn\'t have permission to delete a course' }); 
+			return; 
+		} 
+
+		module.exports.findByName(name, function(courseInfo) {
 
 			//
 			// Si il n'y a rien ou trop d'items ça pète avant 
@@ -222,12 +265,11 @@ module.exports.remove = function(req, res) {
 			//		mais pas une proxy spécifique à chaque entité car ça ne permet pas d'être générique sur tous les appels vers le serveur et entre les modules du serveur 
 			//
 			mod_db.connect(function(db) {
-				db.collection(DbName).findAndRemove({name : courseInfo.course.name });
-				res.send({ success : true}); 
+				db.collection(DbName).findAndRemove({ name : courseInfo.course.name });
+				callback({ success : true}); 
 			});
-			
+
 		});
 	});
 }
-
 
