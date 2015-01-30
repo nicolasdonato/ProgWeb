@@ -56,13 +56,32 @@ window.COURSES = {
 		},
 
 
-		clean: function() {
+		clean: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
 
 			$("#courses-list").empty();
+
+			return false;
 		},
 
 
-		edit: function(e) {
+		refresh: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
+
+			COURSES.list(e, params);
+
+			return false;
+		},
+
+
+		edit: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
 
 			$("#courses-edition-name").val($("#courses-details-name").text());
 			$("#courses-edition-description").val($("#courses-details-description").text());
@@ -70,14 +89,13 @@ window.COURSES = {
 			$("#courses-details-form").hide();
 			$("#courses-edition-form").show();
 
-			e.preventDefault();
 			return false;
 		},
 
 
 		// Effectué lors d'un clic sur le bouton update. 
 		// Va remonter vers le form pour déclencher le submit via processEditionCommand.
-		engageUpdateCommand: function(e) {
+		engageUpdateCommand: function(e, params) {
 
 			COURSES.updateCommandInProgress = true;
 		},
@@ -85,40 +103,89 @@ window.COURSES = {
 
 		// Effectué lors d'un clic sur le bouton delete. 
 		// Va remonter vers le form pour déclencher le submit via processEditionCommand.
-		engageDeleteCommand: function(e) {
+		engageDeleteCommand: function(e, params) {
 
 			COURSES.deleteCommandInProgress = true;
 		},
 
 
 		processHashLink: function(e) {
-
-			var action = '';
-			if (this.hash.indexOf("=") > -1) {
-				action = this.hash.substring(0, this.hash.indexOf("="));
+			if (e != null) {
+				e.preventDefault();
 			}
 
-			var param = '';
-			if (this.hash.indexOf("=") > -1) {
-				param = this.hash.substr(this.hash.indexOf("=") + 1 , this.hash.length - this.hash.indexOf("="));
+			try {
+
+				var questionIndex = this.hash.indexOf('?'); 
+
+				var action = '';
+				var params = {};
+				if (questionIndex > -1) {
+
+					action = this.hash.substr(1, questionIndex - 1);
+					if (action == '') {
+						throw new Error('Bad format #0 of hash link <' + this.hash + '>');
+					}
+
+					var parameters = this.hash.substr(questionIndex + 1);
+					if (parameters == '') {
+						throw new Error('Bad format #1 of hash link <' + this.hash + '>');
+					}
+
+					var ampersand = -1; 
+					do {
+
+						ampersand = parameters.indexOf('&'); 
+						if (ampersand > -1) {
+
+							var parameter = parameters.substr(0, ampersand); 
+							var equalIndex = parameter.indexOf('=');
+							if (equalIndex < 0) {
+								throw new Error('Bad format #2 of hash link <' + this.hash + '>'); 
+							}
+							var param = parameter.substr(0, equalIndex); 
+							var value = parameter.substr(equalIndex + 1); 
+							if (param == '' || value == '') {
+								throw new Error('Bad format #3 of hash link <' + this.hash + '>'); 
+							}
+							params[param] = value; 
+
+							parameters = parameters.substr(ampersand + 1); 
+
+						} else {
+
+							var parameter = parameters; 
+							var equalIndex = parameter.indexOf('=');
+							if (equalIndex < 0) {
+								throw new Error('Bad format #4 of hash link <' + this.hash + '>'); 
+							}
+							var param = parameter.substr(0, equalIndex); 
+							var value = parameter.substr(equalIndex + 1); 
+							if (param == '' || value == '') {
+								throw new Error('Bad format #5 of hash link <' + this.hash + '>'); 
+							}
+							params[param] = value; 
+						}
+
+					} while(ampersand > -1); 
+
+				} else {
+					action = this.hash.substr(1); 
+				}
+
+				if (COURSES[action] == undefined || COURSES[action] == null) {
+					alert('The action <' + action + '> is unknown'); 
+					return false; 
+				}
+
+				COURSES[action](e, params); 
+				return false;
+
+			} catch (err) {
+
+				alert(err.message); 
+				return false;
 			}
-
-			switch(action) {
-
-			case "#refresh":
-				COURSES.list(e);
-				break;
-
-			case "#course":
-				COURSES.get(param);
-				break;
-
-			default:
-				alert('The action <' + action + '> is unknown'); 
-			}
-
-			e.preventDefault();
-			return false;
 		},
 
 
@@ -127,15 +194,23 @@ window.COURSES = {
 
 
 		//	app.get('/manage/courses', mod_db_courses.listRequest);
-		list: function(e) {
+		list: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
 
 			var data = { token: AUTH.session.token };
 			$.get("/manage/courses", data , COURSES.listComplete , "json");
+
+			return false;
 		},
 
 
 		//	app.post('/manage/courses', mod_db_courses.createRequest);
-		create: function(e) {
+		create: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
 
 			var data = { 
 					token: AUTH.session.token,
@@ -144,28 +219,39 @@ window.COURSES = {
 			};
 			$.post("/manage/courses", data, COURSES.creationComplete, "json");
 
-			e.preventDefault();
 			return false;
 		},
 
 
 		//	app.get('/manage/courses/:id', mod_db_courses.getRequest);
-		get: function(id) {
+		get: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
+
+			if (params.id == undefined || params.id == null) {
+				alert('The parameter <id> must be specified for get action'); 
+			}
 
 			var data = { token: AUTH.session.token };
-			$.get("/manage/courses/" + id , data, COURSES.getComplete, "json");
+			$.get("/manage/courses/" + params.id , data, COURSES.getComplete, "json");
+
+			return false;
 		},
 
 
-		processEditionCommand: function(e) {
+		processEditionCommand: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
 
 			var data = { token: AUTH.session.token };
 
 			if (COURSES.updateCommandInProgress) {
 
-				data.name = $("#courses-details-name").text();
+				data.name = $("#courses-edition-name").val();
 				data.teacher = $("#courses-details-teacher").text();
-				data.description = $("#courses-details-description").text();
+				data.description = $("#courses-edition-description").val();
 
 				// app.put('/manage/courses/:id', mod_db_courses.updateRequest); 
 				$.ajax({
@@ -192,11 +278,10 @@ window.COURSES = {
 			COURSES.updateCommandInProgress = false;
 			COURSES.deleteCommandInProgress = false;
 
-			e.preventDefault();
 			return false;
 		},
 
-		
+
 		//RECEIVE functions
 		/////////////////////////////////////////////////////////////////////////////////////
 
@@ -251,7 +336,7 @@ window.COURSES = {
 			$(info.result).each(function(index, course) {
 
 				var item = $("<li><a></a></li>");
-				$("a", item).attr("href","#course=" + course.id).click(COURSES.processHashLink).text(course.name);
+				$("a", item).attr("href", "#get?id=" + course.id).click(COURSES.processHashLink).text(course.name);
 				list.append(item);
 			});
 
@@ -270,7 +355,7 @@ window.COURSES = {
 				$("#courses-details-description").val(info.result.description);
 
 				$("#courses-edition-form").hide();		
-				$("#courses-details-form").show();
+				$("#courses-details-form").hide();
 
 			} else {
 				alert(info.message); 

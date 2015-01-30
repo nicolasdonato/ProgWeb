@@ -184,15 +184,6 @@ module.exports.getUser = function(login, callback) {
 }
 
 
-module.exports.getUser2 = function(login, callback) {
-
-	module.exports.getUser(login, function(userInfo) {
-
-		callback(null, userInfo); 
-	});
-}
-
-
 //Useful functions
 /////////////////////////////////////////////////////////////////////////////////////
 

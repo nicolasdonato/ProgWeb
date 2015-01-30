@@ -84,6 +84,24 @@ module.exports.initialize = function(databaseName) {
 };
 
 
+module.exports.insert = function(collection, document) {
+
+	module.exports.connect(function(db) {
+		try {
+
+			db.collection(collection).insert(document, function(err, result) {
+				if (err) {
+					throw new Error('Error caught on insert request : ' + e.name + ': ' + e.message);
+				}
+			});
+
+		} catch(e) {
+			throw new Error('Error caught on insert request : ' + e.name + ': ' + e.message); 
+		}
+	}); 
+}
+
+
 module.exports.find = function(collection, query, callback) {
 
 	module.exports.connect(function(db) {
@@ -130,12 +148,14 @@ module.exports.remove = function(collection, query, callback) {
 					throw new Error('Failed to remove a document on <' + collection + '> with query <' + JSON.stringify(query) + '> : No result list'); 
 				} else  {
 
-					db.collection(collection).remove(query);
-					for (var i = 0; i < result.length; i++) {
-						logger.out('User <' + result[i].user.login + '> logging out'); 
-					}
+					db.collection(collection).remove(query, function(err, r) {
 
-					callback(result); 
+						if (err) {
+							throw new Error('Error caught on remove request : ' + e.name + ': ' + e.message);
+						}
+
+						callback(result); 
+					}); 
 				}
 			}); 
 

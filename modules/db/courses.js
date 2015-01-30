@@ -246,13 +246,18 @@ module.exports.create = function(token, name, description, callback) {
 			callback(new CourseInfo(false, 'The user <' + sessionInfo.result.user.login + '> doesn\'t have permission to create a course')); 
 			return; 
 		} 
+		
+		if (name == '') {
+			callback(new CourseInfo(false, 'Failed to create course : empty name')); 
+			return;
+		}
 
 		module.exports.findByName(name, function(courseInfo) {
 			if (courseInfo.success) {
 				callback(new CourseInfo(false, 'Failed to create a course: A course with the same name <' + name + '> already exists'));
 			} else {
 				var course = new Course(name, sessionInfo.result.user.login, description); 
-				db.collection(DbName).insert(course);
+				mod_db.insert(DbName, course); 
 				callback(new CourseInfo(true, '', course)); 
 			}
 		}); 
@@ -282,10 +287,17 @@ module.exports.remove = function(token, id, callback) {
 					return; 
 				}
 
-				mod_db.connect(function(db) {
-					db.collection(DbName).findAndRemove({ id: id });
-					callback(new CourseInfo(true, '', courseInfo.result)); 
-				});
+				mod_db.remove(DbName, { id: +id }, function(result) {
+					
+					if (result.length == 0) {
+						callback(new CourseInfo(false, 'Failed to delete a course: The course #' + id + ' unknown')); 
+						return;
+					} else if (result.length > 1) {
+						throw new Error("More than one course with the same ID were found");
+					}
+					
+					callback(new CourseInfo(true, '', result[0]));
+				}); 
 
 			} else {
 				callback(new CourseInfo(false, 'Failed to remove course #' + id + ' : ' + courseInfo.message));
@@ -317,11 +329,16 @@ module.exports.update = function(token, id, name, teacher, description, callback
 					return; 
 				}
 
+				if (name == '') {
+					callback(new CourseInfo(false, 'Failed to update course : empty name')); 
+					return;
+				}
+
 				mod_db.connect(function(db) {
 
 					var course = new Course(name, teacher, description); 
-					course.id = id; 
-					db.collection(DbName).update({ id: id }, course);
+					course.id = +id; 
+					db.collection(DbName).update({ id: +id }, course);
 
 					callback(new CourseInfo(true, '', course)); 
 				});
