@@ -1,6 +1,10 @@
 window.AUTH = {
 
 
+		//Module management
+		/////////////////////////////////////////////////////////////////////////////////////
+
+
 		session: {},
 
 		autoAuthenticationInProgress : false,
@@ -9,12 +13,12 @@ window.AUTH = {
 			return AUTH.session.user;
 		},
 
-		
+
 		initialize: function() {
-			
+
 			$("#loginForm").submit(AUTH.requestLogin);
 			$("#logoutForm").submit(AUTH.requestLogout);
-			
+
 			if (AUTH.session.token == undefined) {
 				if (localStorage.token != undefined) {
 					AUTH.autoAuthenticationInProgress = true;
@@ -23,6 +27,51 @@ window.AUTH = {
 				}
 			}
 		},
+
+
+		loginAccepted: function(info) {
+
+			$.getScript("js/main.js").done(function() {
+
+				AUTH.session.token = info.result.token;
+				localStorage.token = info.result.token; 
+				AUTH.session.user = info.result.user.login; 
+				localStorage.user = info.result.user.login; 
+
+				$("#user").text(AUTH.session.user);
+				$("#loginHeader").hide();
+				$("#login").val('');
+				$("#pwd").val('');
+				$("#logoutHeader").show();
+				$("#logMessage").hide(); 
+
+				COURSES.initialize(); 
+
+			}).fail(function() {
+				console.error('Failed to find <js/main.js>'); 
+			});
+		},
+
+
+		loginRefused: function(info) {
+
+			$("#loginHeader").show();
+			$("#login").val('');
+			$("#pwd").val('');
+			$("#logoutHeader").hide();
+			if(! AUTH.autoAuthenticationInProgress){
+				$("#logMessage").text('Wrong login/password !');
+				$("#logMessage").show(); 
+			}
+
+			AUTH.session = {}; 
+			delete localStorage.token; 
+			delete localStorage.user; 	
+		},
+
+
+		//SEND functions
+		/////////////////////////////////////////////////////////////////////////////////////
 
 
 		requestLogin: function(e) {
@@ -37,60 +86,23 @@ window.AUTH = {
 
 
 		requestLogout: function(e) {
-			
+
 			var data = { token: AUTH.session.token }; 
 			$.post("/session/logout", data, AUTH.logout, "json");
-			
+
 			e.preventDefault();
 		},
 
 
-		loginAccepted: function(info) {
-
-			$.getScript("js/main.js").done(function() {
-
-				AUTH.session.token = info.token;
-				localStorage.token = info.token; 
-				AUTH.session.user = info.user.login; 
-				localStorage.user = info.user.login; 
-
-				$("#user").text(AUTH.session.user);
-				$("#loginHeader").hide();
-				$("#login").val('');
-				$("#pwd").val('');
-				$("#logoutHeader").show();
-				$("#logMessage").hide(); 
-				
-				COURSES.initialize(); 
-
-			}).fail(function() {
-				console.error('Failed to find <js/main.js>'); 
-			});
-		},
-
-
-		loginRefused: function() {
-			
-			$("#loginHeader").show();
-			$("#login").val('');
-			$("#pwd").val('');
-			$("#logoutHeader").hide();
-			if(! AUTH.autoAuthenticationInProgress){
-				$("#logMessage").text('Wrong login/password !');
-				$("#logMessage").show(); 
-			}
-			
-			AUTH.session = {}; 
-			delete localStorage.token; 
-			delete localStorage.user; 	
-		},
+		//RECEIVE functions
+		/////////////////////////////////////////////////////////////////////////////////////
 
 
 		login: function(info) {
-			if (info.token != '' && info.error == '') {
+			if (info.success) {
 				AUTH.loginAccepted(info);
 			} else {
-				AUTH.loginRefused();
+				AUTH.loginRefused(info);
 			}
 			AUTH.autoAuthenticationInProgress = false;
 		},
@@ -98,16 +110,23 @@ window.AUTH = {
 
 		logout: function(info) {
 
-			AUTH.session = {}; 
-			delete localStorage.token; 
-			delete localStorage.user; 
+			if (info.success) {
 
-			$("#loginHeader").show();
-			$("#logoutHeader").hide();
-			$("#logMessage").hide(); 
-			
-			COURSES.disconnect(); 	
+				AUTH.session = {}; 
+				delete localStorage.token; 
+				delete localStorage.user; 
+
+				$("#loginHeader").show();
+				$("#logoutHeader").hide();
+				$("#logMessage").hide(); 
+
+				COURSES.disconnect(); 	
+
+			} else {
+				alert('Logout failed: ' + info.message); 
+			}
 		}
+
 };
 
 

@@ -28,8 +28,8 @@
 <script src="js/chat.js"></script>
 <!-- <script src="js/maps.js"></script> -->
 <script src="js/webrtc.js"></script>
-<script src="js/auth.js"></script>
 <script src="js/courses.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/test.js"></script>
 
 </head>
@@ -85,17 +85,18 @@
         <span class="libelle">Nom :&nbsp;</span> <input id="courses-creation-name" type="text" class="data text-simple" /> <br />
         <span class="libelle">Description :&nbsp;</span> <input id="courses-creation-description" type="text" class="data text-area" /> 
       </p>
-        <input id="courses-creation-submit" type="submit" value="Créer le cours" />
+      <input id="courses-creation-submit" type="submit" value="Créer le cours" />
     </form>
 
     <form id="courses-details-form" style="display:none;">
       <span class="titre">Détails d'un cours :  :&nbsp;</span>
       <p>
+        <span id="courses-details-id" class="data label-simple"  style="display:none;"></span>
         <span class="libelle">Nom :&nbsp;</span> <span id="courses-details-name" class="data label-simple" ></span> <br />
         <span class="libelle">Enseignant :&nbsp;</span> <span id="courses-details-teacher" tclass="data label-simple" ></span> <br />
         <span class="libelle">Description :&nbsp;</span> <span id="courses-details-description" tclass="data label-area" ></span>
-        </p>
-        <input id="courses-details-submit" type="submit" value="Modifier le cours" />
+      </p>
+      <input id="courses-details-submit" type="submit" value="Modifier le cours" />
     </form>
 
     <form id="courses-edition-form" style="display:none;">
@@ -106,8 +107,8 @@
         <span class="libelle">Description :&nbsp;</span> <input id="courses-edition-description" type="text" class="data text-area" /> 
         <!-- Manque liste des teachers -->
       </p>
-        <input id="courses-edition-submit-update" type="submit" value="Mettre à jour" />
-        <input id="courses-edition-submit-delete" type="submit" value="Supprimer" />
+      <input id="courses-edition-submit-update" type="submit" value="Mettre à jour" />
+      <input id="courses-edition-submit-delete" type="submit" value="Supprimer" />
     </form>
   </div>
     

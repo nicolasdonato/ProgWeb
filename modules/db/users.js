@@ -2,7 +2,6 @@
 //Imports and constants
 /////////////////////////////////////////////////////////////////////////////////////
 
-
 var mod_db = require('./manager');
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
@@ -15,7 +14,6 @@ var DbName = 'users';
 
 
 //Template of document 'User' in database
-
 User = function(login, password) {
 
 	// Mandatory information
@@ -28,23 +26,37 @@ User = function(login, password) {
 	this.lastname = ''; 
 	this.organization = ''; 
 	this.country = ''; 
-
-	this.clean = function() {
-		user = new User(this.login, ''); 
-		user.role = this.role; 
-		user.firstname = this.firstname; 
-		user.lastname = this.lastname; 
-		user.organization = this.organization; 
-		user.country = this.country; 
-		user.courses = this.courses; 
-	}
 }
 
-module.exports.User = User; 
+
+function UserInfo(success, message, data) {
+
+	var user = null; 
+	if (data != undefined && data != null) {
+
+		if (data instanceof Array) {
+
+			user = []; 
+			for (var i = 0; i < data.length; i++) {
+
+				var item = data[i]; 
+				if (item != undefined && item != null) {
+					user.push(dbToUser(item)); 
+				}
+			}
+
+		} else {
+			user = dbToUser(data); 
+		}
+	}
+
+	mod_db.ServerInfo.call(this, success, message, user); 
+}
+
+UserInfo.prototype = mod_db.ServerInfo; 
 
 
 //Role level for users
-
 Roles = {
 		STUDENT: 1, 
 		TEACHER: 2, 
@@ -65,8 +77,10 @@ module.exports.create = function(req, res) {
 
 
 module.exports.list = function(req, res) {
-	module.exports.listUsers(function(err, data){
-		res.send(data); 
+
+	module.exports.listUsers(function(err, userInfos){
+
+		res.send(userInfos); 
 	});
 }
 
@@ -127,71 +141,55 @@ module.exports.initialize = function(db) {
 
 module.exports.authenticate = function(login, password, callback) {
 
-	mod_db.connect(function(db) {
+	var hash = mod_utils.getHash(password); 
+	mod_db.find(DbName, { login: login,  password: hash }, function(result) {
 
-		var hash = mod_utils.getHash(password); 
-		var query = { login : login,  password : hash}; 
-		var cursor = db.collection(DbName).find(query); 
+		if (result.length == 0) {
+			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error("More than one user with the same login/password were found");
+		}
 
-		cursor.toArray(function(err, result) {
-
-			if (err) {
-				logger.err(err);
-				callback(new User('', '')); 
-				return;
-			} else if (result.length == 0) {
-				callback(new User('', '')); 
-				return;
-			} else if (result.length > 1) {
-				throw new Exception("More than one user with the same login/password were found");
-			}
-
-			callback(dbToUser(result[0])); 
-		});
+		callback(new UserInfo(true, '', result[0])); 
 	});
 }
 
 
 module.exports.listUsers = function(callback) {
 
-	mod_db.connect(function(db) {
+	mod_db.find(DbName, { }, function(result) {
 
-		var cursor = db.collection(DbName).find();
-		cursor.toArray(function(err, users) {
-			
-			for (var i in users){
-				users[i] = dbToUser(users[i]);  
-			}
-			
-			callback(err, users);
-		});
+		callback(new UserInfo(true, '', result)); 
 	});
 }
 
 
 module.exports.getUser = function(login, callback) {
 
-	mod_db.connect(function(db) {
+	mod_db.find(DbName, { login: login }, function(result) {
 
-		var query = { "login":login }; 
-		var cursor = db.collection(DbName).find(query);
+		if (result.length == 0) {
+			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error("More than one user with the same login were found");
+		} else if (result[0] == null) {
+			callback(new UserInfo(false, 'Return item null')); 
+			return;
+		}
 
-		cursor.toArray(function(err, result) {
+		callback(new UserInfo(true, '', result[0])); 
+	});
+}
 
-			if (err) {
-				logger.err(err);
-				callback(new User('', '')); 
-				return;
-			} else if (result.length == 0) {
-				callback(new User('', '')); 
-				return;
-			} else if (result.length > 1) {
-				throw new Exception("More than one user with the same login were found");
-			}
 
-			callback(dbToUser(result[0])); 
-		});
-	}); 
+module.exports.getUser2 = function(login, callback) {
+
+	module.exports.getUser(login, function(userInfo) {
+
+		callback(null, userInfo); 
+	});
 }
 
 
@@ -200,7 +198,7 @@ module.exports.getUser = function(login, callback) {
 
 
 function dbToUser(u) {
-	
+
 	var user = new User(u.login, ''); 
 	user.role = u.role; 
 	user.firstname = u.firstname; 

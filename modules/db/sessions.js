@@ -3,10 +3,15 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 
+var node_future = require('fibers/future');
+
 var mod_db = require('./manager');
 var mod_db_users = require('./users'); 
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
+
+
+var wait = node_future.wait; 
 
 var DbName = 'sessions'; 
 
@@ -16,45 +21,47 @@ var DbName = 'sessions';
 
 
 //Template of document 'Session' in database
-
-function Session(login, token, begin) {
+function Session(token, user, begin) {
 
 	// Mandatory information
-	this.login = login; 
 	this.token = token; 
+	this.user = user; 
 
-	if (begin == null) {
+	if (begin == undefined || begin == null) {
 		this.begin = new Date(); 
 	} else {
 		this.begin = begin;
 	}
 }
 
-module.exports.Session = Session; 
 
+function SessionInfo(success, message, data) {
 
-function SessionInfo(token, user, error) {
+	mod_db.ServerInfo.call(this, success, message, data);
 
-	this.token = token; 
-	this.user = user; 
-	
-	if (error == null) {
-		this.error = ''; 
-	} else {
-		this.error = error; 
+	this.update = function(callback) {
+
+		if (this.result == undefined || this.result == null) {
+			callback(this); 
+		} else if (this.result instanceof Array) {
+			// TODO
+			callback(this); 
+		} else {
+
+			dbToSession(this, this.result, function(that, session) {
+				that.result = session; 
+				callback(that); 
+			}); 
+		}
 	}
+}
 
-	this.isActive = function() {
-		return this.token != ''; 
-	}
-	
-	this.hasError = function() {
-		return this.error != ''; 
-	}
+SessionInfo.prototype = mod_db.ServerInfo; 
 
-	this.getError = function() {
-		return this.error; 
-	}
+var makeSessionInfo = function(success, message, data, callback) {
+
+	var sessionInfo = new SessionInfo(success, message, data); 
+	sessionInfo.update(callback); 
 }
 
 
@@ -65,19 +72,19 @@ function SessionInfo(token, user, error) {
 module.exports.requestLogin = function(req, res) {
 
 	if (req.body.token != undefined) {
-		module.exports.authenticate(req.body.token, function(result) {
-			res.send(result);
+		module.exports.authenticate(req.body.token, function(sessionInfo) {
+			res.send(sessionInfo);
 		}); 
 	}
 
 	else if (req.body.login != undefined) {
-		module.exports.login(req.body.login, req.body.password, function(result) {
-			res.send(result);
+		module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
+			res.send(sessionInfo);
 		}); 
 	}
-	
+
 	else {
-		res.send(new SessionInfo('', null, 'No login/session specified')); 
+		res.send(new SessionInfo(false, 'No login/session specified')); 
 	}
 };
 
@@ -91,12 +98,12 @@ module.exports.requestLogout = function(req, res) {
 }
 
 
-module.exports.join = function(req, res) {
+module.exports.requestJoin = function(req, res) {
 	// TODO
 }; 
 
 
-module.exports.leave = function(req, res) {
+module.exports.requestLeave = function(req, res) {
 	// TODO
 }; 
 
@@ -112,28 +119,22 @@ module.exports.getCollectionName = function() {
 
 module.exports.login = function(login, password, callback) {
 
-	mod_db_users.authenticate(login, password, function(user) {
+	mod_db_users.authenticate(login, password, function(userInfo) {
 
-		var actionResult; 
-		if (user.login == '') {
+		if (! userInfo.success) {
+			callback(new SessionInfo(false, 'Failed to login with <' + login + ';' + password + '> :' + userInfo.message)); 
+			return; 
+		} 
 
-			logger.out("Failed login <" + login + ";" + password + ">"); 
-			info = new SessionInfo('', null); 
+		logger.out("Successfull login <" + login + ";" + password + ">"); 
+		var token = mod_utils.getStampedHash(userInfo.result.login); 
+		var session = new Session(token, userInfo.result.login); 
 
-		} else {
+		mod_db.connect(function(db) {
+			db.collection(DbName).insert(session); 
+		}); 
 
-			logger.out("Successfull login <" + login + ";" + password + ">"); 
-			var token = mod_utils.getStampedHash(user.login); 
-			var session = new Session(user.login, token); 
-
-			mod_db.connect(function(db) {
-				db.collection(DbName).insert(session); 
-			}); 
-
-			info = new SessionInfo(token, user); 
-		}
-
-		callback(info);
+		makeSessionInfo(true, '', session, callback); 
 	}); 
 }; 
 
@@ -141,37 +142,28 @@ module.exports.login = function(login, password, callback) {
 module.exports.logout = function(token, callback) {
 
 	// Authentication to be allowed to logout
-	module.exports.authenticate(token, function(info) {
+	module.exports.authenticate(token, function(sessionInfo) {
 
-		if (! info.isActive()) {
-			callback(info); 
+		if (! sessionInfo.success) {
+			callback(new SessionInfo(false, 'Failed to logout: ' + sessionInfo.message)); 
 			return; 
 		} 
 
-		// Authentication succeeded
-		mod_db.connect(function(db) {
+		var query = { token: token }; 
+		mod_db.find(DbName, query, function(result) {
 
-			// Find session
-			var query = { "token":token }; 
-			var cursor = db.collection(DbName).find(query); 
-			cursor.toArray(function(err, result) {
+			if (result.length == 0) {
+				logger.out('No session with token <' + token + '> found for removal'); 
+				callback(new SessionInfo(false, 'Failed to logout: no session found'));
+			} else if (result.length > 1) {
+				throw new Error('More than one session with token <' + token + '> found');
+			} else {
 
-				if (err) {
-					logger.err('Removal of session with token <' + token + '> failed: ' + err);
-					info.error = 'Failed to logout'; 
-				} else if (result.length == 0) {
-					logger.out('No session with token <' + token + '> found for removal'); 
-					info.error = 'No session found';
-				} else if (result.length > 1) {
-					throw new Exception('More than one session with token <' + token + '> found');
-				} else {
-					logger.out('User <' + result[0].login + '> logging out'); 
-					db.collection(DbName).remove(query);
-					info = new SessionInfo('', result[0].login);
-				}
+				db.collection(DbName).remove(query);
+				logger.out('User <' + result[0].user.login + '> logging out'); 
 
-				callback(info); 
-			}); 
+				makeSessionInfo(true, '', result[0], callback); 
+			}
 		}); 
 	}); 
 }
@@ -179,35 +171,38 @@ module.exports.logout = function(token, callback) {
 
 module.exports.authenticate = function(token, callback) {
 
-	mod_db.connect(function(db) {
+	mod_db.find(DbName, { token: token }, function(result) {
 
-		var query = { 'token':token };
-		var cursor = db.collection(DbName).find(query); 
+		if (result.length == 0) {
+			logger.out('Authentification with token <' + token + '> failed')
+			callback(new SessionInfo(false, 'Unknown session')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error('More than one user with the same token were found');
+		}
 
-		cursor.toArray(function(err, result) {
-
-			if (err) {
-				logger.err('Authentification with token <' + token + '> failed: ' + err);
-				callback(new SessionInfo('', null, 'Authentification process failed')); 
-				return;
-			} else if (result.length == 0) {
-				logger.out('Authentification with token <' + token + '> failed')
-				callback(new SessionInfo('', null, 'Unknown session')); 
-				return;
-			} else if (result.length > 1) {
-				throw new Exception('More than one user with the same token were found');
-			}
-
-			var session = result[0];
-			mod_db_users.getUser(session.login, function(user) {
-				callback(new SessionInfo(token, user)); 
-			}); 
-		});
+		makeSessionInfo(true, '', result[0], callback); 
 	});
 };
 
 
 //Useful functions
 /////////////////////////////////////////////////////////////////////////////////////
+
+
+var dbToSession = function(that, s, callback) {
+
+	mod_db_users.getUser(s.user, function(userInfo) {
+
+		if (userInfo == null) {
+			throw new Error('User info is null'); 
+		} else if (! userInfo.success) {
+			throw new Error('There should be a user <' + s.login + '> in DB'); 
+		}
+
+		var session = new Session(s.token, userInfo.result, s.begin);
+		callback(that, session); 
+	}); 
+}
 
 

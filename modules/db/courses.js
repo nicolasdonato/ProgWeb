@@ -19,14 +19,13 @@ var DbName = 'courses';
 //Template of document 'Course' in database
 Course = function(name, teacher, description) {
 
+	this.id = mod_utils.idGen.get(); 
+
 	// Mandatory information
 	this.name = name; 
 	this.teacher = teacher; 
 	this.description = description; 
-
 }
-
-module.exports.Course = Course; 
 
 
 function CourseInfo(success, message, data) {
@@ -108,9 +107,19 @@ module.exports.getRequest = function(req, res) {
 }
 
 
-//Update marchera en mélangeant create et remove mais  il y a un problème avec l'utilisation de name comme seule clé transmise au client car il peut la modifier et donc faire un update d'un truc qui n'existe pas
 module.exports.updateRequest = function(req, res) {
-	// TODO
+
+	var parameters = ['token', 'id', 'name', 'teacher', 'description']; 
+	for (var i = 0; i < parameters.length; i++) {
+		if (req.param(parameters[i]) == null) {
+			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
+			return; 
+		} 
+	}
+
+	module.exports.update(req.param('token'), req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), function(info) {
+		res.send(info); 
+	}); 
 }
 
 
@@ -159,161 +168,168 @@ module.exports.initialize = function(db) {
 
 module.exports.findByName = function(name, callback) {
 
-	mod_db.connect(function(db) {
+	mod_db.find(DbName, { name: name }, function(result) {
 
-		var cursor = db.collection(DbName).find({ name : name });
-		cursor.toArray(function(err, result) {
+		if (result.length == 0) {
+			logger.out('No course named <' + name + '> found')
+			callback(new CourseInfo(false, 'Course <' + name + '> unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error('More than one course with the same name were found');
+		}
 
-			if (err) {
-				logger.err('Lookup for course named <' + name + '> failed: ' + err);
-				callback(new CourseInfo(false, 'Course lookup process failed')); 
-				return;
-			} else if (result.length == 0) {
-				logger.out('No course named <' + token + '> found')
-				callback(new CourseInfo(false, 'Course unknown')); 
-				return;
-			} else if (result.length > 1) {
-				throw new Exception('More than one course with the same name were found');
-			}
-
-			callback(new CourseInfo(true, '', result[0])); 
-		});
+		callback(new CourseInfo(true, '', result[0])); 
 	});
 }
 
 
-module.exports.get = function(token, name, callback) {
+module.exports.findById = function(id, callback) {
 
-	mod_db_sessions.authenticate(token, function( info ) {
+	mod_db.find(DbName, { id: +id }, function(result) {
 
-		if ( info.hasError() || ! info.isActive() ) {
-			callback(new CourseInfo(false, info.error)); 
+		if (result.length == 0) {
+			logger.out('No course #' + id + ' found')
+			callback(new CourseInfo(false, 'Course #' + id + ' unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error('More than one course with the same ID were found');
+		}
+
+		callback(new CourseInfo(true, '', result[0])); 
+	});
+}
+
+
+module.exports.get = function(token, id, callback) {
+
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to get course #' + id + ' : ' + sessionInfo.message)); 
 			return;
 		}
 
-		mod_db.connect(function(db) {
-
-			var cursor = db.collection(DbName).find({ name : name });
-			cursor.toArray(function(err, result) {
-
-				if (err) {
-					logger.err('Lookup for course named <' + name + '> failed: ' + err);
-					callback(new CourseInfo(false, 'Course lookup process failed')); 
-					return;
-				} else if (result.length == 0) {
-					logger.out('No course named <' + token + '> found')
-					callback(new CourseInfo(false, 'Course unknown')); 
-					return;
-				} else if (result.length > 1) {
-					throw new Exception('More than one course with the same name were found');
-				}
-
-				callback(new CourseInfo(true, '', result[0])); 
-			});
-		});
+		module.exports.findById(id, function(courseInfo) {
+			callback(courseInfo); 
+		}); 
 	}); 
 }
 
 
 module.exports.list = function(token, callback) {
 
-	mod_db_sessions.authenticate(token, function( info ) {
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
 
-		if ( info.hasError() || ! info.isActive() ) {
-			callback(new CourseInfo(false, info.error)); 
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
 			return;
 		}
 
-		mod_db.connect(function(db) {
+		mod_db.find(DbName, { }, function(result) {
 
-			var cursor = db.collection(DbName).find();
-			cursor.toArray(function(err, result){
-
-				if (err) {
-					logger.err('Lookup for all courses failed: ' + err);
-					callback(new CourseInfo(false, 'Courses lookup process failed')); 
-					return;
-				} else if (result.length == 0) {
-					logger.out('No course found')
-					callback(new CourseInfo(false, 'No course found')); 
-					return;
-				}
-
-				callback(new CourseInfo(true, '', result)); 
-			});
+			callback(new CourseInfo(true, '', result)); 
 		});
-	}); 
+	});
 }
 
 
 module.exports.create = function(token, name, description, callback) {
 
-	mod_db_sessions.authenticate(token, function( info ) {
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
 
-		if ( info.hasError() || ! info.isActive() ) {
-			callback(new CourseInfo(false, info.error)); 
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to create course <' + name + '> : ' + sessionInfo.message)); 
 			return;
 		}
 
-		var user = info.user;
-		if (user.role < mod_db_users.Roles.TEACHER) {
-			callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to create a course')); 
-			return; 
-		} 
-
-		mod_db.connect(function(db) {
-
-			var cursor = db.collection(DbName).find({ name : name });
-			cursor.toArray(function(err, data) {
-				if (data.length == 0) {
-
-					var course = new Course(name, user.login, description); 
-					db.collection(DbName).insert(course);
-					callback(new CourseInfo(true, '', course)); 
-
-				} else {
-					callback(new CourseInfo(false, 'A course with the same name <' + name + '> already exists'));
-				}
-			});
-		});
-	}); 
-}
-
-
-module.exports.remove = function(token, name, callback) {
-
-	mod_db_sessions.authenticate(token, function( info ) {
-
-		if ( info.hasError() || ! info.isActive() ) {
-			callback(new CourseInfo(false, info.error)); 
-			return;
-		}
-
-		var user = info.user;
-
-		if (user.role < mod_db_users.Roles.ADMIN) {
-			callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to delete a course')); 
+		if (sessionInfo.result.user.role < mod_db_users.Roles.TEACHER) {
+			callback(new CourseInfo(false, 'The user <' + sessionInfo.result.user.login + '> doesn\'t have permission to create a course')); 
 			return; 
 		} 
 
 		module.exports.findByName(name, function(courseInfo) {
+			if (courseInfo.success) {
+				callback(new CourseInfo(false, 'Failed to create a course: A course with the same name <' + name + '> already exists'));
+			} else {
+				var course = new Course(name, sessionInfo.result.user.login, description); 
+				db.collection(DbName).insert(course);
+				callback(new CourseInfo(true, '', course)); 
+			}
+		}); 
+	}); 
+}
 
-			//
-			// Si il n'y a rien ou trop d'items ça pète avant 
-			//
-			//
-			//	Mais à part ça il faudrait vraiment renvoyer quelque chose de générique 
-			//		qui puisse venir de mod_courses ou mod_users ou mod_session, qui traverse bien les callback
-			//		et qui  contient un bool success, un texte message d'info ou d'erreur en fonction de success 
-			//				et eventuellement un objet ou une liste à traiter 
-			//		mais pas une proxy spécifique à chaque entité car ça ne permet pas d'être générique sur tous les appels vers le serveur et entre les modules du serveur 
-			//
-			mod_db.connect(function(db) {
-				db.collection(DbName).findAndRemove({ name : courseInfo.data.name });
-				callback(new CourseInfo(true, '', courseInfo.data)); 
-			});
 
-		});
+module.exports.remove = function(token, id, callback) {
+
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to delete course #' + id + ' : ' + sessionInfo.message)); 
+			return;
+		}
+
+		if (sessionInfo.result.user.role < mod_db_users.Roles.TEACHER) {
+			callback(new CourseInfo(false, 'The user <' + sessionInfo.result.user.login + '> doesn\'t have permission to delete a course')); 
+			return; 
+		} 
+
+		module.exports.findById(id, function(courseInfo) {
+			if (courseInfo.success) {
+
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.role) {
+					callback(new CourseInfo(false, 'A teacher can\'t delete someone else\'s course')); 
+					return; 
+				}
+
+				mod_db.connect(function(db) {
+					db.collection(DbName).findAndRemove({ id: id });
+					callback(new CourseInfo(true, '', courseInfo.result)); 
+				});
+
+			} else {
+				callback(new CourseInfo(false, 'Failed to remove course #' + id + ' : ' + courseInfo.message));
+			}
+		}); 
+	});
+}
+
+
+module.exports.update = function(token, id, name, teacher, description, callback) {
+
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to update course #' + id + ' : ' + sessionInfo.message)); 
+			return;
+		}
+
+		if (sessionInfo.result.user.role < mod_db_users.Roles.TEACHER) {
+			callback(new CourseInfo(false, 'The user <' + sessionInfo.result.user.login + '> doesn\'t have permission to update a course')); 
+			return; 
+		} 
+
+		module.exports.findById(id, function(courseInfo) {
+			if (courseInfo.success) {
+
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.role) {
+					callback(new CourseInfo(false, 'A teacher can\'t update someone else\'s course')); 
+					return; 
+				}
+
+				mod_db.connect(function(db) {
+
+					var course = new Course(name, teacher, description); 
+					course.id = id; 
+					db.collection(DbName).update({ id: id }, course);
+
+					callback(new CourseInfo(true, '', course)); 
+				});
+
+			} else {
+				callback(new CourseInfo(false, 'Failed to update course #' + id + ' : ' + courseInfo.message));
+			}
+		}); 
 	});
 }
 
@@ -325,6 +341,8 @@ module.exports.remove = function(token, name, callback) {
 function dbToCourse(c) {
 
 	var course = new Course(c.name, c.teacher, c.description); 
+	course.id = c.id; 
+
 	return course; 
 }
 

@@ -38,8 +38,8 @@ exports.setup = function(app) {
 
 	app.post(  '/session/login',       mod_db_sessions.requestLogin); 
 	app.post(  '/session/logout',      mod_db_sessions.requestLogout); 
-	app.post(  '/session/join/:id',    mod_db_sessions.join); 
-	app.post(  '/session/leave',       mod_db_sessions.leave); 
+	app.post(  '/session/join/:id',    mod_db_sessions.requestJoin); 
+	app.post(  '/session/leave',       mod_db_sessions.requestLeave); 
 	
 };
 

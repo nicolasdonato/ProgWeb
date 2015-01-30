@@ -1,6 +1,10 @@
 window.COURSES = {
 
 
+		//Module management
+		/////////////////////////////////////////////////////////////////////////////////////
+
+
 		updateCommandInProgress: false,
 
 		deleteCommandInProgress: false,
@@ -58,6 +62,78 @@ window.COURSES = {
 		},
 
 
+		edit: function(e) {
+
+			$("#courses-edition-name").val($("#courses-details-name").text());
+			$("#courses-edition-description").val($("#courses-details-description").text());
+
+			$("#courses-details-form").hide();
+			$("#courses-edition-form").show();
+
+			e.preventDefault();
+			return false;
+		},
+
+
+		// Effectué lors d'un clic sur le bouton update. 
+		// Va remonter vers le form pour déclencher le submit via processEditionCommand.
+		engageUpdateCommand: function(e) {
+
+			COURSES.updateCommandInProgress = true;
+		},
+
+
+		// Effectué lors d'un clic sur le bouton delete. 
+		// Va remonter vers le form pour déclencher le submit via processEditionCommand.
+		engageDeleteCommand: function(e) {
+
+			COURSES.deleteCommandInProgress = true;
+		},
+
+
+		processHashLink: function(e) {
+
+			var action = '';
+			if (this.hash.indexOf("=") > -1) {
+				action = this.hash.substring(0, this.hash.indexOf("="));
+			}
+
+			var param = '';
+			if (this.hash.indexOf("=") > -1) {
+				param = this.hash.substr(this.hash.indexOf("=") + 1 , this.hash.length - this.hash.indexOf("="));
+			}
+
+			switch(action) {
+
+			case "#refresh":
+				COURSES.list(e);
+				break;
+
+			case "#course":
+				COURSES.get(param);
+				break;
+
+			default:
+				alert('The action <' + action + '> is unknown'); 
+			}
+
+			e.preventDefault();
+			return false;
+		},
+
+
+		//SEND functions
+		/////////////////////////////////////////////////////////////////////////////////////
+
+
+		//	app.get('/manage/courses', mod_db_courses.listRequest);
+		list: function(e) {
+
+			var data = { token: AUTH.session.token };
+			$.get("/manage/courses", data , COURSES.listComplete , "json");
+		},
+
+
 		//	app.post('/manage/courses', mod_db_courses.createRequest);
 		create: function(e) {
 
@@ -73,162 +149,28 @@ window.COURSES = {
 		},
 
 
-		creationComplete: function(data) {
-
-			if (data.success) {
-				COURSES.list();
-			} else {
-				$("#courses-info").text(data.message);
-			}
-		},
-
-
-		deleteComplete: function(data) {
-
-			if (data.success) {
-				COURSES.list();
-			} else {
-				$("#courses-info").text(data.message);
-			}
-
-			$("#courses-details-form").hide();
-			$("#courses-edition-form").hide();
-		},
-
-
-		// Pas d'action serveur : afficher le formulaire et remplir les inputs
-		edit: function(e) {
-
-			$("#courses-edition-name").val($("#courses-details-name").text());
-			$("#courses-edition-description").val($("#courses-details-description").text());
-
-			// TO IMPLEMENT teacher list :
-			//		sous forme de <select><option value="idItem">Label</option></select> 
-			//		$("#courses-edition-teacher").val(data.course.teacher)
-			// sauf si ça reste Readonly...
-
-			$("#courses-details-form").hide();
-			$("#courses-edition-form").show();
-
-			e.preventDefault();
-			return false;
-		},
-
-
-		// Effectué lors d'un clic sur le bouton update : va remonter vers le form pour déclencher le submit via processEditionCommand
-		engageUpdateCommand: function(e) {
-
-			COURSES.updateCommandInProgress = true;
-		},
-
-
-		// Effectué lors d'un clic sur le bouton delete : va remonter vers le form pour déclencher le submit via processEditionCommand
-		engageDeleteCommand: function(e) {
-
-			COURSES.deleteCommandInProgress = true;
-		},
-
-
 		//	app.get('/manage/courses/:id', mod_db_courses.getRequest);
-		get: function(name) {
+		get: function(id) {
 
 			var data = { token: AUTH.session.token };
-			$.get("/manage/courses/" + name , data, COURSES.getComplete, "json");
+			$.get("/manage/courses/" + id , data, COURSES.getComplete, "json");
 		},
 
 
-		getComplete: function(data) {
-
-			if (data.success) {
-				$("#courses-details-name").text(data.result.name);
-				$("#courses-details-teacher").text(data.result.teacher);
-				$("#courses-details-description").text(data.result.description);
-				$("#courses-details-form").show();
-				$("#courses-edition-form").hide();
-			} else {
-				$("#courses-info").text(data.message);
-				$("#courses-details-form").hide();
-				$("#courses-edition-form").hide();
-			}
-		},
-
-
-		//	app.get('/manage/courses', mod_db_courses.listRequest);
-		list: function(e) {
-
-			var data = { token: AUTH.session.token };
-			$.get("/manage/courses", data , COURSES.listComplete , "json");
-		},
-
-
-		listComplete: function(data) {
-
-			var list = $("<ul></ul>");
-
-			$(data.result).each(function(index, course) {
-
-				var item = $("<li><a></a></li>");
-				$("a", item).attr("href","#course=" + course.name).click(COURSES.processHashLink).text(course.name);
-				list.append(item);
-			});
-
-			$("#courses-list").empty().append(list);
-		},
-
-
-		updateComplete: function(data) {
-
-			// TODO
-			alert("TODO")
-		},
-
-
-		processHashLink: function(e) {
-
-			var hash = this.hash;
-			if (hash.indexOf("=") > -1) {
-				hash = hash.substring(0, hash.indexOf("="));
-			}
-
-			switch(hash) {
-
-			case "#refresh":
-				COURSES.list(e);
-				break;
-
-			case "#course":
-				var name = this.hash;
-				name = name.substr(name.indexOf("=") + 1 , name.length - name.indexOf("="));
-				COURSES.get(name);
-				break;
-
-			default:
-				alert('The action <' + hash + '> is unknown'); 
-			}
-
-			e.preventDefault();
-			return false;
-		},
-
-		
 		processEditionCommand: function(e) {
 
 			var data = { token: AUTH.session.token };
 
-			/*
-			 * TODO Il y a un problème à identifier le cours avec son nom vu que le client peut le modifier
-			 * On a besoin de son id interne, il doit être transmis et stocké le temps de l'édition
-			 * 
-			 */
-
 			if (COURSES.updateCommandInProgress) {
-				
-				data.name = $("#courses-details-name").text();
 
-				// app.put(   '/manage/courses/:id', mod_db_courses.updateRequest); 
+				data.name = $("#courses-details-name").text();
+				data.teacher = $("#courses-details-teacher").text();
+				data.description = $("#courses-details-description").text();
+
+				// app.put('/manage/courses/:id', mod_db_courses.updateRequest); 
 				$.ajax({
 					type: "PUT",
-					url: "/manage/courses/" + $("#courses-details-name").text(),
+					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -240,18 +182,99 @@ window.COURSES = {
 				//	app.delete('/manage/courses/:id', mod_db_courses.removeRequest);
 				$.ajax({
 					type: "DELETE",
-					url: "/manage/courses/" + $("#courses-details-name").text(),
+					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
 				}).done(COURSES.deleteComplete);
 			}
-			
+
 			COURSES.updateCommandInProgress = false;
 			COURSES.deleteCommandInProgress = false;
 
 			e.preventDefault();
 			return false;
+		},
+
+		
+		//RECEIVE functions
+		/////////////////////////////////////////////////////////////////////////////////////
+
+
+		creationComplete: function(info) {
+
+			if (info.success) {
+				COURSES.list();
+			} else {
+				$("#courses-info").text('');
+				alert(info.message); 
+			}
+		},
+
+
+		deleteComplete: function(info) {
+
+			if (info.success) {
+				COURSES.list();
+			} else {
+				$("#courses-info").text('');
+				alert(info.message); 
+			}
+
+			$("#courses-details-form").hide();
+			$("#courses-edition-form").hide();
+		},
+
+
+		getComplete: function(info) {
+
+			if (info.success) {
+				$("#courses-details-id").text(info.result.id);
+				$("#courses-details-name").text(info.result.name);
+				$("#courses-details-teacher").text(info.result.teacher);
+				$("#courses-details-description").text(info.result.description);
+				$("#courses-details-form").show();
+				$("#courses-edition-form").hide();
+			} else {
+				$("#courses-info").text('');
+				$("#courses-details-form").hide();
+				$("#courses-edition-form").hide();
+				alert(info.message); 
+			}
+		},
+
+
+		listComplete: function(info) {
+
+			var list = $("<ul></ul>");
+
+			$(info.result).each(function(index, course) {
+
+				var item = $("<li><a></a></li>");
+				$("a", item).attr("href","#course=" + course.id).click(COURSES.processHashLink).text(course.name);
+				list.append(item);
+			});
+
+			$("#courses-list").empty().append(list);
+		},
+
+
+		updateComplete: function(info) {
+
+			if (info.success) {
+
+				COURSES.list();
+
+				$("#courses-details-name").val(info.result.name);
+				$("#courses-details-teacher").val(info.result.teacher);
+				$("#courses-details-description").val(info.result.description);
+
+				$("#courses-edition-form").hide();		
+				$("#courses-details-form").show();
+
+			} else {
+				alert(info.message); 
+			}
 		}
 
 };
