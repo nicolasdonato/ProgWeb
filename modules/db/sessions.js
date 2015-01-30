@@ -150,7 +150,7 @@ module.exports.logout = function(token, callback) {
 		} 
 
 		var query = { token: token }; 
-		mod_db.find(DbName, query, function(result) {
+		mod_db.remove(DbName, query, function(result) {
 
 			if (result.length == 0) {
 				logger.out('No session with token <' + token + '> found for removal'); 
@@ -158,10 +158,6 @@ module.exports.logout = function(token, callback) {
 			} else if (result.length > 1) {
 				throw new Error('More than one session with token <' + token + '> found');
 			} else {
-
-				db.collection(DbName).remove(query);
-				logger.out('User <' + result[0].user.login + '> logging out'); 
-
 				makeSessionInfo(true, '', result[0], callback); 
 			}
 		}); 

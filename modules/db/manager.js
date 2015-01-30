@@ -112,6 +112,40 @@ module.exports.find = function(collection, query, callback) {
 }
 
 
+module.exports.remove = function(collection, query, callback) {
+
+	module.exports.connect(function(db) {
+		try {
+
+			var cursor = db.collection(collection).find(query);
+			if (cursor == null) {
+				throw new Error('Failed to remove a document on <' + collection + '> with query <' + JSON.stringify(query) + '> : No cursor'); 
+			}
+
+			cursor.toArray(function(err, result) {
+
+				if (err) {
+					throw new Error('Failed to remove a document on <' + collection + '> with query <' + JSON.stringify(query) + '> : ' + err); 
+				} else if (result == null) {
+					throw new Error('Failed to remove a document on <' + collection + '> with query <' + JSON.stringify(query) + '> : No result list'); 
+				} else  {
+
+					db.collection(collection).remove(query);
+					for (var i = 0; i < result.length; i++) {
+						logger.out('User <' + result[i].user.login + '> logging out'); 
+					}
+
+					callback(result); 
+				}
+			}); 
+
+		} catch(e) {
+			throw new Error('Error caught on remove request : ' + e.name + ': ' + e.message); 
+		}
+	}); 
+}
+
+
 clear = function(db) {
 
 	db.collection(mod_db_classes.getCollectionName()).remove();
