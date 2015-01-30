@@ -282,7 +282,7 @@ module.exports.remove = function(token, id, callback) {
 		module.exports.findById(id, function(courseInfo) {
 			if (courseInfo.success) {
 
-				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.role) {
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.login) {
 					callback(new CourseInfo(false, 'A teacher can\'t delete someone else\'s course')); 
 					return; 
 				}
@@ -324,7 +324,7 @@ module.exports.update = function(token, id, name, teacher, description, callback
 		module.exports.findById(id, function(courseInfo) {
 			if (courseInfo.success) {
 
-				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.role) {
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.login) {
 					callback(new CourseInfo(false, 'A teacher can\'t update someone else\'s course')); 
 					return; 
 				}
