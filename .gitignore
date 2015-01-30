@@ -4,3 +4,6 @@ build.sh
 logs/
 node_modules/
 .project
+/test.js
+/test2.js
+/npm-debug.log
