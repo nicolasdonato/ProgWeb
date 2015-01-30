@@ -141,7 +141,6 @@ module.exports.login = function(login, password, callback) {
 
 module.exports.logout = function(token, callback) {
 
-	// Authentication to be allowed to logout
 	module.exports.authenticate(token, function(sessionInfo) {
 
 		if (! sessionInfo.success) {
