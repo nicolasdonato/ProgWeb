@@ -4,7 +4,6 @@ window.AUTH = {
 		//Module management
 		/////////////////////////////////////////////////////////////////////////////////////
 
-
 		session: {},
 
 		autoAuthenticationInProgress : false,
@@ -73,8 +72,6 @@ window.AUTH = {
 		    scripts.push("http://maps.google.com/maps/api/js?sensor=false");
 		    
 		    scripts.push((localSocket ? "" : "..") + "/socket.io/socket.io.js");
-		    //
-		    //scripts.push("../socket.io/socket.io.js");
 		    scripts.push("js/chat.js");
 		    scripts.push("js/maps.js");
 		    scripts.push("js/webrtc.js");

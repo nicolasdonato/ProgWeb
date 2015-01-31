@@ -154,7 +154,10 @@ var WebRTC = Class.create({
 		
 		// It is checked whether there is a need of a TURN server if it is not in localhost
 		if (location.hostname != "localhost") {
-		  this.requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
+			//
+			// username & key are set in json, see below
+			//
+			  this.requestTurn('https://computeengineondemand.appspot.com/turn');
 		}
 		
 		return this;
@@ -203,20 +206,17 @@ var WebRTC = Class.create({
 		if (!turnExists) {
 			console.log('Getting TURN server from ', turn_url);
 			// No TURN server. Get one from computeengineondemand.appspot.com:
-			var xhr = new XMLHttpRequest();
-			xhr.onreadystatechange = function(){
-				if (xhr.readyState === 4 && xhr.status === 200) {
-					var turnServer = JSON.parse(xhr.responseText);
-					console.log('Got TURN server: ', turnServer);
-					this.pc_config.iceServers.push({
-						'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
-						'credential': turnServer.password
-					});
-					turnReady = true;
-				}
-			};
-			xhr.open('GET', turn_url, true);
-			xhr.send();
+			$.get(turn_url, { username : '41784574', key : '4080218913'} , function(data){
+				
+				var turnServer = data;//JSON.parse(xhr.responseText);
+				console.log('Got TURN server: ', turnServer);
+				this.pc_config.iceServers.push({
+					'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
+					'credential': turnServer.password
+				});
+				turnReady = true;
+				
+			}, "json");
 		}
 	},
 	

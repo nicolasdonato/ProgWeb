@@ -1,6 +1,8 @@
 
+var cors = require('cors');
 var fs = require('fs');
 var path = require('path');
+
 
 //Configuration générale
 exports.config = function(app, express){
@@ -14,6 +16,11 @@ exports.config = function(app, express){
 		app.use(express.bodyParser());
 		// Permet de monter par défaut les routes app.get(), app.post(), ...
 		app.use(express.methodOverride());
+		//
+		// configure express to allow cross domain request ex : https://computeengineondemand.appspot.com/turn
+		// ne fonctionne pas encore... à travailler
+		//
+		app.use(cors());
 		app.use(app.router);
 		//
 		// NB : __dirname correspond au répertoire où se trouve ce fichier et on veut que la redirection par défaut pointe vers le contenu du répertoire public
