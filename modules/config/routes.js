@@ -18,11 +18,11 @@ exports.setup = function(app) {
 	
 	// Course management
 	
-	app.post(  '/manage/courses',        mod_db_courses.create);
-	app.get(   '/manage/courses',        mod_db_courses.list);
-	app.get(   '/manage/courses/:id',    mod_db_courses.get);
-	app.put(   '/manage/courses/:id',    mod_db_courses.update); 
-	app.delete('/manage/courses/:id',    mod_db_courses.remove);
+	app.post(  '/manage/courses',        mod_db_courses.createRequest);
+	app.get(   '/manage/courses',        mod_db_courses.listRequest);
+	app.get(   '/manage/courses/:id',    mod_db_courses.getRequest);
+	app.put(   '/manage/courses/:id',    mod_db_courses.updateRequest); 
+	app.delete('/manage/courses/:id',    mod_db_courses.removeRequest);
 	
 	
 	// Class management
@@ -37,8 +37,9 @@ exports.setup = function(app) {
 	// Session management
 
 	app.post(  '/session/login',       mod_db_sessions.requestLogin); 
-	app.post(  '/session/join/:id',    mod_db_sessions.join); 
-	app.post(  '/session/leave',       mod_db_sessions.leave); 
+	app.post(  '/session/logout',      mod_db_sessions.requestLogout); 
+	app.post(  '/session/join/:id',    mod_db_sessions.requestJoin); 
+	app.post(  '/session/leave',       mod_db_sessions.requestLeave); 
 	
 };
 

@@ -20,13 +20,13 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('listUsers', function () {
 			log('Client asked for users');
 			
-			mod_db_users.listUsers(function(err, userList) {
+			mod_db_users.listUsers(function(userInfo) {
 				
-				for (var index in userList) {
-					log('Found user ' + userList[index].login);
+				for (var index in userInfo.result) {
+					log('Found user ' + userInfo.result[index].login);
 				}
 				
-				socket.emit('userList', userList);
+				socket.emit('userList', userInfo.result);
 			});
 		});
 
@@ -34,10 +34,10 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('authentication', function (data) {
 			log('Client asked for auth with credentials <' + data.login + "," + data.password + ">");
 			
-			mod_db_sessions.login(data.login, data.password, function (result) {
+			mod_db_sessions.login(data.login, data.password, function (sessionInfo) {
 				
-				if (result.authenticated) {
-					socket.emit('connectionApproved', result);
+				if (sessionInfo.success) {
+					socket.emit('connectionApproved', sessionInfo.result);
 				} else {
 					socket.emit('connectionRefused');
 				}

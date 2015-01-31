@@ -27,6 +27,11 @@
     "socket.io": "~0.9.16",
     "express": "~3.4.0",
 	"mongodb": ">= 2.0.4",
-	"es-hash": ""
+	"es-hash": "",
+	"async": "",
+	"q": "",
+	"mongo-sync" : "",
+	"fibers" : "",
+	"wait.for" : ""
   }
 }
