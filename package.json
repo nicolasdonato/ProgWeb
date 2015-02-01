@@ -30,9 +30,6 @@
 	"es-hash": "",
 	"async": "",
 	"q": "",
-	"mongo-sync" : "",
-	"fibers" : "",
-	"wait.for" : "",
 	"cors":""
   }
 }

@@ -95,7 +95,7 @@ window.AUTH = {
 
 		    	if(loaders.length == 0){
 			    	loaders.push(function(){
-			    		scriptLoader(script, mainScriptLoader);
+			    		mainScriptLoader();
 			    	});
 		    	}
 

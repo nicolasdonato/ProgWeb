@@ -4,9 +4,22 @@ var mod_db_sessions = require('../db/sessions');
 var mod_db_courses = require('../db/courses'); 
 var mod_db_classes = require('../db/classes'); 
 
+//CORS middleware
+/*var allowCrossDomain = function(req, res, next) {
+  res.status(200);
+  res.header('Access-Control-Allow-Origin', '*');//'computeengineondemand.appspot.com');
+  res.header('Access-Control-Allow-Methods', 'GET,OPTIONS,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, accept, authorization, origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-max-age', '10');
+
+  next();
+}*/
 
 exports.setup = function(app) {
+
 	
+	//app.options('/*', allowCrossDomain);
 	// User management
 	
 	app.post(  '/manage/users',        mod_db_users.create);
