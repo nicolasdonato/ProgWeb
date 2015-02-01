@@ -13,7 +13,6 @@ var node_http = require('http');
 var node_io = require('socket.io'); 
 
 var mod_config = require('./modules/config/config'); 
-var mod_routes = require('./modules/config/routes'); 
 var mod_db = require('./modules/db/manager'); 
 var mod_socket = require('./modules/sockets/manager');
 var mod_socket_auth = require('./modules/sockets/authentication');
@@ -41,7 +40,6 @@ mod_db.initialize(contextRoot);
 
 var app = node_express();
 mod_config.config(app, node_express);
-mod_routes.setup(app);
 
 var server = node_http.createServer(app);
 

@@ -207,6 +207,9 @@ var WebRTC = Class.create({
 			$.ajax({ 
 				type:'GET',
 				url : turn_url, 
+				//
+				// Les deux paramètres qui suivent sembleraient nécessaire pour surpasser le cors... encore faudrait il que la requete OPTIONS soit envoyée
+				//
 				crossDomain: true,
 				xhrFields: {
 					withCredentials: true
@@ -220,6 +223,8 @@ var WebRTC = Class.create({
 					'credential': turnServer.password
 				});
 				turnReady = true;
+			}).fail(function(err){
+				console.log('Getting turn content failed : ' + err.message);
 			});
 		}
 	},

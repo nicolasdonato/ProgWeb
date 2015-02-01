@@ -1,7 +1,7 @@
 {
-  "name": "codelab",
+  "name": "WEB_SRV",
   "version": "0.0.1",
-  "description": "WebRTC codelab",
+  "description": "WEB_SRV - Projet de chat",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
@@ -23,10 +23,15 @@
   "author": "webrtc",
   "license": "MIT",
   "dependencies": {
-    "node-static": "~0.7.1",
     "socket.io": "~0.9.16",
-    "express": "~3.4.0",
+    "express": "~4.2.0",
 	"mongodb": ">= 2.0.4",
+	"body-parser": "",
+	"cookie-parser":"",
+	"method-override":"",
+	"express-session":"",
+	"errorhandler":"",
+	"morgan":"",
 	"es-hash": "",
 	"async": "",
 	"q": "",
