@@ -153,12 +153,9 @@ var WebRTC = Class.create({
 		console.log('Getting user media with constraints', this.constraints);
 		
 		// It is checked whether there is a need of a TURN server if it is not in localhost
-		//if (location.hostname != "localhost") 
+		if (location.hostname != "localhost") 
 		{
-			//
-			// username & key are set in json, see below
-			//
-			  this.requestTurn('https://computeengineondemand.appspot.com/turn');
+			this.requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
 		}
 		
 		return this;
@@ -207,8 +204,18 @@ var WebRTC = Class.create({
 		if (!turnExists) {
 			console.log('Getting TURN server from ', turn_url);
 			// No TURN server. Get one from computeengineondemand.appspot.com:
-			$.get(turn_url, { username : '41784574', key : '4080218913'} , function(data){
-				
+			$.ajax({ 
+				type:'GET',
+				url : turn_url, 
+				//
+				// Les deux paramètres qui suivent sembleraient nécessaire pour surpasser le cors... encore faudrait il que la requete OPTIONS soit envoyée
+				//
+				crossDomain: true,
+				xhrFields: {
+					withCredentials: true
+				},
+				dataType : "json"
+			}).done(function(data){
 				var turnServer = data;//JSON.parse(xhr.responseText);
 				console.log('Got TURN server: ', turnServer);
 				this.pc_config.iceServers.push({
@@ -216,8 +223,9 @@ var WebRTC = Class.create({
 					'credential': turnServer.password
 				});
 				turnReady = true;
-				
-			}, "json");
+			}).fail(function(err){
+				console.log('Getting turn content failed : ' + err.message);
+			});
 		}
 	},
 	
