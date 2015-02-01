@@ -153,7 +153,8 @@ var WebRTC = Class.create({
 		console.log('Getting user media with constraints', this.constraints);
 		
 		// It is checked whether there is a need of a TURN server if it is not in localhost
-		if (location.hostname != "localhost") {
+		//if (location.hostname != "localhost") 
+		{
 			//
 			// username & key are set in json, see below
 			//

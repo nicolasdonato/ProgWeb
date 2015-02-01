@@ -6,21 +6,29 @@ var path = require('path');
 
 //Configuration générale
 exports.config = function(app, express){
+	app.use(cors());
 	// Express configuration
 	app.configure(function(){
 		// Log les access web
 		app.use(express.logger({
 			stream: fs.createWriteStream('logs/access.log', {flags: 'a'}) 
 		}));
-		//
-		// configure express to allow cross domain request ex : https://computeengineondemand.appspot.com/turn
-		// ne fonctionne pas encore... à travailler
-		//
-		app.use(cors());
 		// Permet de récupérer les variables envoyées en POST
 		app.use(express.bodyParser());
 		// Permet de monter par défaut les routes app.get(), app.post(), ...
 		app.use(express.methodOverride());
+		//
+		// configure express to allow cross domain request ex : https://computeengineondemand.appspot.com/turn
+		// ne fonctionne pas encore... à travailler
+		//
+		//
+		/*app.use(function(req, res, next) {
+		  res.header("Access-Control-Allow-Origin", "*");
+		  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+		  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+		  next();
+		});*/
+		//app.options('*', cors());
 		app.use(app.router);
 		//
 		// NB : __dirname correspond au répertoire où se trouve ce fichier et on veut que la redirection par défaut pointe vers le contenu du répertoire public

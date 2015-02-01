@@ -4,6 +4,8 @@ var mod_db_sessions = require('../db/sessions');
 var mod_db_courses = require('../db/courses'); 
 var mod_db_classes = require('../db/classes'); 
 
+var cors = require('cors');
+
 
 exports.setup = function(app) {
 	
