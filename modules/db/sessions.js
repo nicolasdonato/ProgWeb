@@ -188,7 +188,7 @@ var dbToSession = function(that, s, callback) {
 		if (userInfo == null) {
 			throw new Error('User info is null'); 
 		} else if (! userInfo.success) {
-			throw new Error('There should be a user <' + s.login + '> in DB'); 
+			throw new Error('There should be a user <' + s.user + '> in DB'); 
 		}
 
 		var session = new Session(s.token, userInfo.result, s.begin);

@@ -316,7 +316,7 @@ window.COURSES = {
 			if (info.success) {
 				$("#courses-details-id").text(info.result.id);
 				$("#courses-details-name").text(info.result.name);
-				$("#courses-details-teacher").text(info.result.teacher);
+				$("#courses-details-teacher").text(info.result.teacher.login);
 				$("#courses-details-description").text(info.result.description);
 				$("#courses-details-form").show();
 				$("#courses-edition-form").hide();
@@ -351,7 +351,7 @@ window.COURSES = {
 				COURSES.list();
 
 				$("#courses-details-name").val(info.result.name);
-				$("#courses-details-teacher").val(info.result.teacher);
+				$("#courses-details-teacher").val(info.result.teacher.login);
 				$("#courses-details-description").val(info.result.description);
 
 				$("#courses-edition-form").hide();		
