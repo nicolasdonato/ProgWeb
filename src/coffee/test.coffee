@@ -1,16 +1,21 @@
 window.view =
 	login: (event) ->
 		if event.keyCode is 13
-			AUTH.authenticate 	$('#login').val(),
+			AUTH.requestLogin 	$('#login').val(),
 								$('#pass').val()
 
 	loginSuccess: ->
 		$("#loginForm")			.hide()
-		$("#rooms, #deco")		.show()
+		$("#rooms, #logout")	.show()
 
 	loginFail: ->
-		console.log 'login failed'
 		$('#loginForm')			.addClass 'fail'
+
+	logout: ->
+		AUTH.requestLogout()
+		$("#loginForm")			.hide()
+		$("#rooms, #logout")	.show()
+
 
 	addVideo: (member, video) ->
 		$(
@@ -62,6 +67,9 @@ $ ->
 
 	# Login
 	$('#loginForm')		.on 'keyup', 				view.login
+
+	# Logout
+	$('#logout')		.on 'click', 				view.logout
 
 	# Drop on local video
 	$('#localMember')

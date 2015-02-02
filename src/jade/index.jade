@@ -19,27 +19,22 @@ html
 		script(src='js/lib/jsTree/jstree.min.js')
 		script(src='js/lib/adapter.js')
 		script(src='js/lib/jquery.class.js')
-		script(src='http://maps.google.com/maps/api/js?sensor=false')
-		script(src='/socket.io/socket.io.js')
-
-		script(src='js/chat.js')
-		script(src='js/maps.js')
-		script(src='js/webrtc.js')
-		script(src='js/auth.js')
 		script(src='js/test.js')
+		script(src='js/auth.js')
+
 	body
 		header
-			form#loginForm.show
+			form#loginForm
 				input#login(
-					type='text',
+					type='text'
 					placeholder='Login')
 				br
 				input#pass(
-					type='password',
+					type='password'
 					placeholder='Password')
-			nav#rooms.hide
+			nav#rooms(style="display:none")
 				span Mon Projet
-			button#deco.hide(type='text') Deco
+			button#logout(type='text' style='display:none') Deco
 		main
 			aside#geochat
 				section#geo
@@ -50,7 +45,43 @@ html
 				.cam
 					p#localMember
 					video#localVideo(
-						autoplay='true',
+						autoplay='true'
 						muted='true')
+			section#courses-div(style='display:none')
+				a#courses-refresh(href='#refresh')
+					span Refresh
+				form#courses-creation-form(style='display:none')
+					span.titre Créer
+					p
+						span.libelle Nom
+						input#courses-creation-name.data.text-simple(type='text')
+						br
+						span.libelle Desc
+						input#courses-creation-description.data.text-area(type='text')
+					input#courses-creation-submit(type='submit')
+				form#courses-details-form(style='display:none')
+					span.titre
+					p
+						span#courses-details-id.data.label-simple(style='display:none')
+						span.libelle Nom :&nbsp;
+						span#courses-details-name.data.label-simple
+						br
+						span.libelle Enseignant :&nbsp;
+						span#courses-details-teacher.data.label-simple
+						br
+						span.libelle Description :&nbsp;
+						span#courses-details-description.data.label-area
+				form#courses-edition-form(style='display:none')
+					input#courses-edition-id(type="hidden")
+					span.titre Modifier un cours :&nbsp;
+					p
+						span.libelle Nom :&nbsp;
+						input#courses-edition-name.data.text-simple(type="text")
+						br
+						span.libelle Description :&nbsp;
+						input#courses-edition-description.data.text-area(type="text")
+						// Manque liste des teachers
+					input#courses-edition-submit-update(type="submit", value="Mettre à jour")
+					input#courses-edition-submit-delete(type="submit", value="Supprimer")
 			aside#files
 		footer footer

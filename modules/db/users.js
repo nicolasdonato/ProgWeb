@@ -1,139 +1,88 @@
 
+//Imports and constants
+/////////////////////////////////////////////////////////////////////////////////////
+
 var mod_db = require('./manager');
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
 
-
 var DbName = 'users'; 
 
 
-/*
- * Template of document 'User' in database. 
- */
+//Objects
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+//Template of document 'User' in database
 User = function(login, password) {
-	
+
 	// Mandatory information
 	this.login = login; 
 	this.password = password; 
 	this.role = Roles.STUDENT; 
-	
+
 	// Optional information
 	this.firstname = ''; 
 	this.lastname = ''; 
 	this.organization = ''; 
 	this.country = ''; 
-	
-	this.cleanCopy = function(user) {
-		this.role = user.role; 
-		this.firstname = user.firstname; 
-		this.lastname = user.lastname; 
-		this.organization = user.organization; 
-		this.country = user.country; 
-		this.courses = user.courses; 
-	}
 }
 
-module.exports.User = User; 
+
+function UserInfo(success, message, data) {
+
+	var user = null; 
+	if (data != undefined && data != null) {
+
+		if (data instanceof Array) {
+
+			user = []; 
+			for (var i = 0; i < data.length; i++) {
+
+				var item = data[i]; 
+				if (item != undefined && item != null) {
+					user.push(dbToUser(item)); 
+				}
+			}
+
+		} else {
+			user = dbToUser(data); 
+		}
+	}
+
+	mod_db.ServerInfo.call(this, success, message, user); 
+}
+
+UserInfo.prototype = mod_db.ServerInfo; 
 
 
+//Role level for users
 Roles = {
-	STUDENT: 1, 
-	TEACHER: 2, 
-	ADMIN: 3
+		STUDENT: 1, 
+		TEACHER: 2, 
+		ADMIN: 3
 }; 
 
 module.exports.Roles = Roles; 
 
 
-module.exports.getCollectionName = function() {
-	return DbName; 
-}
-
-
-module.exports.initialize = function(db) {
-
-	var collection = db.collection(module.exports.getCollectionName());
-	
-	// Définir les utilisateurs de base
-	var damien = new User('damien', 'lepiller'); 
-	var nicolas = new User('nicolas', 'donato'); 
-	var romain = new User('romain', 'truchi'); 
-	var initializationData = [damien, nicolas, romain];
-
-	// Ajout des utilisateurs prédéfinis
-	for (var index in initializationData) {
-		var hash = mod_utils.getHash(initializationData[index].password); 
-		initializationData[index].password = hash; 
-		collection.insert(initializationData[index]); 
-	}
-}
-
-
-module.exports.authenticate = function(login, password, callBack) {
-	
-	mod_db.connect(function(db) {
-
-		var hash = mod_utils.getHash(password); 
-		var query = { login : login,  password : hash}; 
-		var cursor = db.collection(DbName).find(query); 
-		
-		cursor.toArray(function(err, result) {
-			
-			if (err) {
-				logger.err(err);
-				callBack(new User('', '')); 
-				return;
-			}
-
-			if (result.length == 0) {
-				callBack(new User('', '')); 
-				return;
-			}
-
-			if (result.length > 1) {
-				throw new Exception("More than one user with the same login/password were found");
-			}
-			
-			var user = result[0];
-			
-			var cleanUser = new User(user.login, ''); 
-			cleanUser.cleanCopy(user); 
-			callBack(cleanUser); 
-		});
-	});
-}
+//External API
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 module.exports.create = function(req, res) {
-	
-	
-}
 
 
-module.exports.listUsers = function(callBack) {
-
-	mod_db.connect(function(db) {
-		
-		var cursor = db.collection(DbName).find();
-		
-		cursor.toArray(function(err, data){
-			for(var i in data){
-				delete data[i].password; 
-			}
-			callBack(err, data);
-		});
-		
-		
-	});
 }
 
 
 module.exports.list = function(req, res) {
-	module.exports.listUsers(function(err, data){
-		res.send(JSON.stringify(data)); 
+
+	module.exports.listUsers(function(err, userInfos){
+
+		res.send(userInfos); 
 	});
 }
-
 
 
 module.exports.get = function(req, res) {
@@ -151,4 +100,105 @@ module.exports.update = function(req, res) {
 module.exports.remove = function(req, res) {
 	// TODO
 }
+
+
+//Local API
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+module.exports.getCollectionName = function() {
+	return DbName; 
+}
+
+
+module.exports.initialize = function(db) {
+
+	var collection = db.collection(module.exports.getCollectionName());
+
+	// Définir les utilisateurs de base
+	var admin = new User('admin', 'root'); 
+	admin.role = Roles.ADMIN; 
+	var damien = new User('damien', 'lepiller'); 
+	damien.role = Roles.STUDENT; 
+	var nicolas = new User('nicolas', 'donato'); 
+	nicolas.role = Roles.STUDENT; 
+	var romain = new User('romain', 'truchi'); 
+	romain.role = Roles.STUDENT; 
+	var sander = new User('peter', 'sander'); 
+	sander.role = Roles.TEACHER; 
+	var buffa = new User('michel', 'buffa'); 
+	buffa.role = Roles.TEACHER; 
+	var initializationData = [admin, damien, nicolas, romain, sander, buffa];
+
+	// Ajout des utilisateurs prédéfinis
+	for (var index in initializationData) {
+		var hash = mod_utils.getHash(initializationData[index].password); 
+		initializationData[index].password = hash; 
+		collection.insert(initializationData[index]); 
+	}
+}
+
+
+module.exports.authenticate = function(login, password, callback) {
+
+	var hash = mod_utils.getHash(password); 
+	mod_db.find(DbName, { login: login,  password: hash }, function(result) {
+
+		if (result.length == 0) {
+			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error("More than one user with the same login/password were found");
+		}
+
+		callback(new UserInfo(true, '', result[0])); 
+	});
+}
+
+
+module.exports.listUsers = function(callback) {
+
+	mod_db.find(DbName, { }, function(result) {
+
+		callback(new UserInfo(true, '', result)); 
+	});
+}
+
+
+module.exports.getUser = function(login, callback) {
+
+	mod_db.find(DbName, { login: login }, function(result) {
+
+		if (result.length == 0) {
+			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error("More than one user with the same login were found");
+		} else if (result[0] == null) {
+			callback(new UserInfo(false, 'Return item null')); 
+			return;
+		}
+
+		callback(new UserInfo(true, '', result[0])); 
+	});
+}
+
+
+//Useful functions
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+function dbToUser(u) {
+
+	var user = new User(u.login, ''); 
+	user.role = u.role; 
+	user.firstname = u.firstname; 
+	user.lastname = u.lastname; 
+	user.organization = u.organization; 
+	user.country = u.country; 
+	user.courses = u.courses; 
+
+	return user; 
+}
+
 

@@ -41,6 +41,7 @@ var webrtc = new WebRTC({
 	},
 	receiveMessageByDataChannel: function (event) {
 		console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
+		FileTransfer.receiveFile(event);
 	}
 });
 
@@ -93,57 +94,63 @@ var map = new Map({
 // File sharing events
 //
 
-//var progressHelper = {};
-//var outputPanel = document.body;
-//
-//var fileHelper = {
-//    onBegin: function (file) {
-//        var div = document.createElement('div');
-//        div.title = file.name;
-//        div.innerHTML = '&lt;label&gt;0%&lt;/label&gt; &lt;progress&gt;&lt;/progress&gt;';
-//        outputPanel.insertBefore(div, outputPanel.firstChild);
-//        progressHelper[file.uuid] = {
-//            div: div,
-//            progress: div.querySelector('progress'),
-//            label: div.querySelector('label')
-//        };
-//        progressHelper[file.uuid].progress.max = file.maxChunks;
-//    },
-//    onEnd: function (file) {
-//        progressHelper[file.uuid].div.innerHTML = '&lt;a href="' + file.url + '" target="_blank" download="' + file.name + '"&lt;' + file.name + '&lt;/a&gt;';
-//    },
-//    onProgress: function (chunk) {
-//        var helper = progressHelper[chunk.uuid];
-//        helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
-//        updateLabel(helper.progress, helper.label);
-//    }
-//};
-//
-//function updateLabel(progress, label) {
-//    if (progress.position == -1) return;
-//    var position = +progress.position.toFixed(2).split('.')[1] || 100;
-//    label.innerHTML = position + '%';
-//}
-//
-//// To Send a File
-//File.Send({
-//    file: file,
-//    channel: peer,
-//    interval: 100,
-//    chunkSize: 1000, // 1000 for RTP; or 16k for SCTP
-//                     // chrome's sending limit is 64k; firefox' receiving limit is 16k!
-//
-//    onBegin: fileHelper.onBegin,
-//    onEnd: fileHelper.onEnd,
-//    onProgress: fileHelper.onProgress
-//});
-//
-//// To Receive a File
-//var fleReceiver = new File.Receiver(fileHelper);
-//peer.onmessage = function (data) {
-//    fleReceiver.receive(data);
-//};
+var progressHelper = {};
+var outputPanel = document.body;
 
+// FileHelper with different methods which fill progress data into
+// the dom and a link when the sending is finished
+var fileHelper = {
+    onBegin: function (file) {
+        var div = document.createElement('div');
+        div.title = file.name;
+        div.innerHTML = '<label>0%</label> <progress></progress>';
+        outputPanel.insertBefore(div, outputPanel.firstChild);
+        progressHelper[file.uuid] = {
+            div: div,
+            progress: div.querySelector('progress'),
+            label: div.querySelector('label')
+        };
+        progressHelper[file.uuid].progress.max = file.maxChunks;
+    },
+    onEnd: function (file) {
+    	progressHelper[file.uuid].div.innerHTML = '<a href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
+    },
+    onProgress: function (chunk) {
+        var helper = progressHelper[chunk.uuid];
+        helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
+        
+        if (helper.progress.position == -1) return;
+        var position = +helper.progress.position.toFixed(2).split('.')[1] || 100;
+        helper.label.innerHTML = position + '%';
+    }
+};
+
+// Class permit to send and receive file. It encapsulates methods of File.js
+var FileTransfer = {
+	// To Send a File
+	sendFile: function (member, file) {
+		var peer = webrtc.getPC(member);
+		if (peer) {
+			File.Send({
+			    file: file,
+			    channel: peer.sendChannel,
+			    interval: 100,
+			    chunkSize: 100,//1000, // 1000 for RTP; or 16k for SCTP
+			                     // chrome's sending limit is 64k; firefox' receiving limit is 16k!
+			
+			    onBegin: fileHelper.onBegin,
+			    onEnd: fileHelper.onEnd,
+			    onProgress: fileHelper.onProgress
+			});
+		}
+	},
+
+	// To Receive a File
+	fileReceiver: new File.Receiver(fileHelper),
+	receiveFile: function (data) {
+		this.fileReceiver.receive(data);
+	}
+};
 
 /////////////////////////////////////////
 // Window events
@@ -155,8 +162,8 @@ var map = new Map({
 window.onbeforeunload = function(e){
 	//sendMessage('bye');
 	webrtc.hangup();
-	map.closeLocation();
-};
+//	map.closeLocation();
+}
 
 /////////////////////////////////////////
 // Chat component initialization
@@ -182,7 +189,7 @@ var chatMessage = new ChatMessage()
 		console.log('Another peer made a request to join room ' + room);
 		console.log('This peer is the initiator of room ' + room + '!');
 		webrtc.setChannelReady(true);
-		map.sendPosition();
+//		map.sendPosition();
 	})
 	// If you receive the message "joined" then joined an existing room.
 	// We are not the initiator, there is already someone (the appellant),
@@ -191,7 +198,7 @@ var chatMessage = new ChatMessage()
 		console.log('This peer has joined room ' + room);
 		webrtc.setChannelReady(true);
 		console.log('Send my position');
-		map.sendPosition();
+//		map.sendPosition();
 	})
 	// Called by the server to make tracks in the connected clients
 	.on('log', function (array){
@@ -241,7 +248,13 @@ if (room !== '') {
 }
 
 ////////////////////////////////////////////////
+// these 2 functions are called resp. after successfull login and logout
+//
+var globalInitialization = function(){
+	window.COURSES.initialize();
+};
 
-$(document).ready(function(){
-	// window.COURSES.initialize();
-});
+var globalDisconnect = function(){
+	window.COURSES.disconnect(); 	
+};
+

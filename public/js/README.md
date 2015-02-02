@@ -6,7 +6,7 @@ Each files in this following document use Socket.IO of the NodeJS server.
 To see all component initialization, see the file [main.js!](main.js)
 
 
-## [chat.js!](chat.js) File
+## [chat.js](chat.js) File
 ### Description
 Interface corresponding to the management of events and send/receive messages from the server via NodeJS SocketIO.
 
@@ -66,15 +66,18 @@ Send message to NodeJS server using SocketIO
 chatMessage.sendMessage(messageType, data);
 ```
 
-## [maps.js!](maps.js) File
-Manage the localization of all people in the chat room with the GoogleMaps API.
+## [maps.js](maps.js) File
+Manage the localization of all people in the chat room with the GoogleMaps API. This class uses the "Chat" class in the file chat.js.
 
 ### Initialization of the component
-Options to use to initialize the class: {
+Options to use to initialize the class:
+```js
+{
  		divMap --> The HTML element which is used by the map of Google. The element is found for example by this code: document.querySelector('#divMap')
 		showMap --> This property is filled with a function (callback) which is called by the class to show the map when the map is initialize.
 		localMember --> The local member which opened the browser. This property can be an attribute or a function
 }
+```
 
 Example:
 ```js
@@ -115,12 +118,15 @@ socket.on('geolocalisation_component', function(message) {
 ### Public methods
 * Map#closeLocation(): Delete marker of local member on the remote map
 
-## [webrtc.js!](webrtc.js) File
+## [webrtc.js](webrtc.js) File
 Class using to display remote cams of people connected in the chat room.
 It manages all of cams on the chat window of the user.
+This class uses the "Chat" class in the file chat.js.
 
 ### Initialization of the component
-Options to use to initialize the class: {
+Options to use to initialize the class:
+```js
+{
  		constraints --> constraint definitions for the HTML5 videos tag (using in the getUserMedia method)
  		pc_config --> Stun servers configuration...
  		pc_constraints --> Peer connection constraints
@@ -130,6 +136,7 @@ Options to use to initialize the class: {
 		addNewVideo --> method to add remote video (remote cams) of other members of the room (can be create the html dom)
  		deleteVideo --> method to delete remote video (remote cams) of other members of the room (can be create the html dom)
 }
+```
 
 Example:
 ```js
@@ -159,6 +166,13 @@ var webrtc = new WebRTC({
 		},
 		deleteVideo: function(event) {
 			jQuery(event.remoteVideo).remove();
+		},
+		enableDataChannel: function (event) {
+			console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");
+		},
+		receiveMessageByDataChannel: function (event) {
+			console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
+			FileTransfer.receiveFile(event);
 		}
 });
 ```
@@ -202,4 +216,102 @@ socket.on('webrtc_component', function(message) {
 ```
 
 ### Public methods
-* WebRTC#hangup(): Lets stop the video stream to the other chat room users. Sends a message to other participants to delete the locale video (cam).
+* WebRTC#hangup() - Lets stop the video stream to the other chat room users. Sends a message to other participants to delete the locale video (cam).
+* WebRTC#sendDataByDataChannel(remoteMemberLogin#String, messageToSend#String) - Method used when the local user send a message by RTCDataChannel (P2P communication)
+* WebRTC#getPC(remoteMemberLogin#String):WebRTCNode - Return an object containing different informations of the remote user like the remote login, the RTCPeerConnection, ...
+
+### Send files by RTCDataChannel
+To send files by RTCDataChannel, we use a library called [File.js](File.js) which cut the file by chunk and send the file pieces to the remote user.
+
+#### Create the send and receive callback
+We can create some callback for the receive and send the file :
+```js
+// Class permit to send and receive file. It encapsulates methods of File.js
+var FileTransfer = {
+	// To Send a File
+	sendFile: function (member, file) {
+		var peer = webrtc.getPC(member);
+		if (peer) {
+			File.Send({
+			    file: file,
+			    channel: peer.sendChannel,
+			    interval: 100,
+			    chunkSize: 100,//1000, // 1000 for RTP; or 16k for SCTP
+			                     // chrome's sending limit is 64k; firefox' receiving limit is 16k!
+			    onBegin: fileHelper.onBegin,
+			    onEnd: fileHelper.onEnd,
+			    onProgress: fileHelper.onProgress
+			});
+		}
+	},
+	// To Receive a File
+	fileReceiver: new File.Receiver(fileHelper),
+	receiveFile: function (data) {
+		this.fileReceiver.receive(data);
+	}
+};
+```
+You can pair the issuance and file hostels' reception with WebRTC component as follows (in the WebRTC option initialization):
+To receive file: in the receiveMessageByDataChannel callback, you can call the method FileTransfert.receiveFile
+```js
+receiveMessageByDataChannel: function (event) {
+	console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
+	FileTransfer.receiveFile(event);
+}
+```
+To send file: in the send method (FileTransfert.sendFile), you can use the RTCDataChannel creating by the WebRTC component by using the method getPC(member#String) and use the "sendChannel" object
+```js
+sendFile: function (member, file) {
+	var peer = webrtc.getPC(member);
+	if (peer) {
+		File.Send({
+		    file: file,
+		    channel: peer.sendChannel,
+		    interval: 100,
+		    chunkSize: 100,//1000, // 1000 for RTP; or 16k for SCTP
+		                     // chrome's sending limit is 64k; firefox' receiving limit is 16k!		
+		    onBegin: fileHelper.onBegin,
+		    onEnd: fileHelper.onEnd,
+		    onProgress: fileHelper.onProgress
+		});
+	}
+},
+```
+
+#### Interact with the graphics
+To interact with the DOM HTML, you must create a "FileHelper" producing changes:
+```js
+var progressHelper = {};
+var outputPanel = document.body;
+
+// FileHelper with different methods which fill progress data into
+// the dom and a link when the sending is finished
+var fileHelper = {
+    onBegin: function (file) {
+        var div = document.createElement('div');
+        div.title = file.name;
+        div.innerHTML = '<label>0%</label> <progress></progress>';
+        outputPanel.insertBefore(div, outputPanel.firstChild);
+        progressHelper[file.uuid] = {
+            div: div,
+            progress: div.querySelector('progress'),
+            label: div.querySelector('label')
+        };
+        progressHelper[file.uuid].progress.max = file.maxChunks;
+    },
+    onEnd: function (file) {
+    	progressHelper[file.uuid].div.innerHTML = '<a href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
+    },
+    onProgress: function (chunk) {
+        var helper = progressHelper[chunk.uuid];
+        helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
+        if (helper.progress.position == -1) return;
+        var position = +helper.progress.position.toFixed(2).split('.')[1] || 100;
+        helper.label.innerHTML = position + '%';
+    }
+};
+```
+You must create these callback (like the previous example):
+* onBegin(file#Object) - Executing when a file is sending
+* onEnd(file#Object) - Executing when sending the file is finished
+* onProgress(file#Object) - Executing when sending files of parts are sent

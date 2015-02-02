@@ -42,3 +42,16 @@ module.exports.getHash = function(object) {
 }
 
 
+IdGen = function() {
+	
+	var id = 0; 
+	
+	this.get = function() {
+		id++; 
+		return id; 
+	}
+}
+
+module.exports.idGen = new IdGen(); 
+
+
