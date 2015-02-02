@@ -76,8 +76,16 @@ module.exports.listRequest = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token'])) {
 
-		module.exports.list(req.param('token'), function(infos) {
-			res.send(infos); 
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.list(function(infos) {
+				res.send(infos); 
+			}); 
 		}); 
 	}
 }
@@ -87,8 +95,16 @@ module.exports.getRequest = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
-		module.exports.get(req.param('token'), req.param('id'), function(info) {
-			res.send(info); 
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to get course #' + id + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.get(req.param('id'), function(info) {
+				res.send(info); 
+			}); 
 		}); 
 	}
 }
@@ -177,35 +193,19 @@ module.exports.findById = function(id, callback) {
 }
 
 
-module.exports.get = function(token, id, callback) {
+module.exports.get = function(id, callback) {
 
-	mod_db_sessions.authenticate(token, function(sessionInfo) {
-
-		if (! sessionInfo.success) {
-			callback(new CourseInfo(false, 'Failed to get course #' + id + ' : ' + sessionInfo.message)); 
-			return;
-		}
-
-		module.exports.findById(id, function(courseInfo) {
-			callback(courseInfo); 
-		}); 
+	module.exports.findById(id, function(courseInfo) {
+		callback(courseInfo); 
 	}); 
 }
 
 
-module.exports.list = function(token, callback) {
+module.exports.list = function(callback) {
 
-	mod_db_sessions.authenticate(token, function(sessionInfo) {
+	mod_db.find(DbName, { }, function(result) {
 
-		if (! sessionInfo.success) {
-			callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
-			return;
-		}
-
-		mod_db.find(DbName, { }, function(result) {
-
-			makeCourseInfo(true, '', result, callback); 
-		});
+		makeCourseInfo(true, '', result, callback); 
 	});
 }
 
