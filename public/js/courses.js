@@ -30,7 +30,11 @@ window.COURSES = {
 			// Afficher la liste des cours et le formulaire de création
 			COURSES.list();
 			$("#courses-div").show();
-			$("#courses-creation-form").show();
+			if (AUTH.getRole() >= 2) {
+				$("#courses-creation-form").show();
+			} else {
+				$("#courses-creation-form").hide();
+			}
 			$("#courses-details-form").hide();
 			$("#courses-edition-form").hide();
 		},
@@ -319,7 +323,11 @@ window.COURSES = {
 				$("#courses-details-teacher").text(info.result.teacher.login);
 				$("#courses-details-description").text(info.result.description);
 				$("#courses-details-form").show();
-				$("#courses-edition-form").hide();
+				if (AUTH.getRole() < 3 && info.result.teacher.login != AUTH.getMember()) {
+					$("#courses-details-submit").hide();
+				} else {
+					$("#courses-details-submit").show();
+				}
 			} else {
 				$("#courses-info").text('');
 				$("#courses-details-form").hide();

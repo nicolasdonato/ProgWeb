@@ -12,6 +12,10 @@ window.AUTH = {
 			return AUTH.session.user;
 		},
 
+		getRole: function() {
+			return AUTH.session.role;
+		},
+
 
 		initialize: function() {
 
@@ -34,14 +38,16 @@ window.AUTH = {
 			// Chargement des scripts en callback recursifs jusqu'au main.js en dernier, voir ci-dessous
 			//
 
-			var mainScriptLoader = function(){
+			var mainScriptLoader = function() {
 				
-				$.getScript('js/main.js').done(function(){
+				$.getScript('js/main.js').done(function() {
 					
 					AUTH.session.token = info.result.token;
 					localStorage.token = info.result.token; 
 					AUTH.session.user = info.result.user.login; 
 					localStorage.user = info.result.user.login; 
+					AUTH.session.role = info.result.user.role; 
+					localStorage.role = info.result.user.role; 
 
 					$("#user").text(AUTH.session.user);
 					$("#loginHeader").hide();
@@ -53,7 +59,7 @@ window.AUTH = {
 					//
 					// globalInitialization est définie dans main.js et contient l'init des composants 
 					//
-					if(typeof globalInitialization != "function"){
+					if (typeof globalInitialization != "function") {
 						throw new Error("Function globalInitialization must be defined in main.js");
 					}
 					
@@ -79,10 +85,11 @@ window.AUTH = {
 		    scripts.push("js/courses.js");
 		    scripts.push("js/test.js");
 
-			var scriptLoader = function(script, callback){
-				$.getScript(script).done(function(){
-					if(callback != null)
+			var scriptLoader = function(script, callback) {
+				$.getScript(script).done(function() {
+					if(callback != null) {
 						callback();
+					}
 				}).fail(function() {
 					console.error('Failed to find <'+ script +'>'); 
 				});
@@ -91,16 +98,16 @@ window.AUTH = {
 		    var loaders = [];
 		    var currentLoader = null;
 		    
-		    scripts.reverse().forEach(function(script){
+		    scripts.reverse().forEach(function(script) {
 
-		    	if(loaders.length == 0){
-			    	loaders.push(function(){
+		    	if (loaders.length == 0) {
+			    	loaders.push(function() {
 			    		mainScriptLoader();
 			    	});
 		    	}
 
 	    		var lastLoader = loaders[ loaders.length - 1 ];
-		    	loaders.push(function(){
+		    	loaders.push(function() {
 		    		scriptLoader(script, lastLoader);
 		    	});
 
@@ -110,7 +117,7 @@ window.AUTH = {
 		    	throw new Error('Connection malfunction, please reconnect');
 	    	}
 	    	
-	    	loaders[ loaders.length - 1 ]();
+	    	loaders[loaders.length - 1]();
 	    	
 		},
 
@@ -129,6 +136,7 @@ window.AUTH = {
 			AUTH.session = {}; 
 			delete localStorage.token; 
 			delete localStorage.user; 	
+			delete localStorage.role; 	
 		},
 
 
@@ -177,6 +185,7 @@ window.AUTH = {
 				AUTH.session = {}; 
 				delete localStorage.token; 
 				delete localStorage.user; 
+				delete localStorage.role; 
 
 				$("#loginHeader").show();
 				$("#logoutHeader").hide();
