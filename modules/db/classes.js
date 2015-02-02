@@ -28,6 +28,7 @@ Classe = function(course, subject, begin) {
 	} else {
 		this.begin = begin;
 	}
+	this.end = 0; 
 }
 
 

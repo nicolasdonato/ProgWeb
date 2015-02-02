@@ -189,17 +189,24 @@ module.exports.authenticate = function(token, callback) {
 
 var dbToSession = function(that, s, callback) {
 
-	mod_db_users.getUser(s.user, function(userInfo) {
+	if (typeof s.user == 'string') {
 
-		if (userInfo == null) {
-			throw new Error('User info is null'); 
-		} else if (! userInfo.success) {
-			throw new Error('There should be a user <' + s.user + '> in DB'); 
-		}
+		mod_db_users.getUser(s.user, function(userInfo) {
 
-		var session = new Session(s.token, userInfo.result, s.begin);
-		callback(that, session); 
-	}); 
+			if (userInfo == null) {
+				throw new Error('User info is null'); 
+			} else if (! userInfo.success) {
+				throw new Error('There should be a user <' + s.user + '> in DB'); 
+			}
+
+			var session = new Session(s.token, userInfo.result, s.begin);
+			callback(that, session); 
+		}); 
+
+	} else {
+		var session = new Session(s.token, s.user, s.begin);
+		callback(that, s); 
+	}
 }
 
 

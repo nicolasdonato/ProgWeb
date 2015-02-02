@@ -98,10 +98,15 @@
       <p>
         <span id="courses-details-id" class="data label-simple"  style="display:none;"></span>
         <span class="libelle">Nom :&nbsp;</span> <span id="courses-details-name" class="data label-simple" ></span> <br />
-        <span class="libelle">Enseignant :&nbsp;</span> <span id="courses-details-teacher" tclass="data label-simple" ></span> <br />
-        <span class="libelle">Description :&nbsp;</span> <span id="courses-details-description" tclass="data label-area" ></span>
+        <span class="libelle">Enseignant :&nbsp;</span> <span id="courses-details-teacher" class="data label-simple" ></span> <br />
+        <span class="libelle">Description :&nbsp;</span> <span id="courses-details-description" class="data label-area" ></span>
       </p>
-      <input id="courses-details-submit" type="submit" value="Modifier le cours" />
+      <p>
+        <input id="courses-details-submit-modify" type="submit" value="Modifier le cours" />
+        <input id="courses-details-submit-enrol" type="submit" value="S'inscrire" />
+        <input id="courses-details-submit-quit" type="submit" value="Se désinscrire" style="display:none;" />
+        <span id="courses-details-message" class="data label-area" ></span>
+      </p>
     </form>
 
     <form id="courses-edition-form" style="display:none;">
