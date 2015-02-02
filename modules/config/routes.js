@@ -31,13 +31,13 @@ exports.setup = function(app) {
 	// Class management
 
 	app.route('/manage/classes').
-		post(	mod_db_classes.start).
-		get(	mod_db_classes.list);
+		post(	mod_db_classes.requestStart).
+		get(	mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
-		get(	mod_db_classes.get).
-		put(	mod_db_classes.update).
-		delete(	mod_db_classes.end);
+		get(	mod_db_classes.requestGet).
+		put(	mod_db_classes.requestUpdate).
+		delete(	mod_db_classes.requestEnd);
 	
 	
 	// Session management

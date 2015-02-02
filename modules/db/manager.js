@@ -40,6 +40,21 @@ module.exports.ServerInfo = ServerInfo;
 /////////////////////////////////////////////////////////////////////////////////////
 
 
+module.exports.checkParams = function(req, res, paramList) {
+	
+	for (var i = 0; i < paramList.length; i++) {
+		if (req.param(paramList[i]) == null) {
+			
+			var serverInfo = new ServerInfo(false, 'Property <' + parameters[i] + '> is missing'); 
+			res.send(serverInfo); 
+			return false; 
+		}
+	}
+	
+	return true; 
+}; 
+
+
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
 

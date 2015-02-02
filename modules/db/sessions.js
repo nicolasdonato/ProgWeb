@@ -68,15 +68,19 @@ var makeSessionInfo = function(success, message, data, callback) {
 module.exports.requestLogin = function(req, res) {
 
 	if (req.body.token != undefined) {
-		module.exports.authenticate(req.body.token, function(sessionInfo) {
-			res.send(sessionInfo);
-		}); 
+		if (mod_db.checkParams(req, res, ['token'])) {
+			module.exports.authenticate(req.body.token, function(sessionInfo) {
+				res.send(sessionInfo);
+			}); 
+		}
 	}
 
 	else if (req.body.login != undefined) {
-		module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
-			res.send(sessionInfo);
-		}); 
+		if (mod_db.checkParams(req, res, ['login', 'password'])) {
+			module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
+				res.send(sessionInfo);
+			}); 
+		}
 	}
 
 	else {
@@ -87,10 +91,12 @@ module.exports.requestLogin = function(req, res) {
 
 module.exports.requestLogout = function(req, res) {
 
-	module.exports.logout(req.body.token, function(result) {
+	if (mod_db.checkParams(req, res, ['token'])) {
+		module.exports.logout(req.body.token, function(result) {
 
-		res.send(result); 
-	});
+			res.send(result); 
+		});
+	}
 }
 
 

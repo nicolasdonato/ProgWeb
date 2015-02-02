@@ -40,7 +40,7 @@ function CourseInfo(success, message, data) {
 			// TODO
 			callback(this); 
 		} else {
-			course = dbToCourse(this, this.result, function(that, course) {
+			dbToCourse(this, this.result, function(that, course) {
 				that.result = course; 
 				callback(that); 
 			}); 
@@ -63,81 +63,56 @@ var makeCourseInfo = function(success, message, data, callback) {
 
 module.exports.createRequest = function(req, res) {
 
-	var parameters = ['token', 'name', 'description']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'name', 'description'])) {
 
-	module.exports.create(req.param('token'), req.param('name'), req.param('description'), function(info) {
-		res.send(info); 
-	}); 
+		module.exports.create(req.param('token'), req.param('name'), req.param('description'), function(info) {
+			res.send(info); 
+		}); 
+	}
 }
 
 
 module.exports.listRequest = function(req, res) {
 
-	var parameters = ['token']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token'])) {
 
-	module.exports.list(req.param('token'), function(infos) {
-		res.send(infos); 
-	}); 
+		module.exports.list(req.param('token'), function(infos) {
+			res.send(infos); 
+		}); 
+	}
 }
 
 
 module.exports.getRequest = function(req, res) {
 
-	var parameters = ['token', 'id']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
-	module.exports.get(req.param('token'), req.param('id'), function(info) {
-		res.send(info); 
-	}); 
+		module.exports.get(req.param('token'), req.param('id'), function(info) {
+			res.send(info); 
+		}); 
+	}
 }
 
 
 module.exports.updateRequest = function(req, res) {
 
-	var parameters = ['token', 'id', 'name', 'teacher', 'description']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id', 'name', 'teacher', 'description'])) {
 
-	module.exports.update(req.param('token'), req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), function(info) {
-		res.send(info); 
-	}); 
+		module.exports.update(req.param('token'), req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), function(info) {
+			res.send(info); 
+		}); 
+	}
 }
 
 
 module.exports.removeRequest = function(req, res) {
 
-	var parameters = ['token', 'id']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
-	module.exports.remove(req.param('token'), req.param('id'), function(info) {
-		res.send(info); 
-	}); 
+		module.exports.remove(req.param('token'), req.param('id'), function(info) {
+			res.send(info); 
+		}); 
+	}
 }
 
 
