@@ -1,12 +1,91 @@
-$ ->
-	
-	$('#in').on 'keyup', (e) ->
-		if $(this).val() isnt '' and e.keyCode is 13
-			val = $(this).val()
-			$('#out').append 'me : ' + val + '<br>'
-			$('#out').scrollTop $('#out')[0].scrollHeight
+window.view =
+	login: (event) ->
+		if event.keyCode is 13
+			AUTH.authenticate 	$('#login').val(),
+								$('#pass').val()
+
+	loginSuccess: ->
+		$("#loginForm")			.hide()
+		$("#rooms, #deco")		.show()
+
+	loginFail: ->
+		console.log 'login failed'
+		$('#loginForm')			.addClass 'fail'
+
+	addVideo: (member, video) ->
+		$(
+			"""
+			<div id="#{member}" class="cam">
+				<p>#{member}</p>
+				#{$(video).prop('outerHTML')}
+			</div>
+			"""
+		)	.appendTo					('#cams')
+			.on 'dragover dragenter', 	view.dragCancel
+			.on 'drop', 				view.dropFile
+
+	writeChat: (user, msg) ->
+		$('#out').append 		user + ' : ' + msg + '<br>'
+		$('#out').scrollTop 	$('#out')[0].scrollHeight
+
+	readChat: (event) ->
+		msg = $(this).val()
+		if msg isnt '' and event.keyCode is 13
 			$(this).val ''
-			sendMessage 'messageChat', {user: AUTH.connectionData.userName, message: val}
+			if typeof sendMessage is 'undefined'
+				view.writeChat 	'WARNING', 'You are not connected !'
+			else
+				view.writeChat 	'me',
+								msg
+				sendMessage 	'messageChat',
+								user: AUTH.connectionData.userName
+								message: msg
+
+	dragCancel: (event) ->
+		if event.preventDefault
+			event.preventDefault()
+		return off
+
+	dropFile: (event) ->
+		if event.preventDefault
+			event.preventDefault()
+
+		event = event.originalEvent
+		# console.log 'drop event, target: ' + event.target
+		console.log event.dataTransfer.files[0]
+		# console.log event.target.file
+
+$ ->
+	#########################################
+	# 				Event handlers			#
+	#########################################
+
+	# Login
+	$('#loginForm')		.on 'keyup', 				view.login
+
+	# Drop on local video
+	$('#localMember')
+		.parent()		.on 'dragover dragenter', 	view.dragCancel
+						.on 'drop', 				view.dropFile
+
+	# Chat
+	$('#in')			.on 'keyup', 				view.readChat
+
+
+
+	#########################################
+	# 				Tests					#
+	#########################################
+	if window.FileReader
+		console.log 'FILEREADER'
+	else
+		console.log 'NO FILEREADER !'
+
+	if window.FileList
+		console.log 'FILELIST'
+	else
+		console.log 'NO FILELIST !'
+	
 
 	data = data: [
 		text: 'Projet 1'

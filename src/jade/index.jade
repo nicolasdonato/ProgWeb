@@ -29,15 +29,17 @@ html
 		script(src='js/test.js')
 	body
 		header
-			form#loginForm(onkeyup='return AUTH.authenticate(event, \'auth\');')
-				input#login(type='text', placeholder='Login')
+			form#loginForm.show
+				input#login(
+					type='text',
+					placeholder='Login')
 				br
-				input#pwd(type='password', placeholder='Password')
-			nav#rooms(style='display:none')
-				a(href='#') Projet 1
-				a(href='#') Projet 2
-				a(href='#') Projet 3
-			button#deco(type='text', style='display:none') Deco
+				input#pass(
+					type='password',
+					placeholder='Password')
+			nav#rooms.hide
+				span Mon Projet
+			button#deco.hide(type='text') Deco
 		main
 			aside#geochat
 				section#geo
@@ -47,6 +49,8 @@ html
 			section#cams
 				.cam
 					p#localMember
-					video#localVideo(autoplay='true', muted='true')
+					video#localVideo(
+						autoplay='true',
+						muted='true')
 			aside#files
 		footer footer

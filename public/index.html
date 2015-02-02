@@ -25,12 +25,12 @@
   </head>
   <body>
     <header>
-      <form id="loginForm" onkeyup="return AUTH.authenticate(event, 'auth');">
+      <form id="loginForm" class="show">
         <input id="login" type="text" placeholder="Login"><br>
-        <input id="pwd" type="password" placeholder="Password">
+        <input id="pass" type="password" placeholder="Password">
       </form>
-      <nav id="rooms" style="display:none"><a href="#">Projet 1</a><a href="#">Projet 2</a><a href="#">Projet 3</a></nav>
-      <button id="deco" type="text" style="display:none">Deco</button>
+      <nav id="rooms" class="hide"><span>Mon Projet</span></nav>
+      <button id="deco" type="text" class="hide">Deco</button>
     </header>
     <main>
       <aside id="geochat">

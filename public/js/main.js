@@ -31,11 +31,7 @@ var webrtc = new WebRTC({
 		return AUTH.getMember();
 	},
 	addNewVideo: function(event) {
-		var tagToAdd = jQuery("<div></div>")
-						.addClass("cam")
-						.append("<p>" + event.member + "</p>")
-						.append(event.remoteVideo);
-		jQuery("#cams").append(tagToAdd);
+		view.addVideo(event.member, event.remoteVideo);
 	},
 	deleteVideo: function(event) {
 		jQuery(event.remoteVideo).parent().remove();
@@ -55,10 +51,41 @@ var map = new Map({
 		return AUTH.getMember();
 	},
 	showMap: function(mapElement) {
-		jQuery(mapElement).css({
-			height: "150px",
-			width: "150px"
+		var el = jQuery(mapElement);
+
+		el.css({
+			height: "100%"
 		});
+
+		this.map.setOptions({
+			disableDefaultUI: true,
+			zoomControl: true
+		});
+
+		// TODO
+		// 		panControl: boolean,
+		// 		mapTypeControl: boolean,
+		// 		scaleControl: boolean,
+		// 		streetViewControl: boolean,
+		// 		overviewMapControl: boolean
+
+		// el.find('#carte img[src*="google_white"]')
+		// 	.parent()
+		// 	.parent()
+		// 	.parent()
+		// 	.css('background-color', 'red');
+
+		// el.find('#carte .gmnoprint div:contains(Données)').remove();
+		// el.find('#carte .gmnoprint span:contains(Données)').remove();
+		// el.find('#carte .gmnoprint a:contains(Données)').remove();
+		// el.find('#carte .gmnoprint a:contains(Conditions)').remove();
+
+		// a = el.find('#carte').children('.gmstyle').children('div:first-child').clone();
+		// a = el.find('#carte').children('.gmstyle').children('div:last-child').clone();
+
+		// el.find('#carte .gmstyle div').remove();
+		// el.find('#carte .gmstyle').append(a);
+		// el.find('#carte .gmstyle').append(b);
 	}
 });
 
@@ -129,7 +156,7 @@ window.onbeforeunload = function(e){
 	//sendMessage('bye');
 	webrtc.hangup();
 	map.closeLocation();
-}
+};
 
 /////////////////////////////////////////
 // Chat component initialization
@@ -172,17 +199,7 @@ var chatMessage = new ChatMessage()
 	})
 	
 	.on('messageChat', function(messageChat) {
-		console.log(messageChat)
-		console.log("Receive a message by " + messageChat.user + ": " + messageChat.message);
-		if (jQuery("#dataChannelReceive").length > 0) {
-			var outChat = jQuery("#dataChannelReceive");
-			var val = outChat.val();
-			val += messageChat.user + " says: " + messageChat.message;
-			outChat.val(val);
-		} else {
-			console.log('il est temps de printer')
-			$('#out').append(messageChat.user + ' : ' + messageChat.message + '<br>');
-		}
+		view.writeChat(messageChat.user, messageChat.message);
 	})
 	// do refresh the GitHub file list
 	.on('refreshFileList', function (fileToRefresh) {
@@ -202,34 +219,6 @@ function sendMessage(messageType, data){
 
 //add member name to the local video
 jQuery('#localMember').text(AUTH.getMember());
-
-jQuery("#sendButton").click(function () {
-	var data;
-	var inputChat = jQuery('#dataChannelSend');
-	if (inputChat && inputChat.length > 0) {
-		data = inputChat.val();
-	} else {
-		data = jQuery("#in").val();
-	}
-	if (data) {
-		sendMessage('messageChat', {
-			user: AUTH.getMember(),
-			message: data
-		});
-	}
-});
-
-$('#in').on('keyup', function(e) {
-	if ($(this).val() !== '' && e.keyCode === 13) {
-		$('#out').append('me : ' + $(this).val() + '<br>');
-		sendMessage('messageChat', {
-			user: AUTH.getMember(),
-			message: $(this).val()
-		});
-		$('#out').scrollTop($('#out')[0].scrollHeight);
-		return $(this).val('');
-	}
-});
 
 
 /////////////////////////////////////////

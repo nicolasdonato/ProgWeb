@@ -27,26 +27,19 @@ window.AUTH = {
 		console.log('--- userList ---');
 		console.log(AUTH.users);
 	},
-	authenticate: function(e) {
-		if (e.keyCode === 13) {
-			$("#loginForm").css('display', 'none');
-			$("#rooms").css('display', 'inline');
-			$("#deco").css('display', 'inline');
+	authenticate: function(login, pass) {
+		var data = { login: login, password: pass };
+		AUTH.connectionData.userName = login;
 
-			var data = { login: $("#login").val(), password: $("#pwd").val() };
-
-			AUTH.connectionData.userName = data.login;
-			console.log(data)
-			if(AUTH.enableSocketAuth)
-			{
-				AUTH.auth.emit("authentification", data);
-			}
-			if(AUTH.enablePostAuth)
-			{
-				$.post("/session/login", data , AUTH.authenticationResult, "json");
-			}
-		e.preventDefault();
+		if(AUTH.enableSocketAuth) // Still usefull ?
+		{
+			AUTH.auth.emit("authentification", data);
 		}
+		if(AUTH.enablePostAuth)
+		{
+			$.post("/session/login", data , AUTH.authenticationResult, "json");
+		}
+
 		return false;
 	},
 	connectionApproved : function(data){
@@ -55,32 +48,25 @@ window.AUTH = {
 			return;
 		}
 		
-		var userName 	= AUTH.getMember();
+		var userName 	= AUTH.connectionData.userName;
 		var token 		= data.token;
 		
-		// TODO : load project in #main
+		// "Refresh" view
+		view.loginSuccess();
 		
 		// Asynchronously Load the map API 
 		$.getScript("js/main.js")
 		.done(function() {
-			AUTH.connectionData.userName 	= userName;
 			AUTH.connectionData.token 		= token;
-			
-			$("#loginInProgress").hide();
-			$("#connectionData").text("Hello "+userName+", your connection token is : "+ token);
-			$("#connectionData").show();
 		})
 		.fail(function() {
 		});
 	},
 	connectionRefused : function(data){
-		$("#loginInProgress").hide();
-		$("#connectionData").text('LOGIN FAILED');
-		$("#connectionData").show();
-		$("#loginForm").show();
+		// "Refresh" view
+		view.loginFail();
 	},
 	authenticationResult : function(data){
-		alert(data)
 		if(data.authenticated){
 			AUTH.connectionApproved(data);
 		}
