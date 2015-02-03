@@ -20,7 +20,6 @@ window.AUTH = {
 		getRole: function() {
 			return AUTH.session.role;
 		},
-		
 
 
 		initialize: function() {
@@ -41,9 +40,9 @@ window.AUTH = {
 			// Chargement des scripts en callback recursifs jusqu'au main.js en dernier, voir ci-dessous
 			//
 
-			var mainScriptLoader = function(){
+			var mainScriptLoader = function() {
 				
-				$.getScript('js/main.js').done(function(){
+				$.getScript('js/main.js').done(function() {
 					
 					AUTH.session.token = info.result.token;
 					localStorage.token = info.result.token; 
@@ -102,7 +101,6 @@ window.AUTH = {
 		    //
 		    //Chargé depuis index.html visiblement...
 		    //scripts.push("js/test.js");
-
 			var scriptLoader = function(script, callback){
 				$.getScript(script).done(function(){
 					if(callback != null) {
@@ -116,16 +114,16 @@ window.AUTH = {
 		    var loaders = [];
 		    var currentLoader = null;
 		    
-		    scripts.reverse().forEach(function(script){
+		    scripts.reverse().forEach(function(script) {
 
-		    	if(loaders.length == 0){
-			    	loaders.push(function(){
+		    	if (loaders.length == 0) {
+			    	loaders.push(function() {
 			    		mainScriptLoader();
 			    	});
 		    	}
 
 	    		var lastLoader = loaders[ loaders.length - 1 ];
-		    	loaders.push(function(){
+		    	loaders.push(function() {
 		    		scriptLoader(script, lastLoader);
 		    	});
 
@@ -135,7 +133,7 @@ window.AUTH = {
 		    	throw new Error('Connection malfunction, please reconnect');
 	    	}
 	    	
-	    	loaders[ loaders.length - 1 ]();
+	    	loaders[loaders.length - 1]();
 	    	
 		},
 
