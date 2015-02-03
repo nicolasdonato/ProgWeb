@@ -25,34 +25,69 @@ Course = function(name, teacher, description) {
 	this.name = name; 
 	this.teacher = teacher; 
 	this.description = description; 
+
+	this.students = new Array(); 
+
+	this.addStudent = function(user) {
+		if (! this.hasStudent(user)) {
+			this.students.push(user); 
+		}
+	};
+
+	this.removeStudent = function(user) {
+		var hasBeenRemoved = false; 
+		var i = 0; 
+		while (! hasBeenRemoved && i < this.students.length) {
+			if(this.students[i] == user) {
+				this.students.splice(i, 1); 
+				hasBeenRemoved = true;
+			}
+			i++;
+		}
+		if(!hasBeenRemoved){
+			throw new Error('Student could not be found for removal');
+		}
+	};
+
+	this.hasStudent = function(user) {
+		var isStudent = false; 
+		var i = 0; 
+		while (! isStudent && i < this.students.length) {
+			isStudent = (this.students[i] == user);
+			i++;
+		}
+		return isStudent; 
+	};
 }
 
 
 function CourseInfo(success, message, data) {
 
-	var course = null; 
-	if (data != undefined && data != null) {
+	mod_db.ServerInfo.call(this, success, message, data); 
 
-		if (data instanceof Array) {
+	this.update = function(callback) {
 
-			course = []; 
-			for (var i = 0; i < data.length; i++) {
-
-				var item = data[i]; 
-				if (item != undefined && item != null) {
-					course.push(dbToCourse(item)); 
-				}
-			}
-
+		if (this.result == undefined || this.result == null) {
+			callback(this); 
+		} else if (this.result instanceof Array) {
+			// TODO
+			callback(this); 
 		} else {
-			course = dbToCourse(data); 
+			dbToCourse(this, this.result, function(that, course) {
+				that.result = course; 
+				callback(that); 
+			}); 
 		}
 	}
-
-	mod_db.ServerInfo.call(this, success, message, course); 
 }
 
 CourseInfo.prototype = mod_db.ServerInfo; 
+
+var makeCourseInfo = function(success, message, data, callback) {
+
+	var courseInfo = new CourseInfo(success, message, data); 
+	courseInfo.update(callback); 
+};
 
 
 //External API
@@ -61,82 +96,95 @@ CourseInfo.prototype = mod_db.ServerInfo;
 
 module.exports.createRequest = function(req, res) {
 
-	var parameters = ['token', 'name', 'description']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'name', 'description'])) {
 
-	module.exports.create(req.param('token'), req.param('name'), req.param('description'), function(info) {
-		res.send(info); 
-	}); 
-}
+		module.exports.create(req.param('token'), req.param('name'), req.param('description'), function(info) {
+			res.send(info); 
+		}); 
+	}
+};
 
 
 module.exports.listRequest = function(req, res) {
 
-	var parameters = ['token']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token'])) {
 
-	module.exports.list(req.param('token'), function(infos) {
-		res.send(infos); 
-	}); 
-}
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.list(function(infos) {
+				res.send(infos); 
+			}); 
+		}); 
+	}
+};
 
 
 module.exports.getRequest = function(req, res) {
 
-	var parameters = ['token', 'id']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
-	module.exports.get(req.param('token'), req.param('id'), function(info) {
-		res.send(info); 
-	}); 
-}
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to get course #' + id + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.get(req.param('id'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
+};
 
 
 module.exports.updateRequest = function(req, res) {
 
-	var parameters = ['token', 'id', 'name', 'teacher', 'description']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id', 'name', 'teacher', 'description'])) {
 
-	module.exports.update(req.param('token'), req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), function(info) {
-		res.send(info); 
-	}); 
-}
+		module.exports.update(req.param('token'), req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), [], function(info) {
+			res.send(info); 
+		}); 
+	}
+};
 
 
 module.exports.removeRequest = function(req, res) {
 
-	var parameters = ['token', 'id']; 
-	for (var i = 0; i < parameters.length; i++) {
-		if (req.param(parameters[i]) == null) {
-			res.send(new CourseInfo(false, 'Property <' + parameters[i] + '> is missing')); 
-			return; 
-		} 
-	}
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
-	module.exports.remove(req.param('token'), req.param('id'), function(info) {
-		res.send(info); 
-	}); 
-}
+		module.exports.remove(req.param('token'), req.param('id'), function(info) {
+			res.send(info); 
+		}); 
+	}
+};
+
+
+module.exports.enrolRequest = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		module.exports.enrol(req.param('token'), req.param('id'), function(info) {
+			res.send(info); 
+		}); 
+	}
+};
+
+
+module.exports.quitRequest = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		module.exports.quit(req.param('token'), req.param('id'), function(info) {
+			res.send(info); 
+		}); 
+	}
+};
 
 
 //Local API
@@ -145,7 +193,7 @@ module.exports.removeRequest = function(req, res) {
 
 module.exports.getCollectionName = function() {
 	return DbName; 
-}
+};
 
 
 module.exports.initialize = function(db) {
@@ -163,7 +211,7 @@ module.exports.initialize = function(db) {
 	for (var index in initializationData) {
 		collection.insert(initializationData[index]); 
 	}
-}
+};
 
 
 module.exports.findByName = function(name, callback) {
@@ -178,9 +226,9 @@ module.exports.findByName = function(name, callback) {
 			throw new Error('More than one course with the same name were found');
 		}
 
-		callback(new CourseInfo(true, '', result[0])); 
+		makeCourseInfo(true, '', result[0], callback); 
 	});
-}
+};
 
 
 module.exports.findById = function(id, callback) {
@@ -195,42 +243,26 @@ module.exports.findById = function(id, callback) {
 			throw new Error('More than one course with the same ID were found');
 		}
 
-		callback(new CourseInfo(true, '', result[0])); 
+		makeCourseInfo(true, '', result[0], callback); 
 	});
-}
+};
 
 
-module.exports.get = function(token, id, callback) {
+module.exports.get = function(id, callback) {
 
-	mod_db_sessions.authenticate(token, function(sessionInfo) {
-
-		if (! sessionInfo.success) {
-			callback(new CourseInfo(false, 'Failed to get course #' + id + ' : ' + sessionInfo.message)); 
-			return;
-		}
-
-		module.exports.findById(id, function(courseInfo) {
-			callback(courseInfo); 
-		}); 
+	module.exports.findById(id, function(courseInfo) {
+		callback(courseInfo); 
 	}); 
-}
+};
 
 
-module.exports.list = function(token, callback) {
+module.exports.list = function(callback) {
 
-	mod_db_sessions.authenticate(token, function(sessionInfo) {
+	mod_db.find(DbName, { }, function(result) {
 
-		if (! sessionInfo.success) {
-			callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
-			return;
-		}
-
-		mod_db.find(DbName, { }, function(result) {
-
-			callback(new CourseInfo(true, '', result)); 
-		});
+		makeCourseInfo(true, '', result, callback); 
 	});
-}
+};
 
 
 module.exports.create = function(token, name, description, callback) {
@@ -246,7 +278,7 @@ module.exports.create = function(token, name, description, callback) {
 			callback(new CourseInfo(false, 'The user <' + sessionInfo.result.user.login + '> doesn\'t have permission to create a course')); 
 			return; 
 		} 
-		
+
 		if (name == '') {
 			callback(new CourseInfo(false, 'Failed to create course : empty name')); 
 			return;
@@ -258,11 +290,11 @@ module.exports.create = function(token, name, description, callback) {
 			} else {
 				var course = new Course(name, sessionInfo.result.user.login, description); 
 				mod_db.insert(DbName, course); 
-				callback(new CourseInfo(true, '', course)); 
+				makeCourseInfo(true, '', course, callback); 
 			}
 		}); 
 	}); 
-}
+};
 
 
 module.exports.remove = function(token, id, callback) {
@@ -282,21 +314,21 @@ module.exports.remove = function(token, id, callback) {
 		module.exports.findById(id, function(courseInfo) {
 			if (courseInfo.success) {
 
-				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.login) {
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher.login != sessionInfo.result.user.login) {
 					callback(new CourseInfo(false, 'A teacher can\'t delete someone else\'s course')); 
 					return; 
 				}
 
 				mod_db.remove(DbName, { id: +id }, function(result) {
-					
+
 					if (result.length == 0) {
 						callback(new CourseInfo(false, 'Failed to delete a course: The course #' + id + ' unknown')); 
 						return;
 					} else if (result.length > 1) {
 						throw new Error("More than one course with the same ID were found");
 					}
-					
-					callback(new CourseInfo(true, '', result[0]));
+
+					makeCourseInfo(true, '', result[0], callback); 
 				}); 
 
 			} else {
@@ -304,10 +336,16 @@ module.exports.remove = function(token, id, callback) {
 			}
 		}); 
 	});
-}
+};
 
 
-module.exports.update = function(token, id, name, teacher, description, callback) {
+module.exports.updateCourse = function(token, course, callback) {
+
+	module.exports.update(token, course.id, course.name, course.teacher, course.description, course.students, callback); 
+};
+
+
+module.exports.update = function(token, id, name, teacher, description, students, callback) {
 
 	mod_db_sessions.authenticate(token, function(sessionInfo) {
 
@@ -324,7 +362,7 @@ module.exports.update = function(token, id, name, teacher, description, callback
 		module.exports.findById(id, function(courseInfo) {
 			if (courseInfo.success) {
 
-				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher != sessionInfo.result.user.login) {
+				if (sessionInfo.result.user.role < mod_db_users.Roles.ADMIN && courseInfo.result.teacher.login != sessionInfo.result.user.login) {
 					callback(new CourseInfo(false, 'A teacher can\'t update someone else\'s course')); 
 					return; 
 				}
@@ -338,9 +376,13 @@ module.exports.update = function(token, id, name, teacher, description, callback
 
 					var course = new Course(name, teacher, description); 
 					course.id = +id; 
+					course.students = courseInfo.result.students;
+					students.forEach(function(student) {
+						course.students.push(student); 
+					}); 
 					db.collection(DbName).update({ id: +id }, course);
 
-					callback(new CourseInfo(true, '', course)); 
+					makeCourseInfo(true, '', course, callback); 
 				});
 
 			} else {
@@ -348,19 +390,113 @@ module.exports.update = function(token, id, name, teacher, description, callback
 			}
 		}); 
 	});
-}
+};
+
+
+module.exports.enrol = function(token, id, callback) {
+
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to enrol in course #' + id + ' : ' + sessionInfo.message)); 
+			return;
+		}
+		var user = sessionInfo.result.user; 
+
+		module.exports.findById(id, function(courseInfo) {
+
+			if (! courseInfo.success) {
+				callback(new CourseInfo(false, 'Failed to enrol in course #' + id + ' : ' + courseInfo.message)); 
+				return;
+			}
+			var course = courseInfo.result; 
+
+			if (course.hasStudent(user.login)) {
+				callback(new CourseInfo(false, 'The user <' + user.login + '> is already enrolled in course #' + id)); 
+				return; 
+			} else if (course.teacher == user.login) {
+				callback(new CourseInfo(false, 'A teacher can\'t be enrolled in its own course')); 
+				return; 
+			}
+
+			course.addStudent(user.login); 
+
+			mod_db.connect(function(db) {
+
+				db.collection(DbName).update({ id: +(course.id) }, course);
+				makeCourseInfo(true, '', course, callback); 
+			}); 
+		}); 
+	});
+};
+
+
+module.exports.quit = function(token, id, callback) {
+
+	mod_db_sessions.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			callback(new CourseInfo(false, 'Failed to quit course #' + id + ' : ' + sessionInfo.message)); 
+			return;
+		}
+		var user = sessionInfo.result.user; 
+
+		module.exports.findById(id, function(courseInfo) {
+
+			if (! courseInfo.success) {
+				callback(new CourseInfo(false, 'Failed to quit course #' + id + ' : ' + courseInfo.message)); 
+				return;
+			}
+			var course = courseInfo.result; 
+
+			if (! course.hasStudent(user.login)) {
+				callback(new CourseInfo(false, 'The user <' + user.login + '> is not enrolled in course #' + id)); 
+				return; 
+			} 
+
+			course.removeStudent(user.login); 
+
+			mod_db.connect(function(db) {
+
+				db.collection(DbName).update({ id: +(course.id) }, course);
+				makeCourseInfo(true, '', course, callback); 
+			}); 
+		}); 
+	});
+};
+
+
 
 
 //Useful functions
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-function dbToCourse(c) {
+function dbToCourse(that, c, callback) {
 
-	var course = new Course(c.name, c.teacher, c.description); 
-	course.id = c.id; 
+	if (typeof c.teacher == 'string') {
 
-	return course; 
+		mod_db_users.getUser(c.teacher, function(userInfo) {
+
+			if (userInfo == null) {
+				throw new Error('User info is null'); 
+			} else if (! userInfo.success) {
+				throw new Error('There should be a user <' + c.teacher + '> in DB'); 
+			}
+
+			var course = new Course(c.name, userInfo.result, c.description); 
+			course.id = c.id; 
+			course.students = c.students; 
+			callback(that, course); 
+		}); 
+
+	} else {
+		var course = new Course(c.name, c.teacher, c.description); 
+		course.id = c.id; 
+		course.students = c.students; 
+		callback(that, course); 
+	}
+
 }
 
 

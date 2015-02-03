@@ -7,7 +7,10 @@
       }
     },
     loginSuccess: function() {
-      $("#loginForm").hide();
+	    $("#loginForm").hide();
+	    //garder le login mais pas le mdp
+	    $("#pass").val('');
+	    $("#logout").show();
       return $("#rooms, #logout").show();
     },
     loginFail: function() {
@@ -15,8 +18,9 @@
     },
     logout: function() {
       AUTH.requestLogout();
-      $("#loginForm").hide();
-      return $("#rooms, #logout").show();
+      $("#loginForm").show();
+      $("#logout").hide();
+      $("#rooms").hide();
     },
     addVideo: function(member, video) {
       return $("<div id=\"" + member + "\" class=\"cam\">\n	<p>" + member + "</p>\n	" + ($(video).prop('outerHTML')) + "\n</div>").appendTo('#cams').on('dragover dragenter', view.dragCancel).on('drop', view.dropFile);
@@ -35,7 +39,7 @@
         } else {
           view.writeChat('me', msg);
           return sendMessage('messageChat', {
-            user: AUTH.connectionData.userName,
+            user: AUTH.getMember(),
             message: msg
           });
         }
@@ -59,7 +63,7 @@
   $(function() {
     var data;
     $('#loginForm').on('keyup', view.login);
-    $('#logout').on('click', view.logout);
+    $('#logout').click(view.logout);
     $('#localMember').parent().on('dragover dragenter', view.dragCancel).on('drop', view.dropFile);
     $('#in').on('keyup', view.readChat);
     if (window.FileReader) {

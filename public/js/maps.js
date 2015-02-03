@@ -108,7 +108,7 @@ var Map = Class.create({
 
 		if (geolocation) {
 			geolocation.getCurrentPosition(function(pos) {
-				createPositionOnMap(pos.coords);
+				GEOCHAT_MAP.map.createPositionOnMap(pos.coords);
 			});
 		}
 	},
@@ -117,7 +117,8 @@ var Map = Class.create({
 	 * create the location on the map with the data of the remote person
 	 */
 	createPositionOnMap: function(data) {
-		var crd = data.coords;
+		//dans le cas de l'appel lancé depuis GEOCHAT_MAP.locate : data == coords voir ci-dessus, donc si pas de pro coords, on suppose que data l'est
+		var crd = data.coords ? data.coords : data;
 		console.log('Your current position is:');
 		console.log('Latitude : ' + crd.latitude);
 		console.log('Longitude: ' + crd.longitude);
@@ -126,8 +127,9 @@ var Map = Class.create({
 		// create the map if it does not exist
 		if (!this.isCarteEnable) {
 			// define default options for the map
+			var position = new google.maps.LatLng(crd.latitude, crd.longitude);
 			var options = {
-				//center: position,
+				center: position,
 				zoom: 19,
 				mapTypeId: google.maps.MapTypeId.ROADMAP
 			};
@@ -221,3 +223,69 @@ var Map = Class.create({
 	}
 	
 });
+
+window.GEOCHAT_MAP = {
+	map : null,
+	initialize : function(){
+		//
+		// le lien pour tester l'affichage local
+		//
+		$("#map-locate").click(GEOCHAT_MAP.locate);
+		
+		GEOCHAT_MAP.map = new Map({
+			divMap: $("#carte")[0],
+			localMember: function() {
+				return AUTH.getMember();
+			},
+			showMap: function(mapElement) {
+				var el = jQuery(mapElement);
+
+				el.css({
+					height: "100%"
+				});
+
+				this.map.setOptions({
+					disableDefaultUI: true,
+					zoomControl: true
+				});
+
+				// TODO
+				// 		panControl: boolean,
+				// 		mapTypeControl: boolean,
+				// 		scaleControl: boolean,
+				// 		streetViewControl: boolean,
+				// 		overviewMapControl: boolean
+
+				// el.find('#carte img[src*="google_white"]')
+				// 	.parent()
+				// 	.parent()
+				// 	.parent()
+				// 	.css('background-color', 'red');
+
+				// el.find('#carte .gmnoprint div:contains(Données)').remove();
+				// el.find('#carte .gmnoprint span:contains(Données)').remove();
+				// el.find('#carte .gmnoprint a:contains(Données)').remove();
+				// el.find('#carte .gmnoprint a:contains(Conditions)').remove();
+
+				// a = el.find('#carte').children('.gmstyle').children('div:first-child').clone();
+				// a = el.find('#carte').children('.gmstyle').children('div:last-child').clone();
+
+				// el.find('#carte .gmstyle div').remove();
+				// el.find('#carte .gmstyle').append(a);
+				// el.find('#carte .gmstyle').append(b);
+			}
+		});
+	},
+	connect : function(){
+		$("#carte").show();
+		$("#map-locate").show();
+	},
+	disconnect : function(){
+		$("#carte").hide();
+		$("#map-locate").hide();
+	},
+	locate : function(e){
+		e.preventDefault();
+		GEOCHAT_MAP.map.showGeolocationOnGoogleMap(navigator.geolocation);
+	}
+};

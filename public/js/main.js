@@ -45,50 +45,11 @@ var webrtc = new WebRTC({
 	}
 });
 
-// Map initialization 
-var map = new Map({
-	divMap: document.getElementById("carte"),
-	localMember: function() {
-		return AUTH.getMember();
-	},
-	showMap: function(mapElement) {
-		var el = jQuery(mapElement);
-
-		el.css({
-			height: "100%"
-		});
-
-		this.map.setOptions({
-			disableDefaultUI: true,
-			zoomControl: true
-		});
-
-		// TODO
-		// 		panControl: boolean,
-		// 		mapTypeControl: boolean,
-		// 		scaleControl: boolean,
-		// 		streetViewControl: boolean,
-		// 		overviewMapControl: boolean
-
-		// el.find('#carte img[src*="google_white"]')
-		// 	.parent()
-		// 	.parent()
-		// 	.parent()
-		// 	.css('background-color', 'red');
-
-		// el.find('#carte .gmnoprint div:contains(Données)').remove();
-		// el.find('#carte .gmnoprint span:contains(Données)').remove();
-		// el.find('#carte .gmnoprint a:contains(Données)').remove();
-		// el.find('#carte .gmnoprint a:contains(Conditions)').remove();
-
-		// a = el.find('#carte').children('.gmstyle').children('div:first-child').clone();
-		// a = el.find('#carte').children('.gmstyle').children('div:last-child').clone();
-
-		// el.find('#carte .gmstyle div').remove();
-		// el.find('#carte .gmstyle').append(a);
-		// el.find('#carte .gmstyle').append(b);
-	}
-});
+//
+// Map initialization : renamed window.GEOCHAT_MAP.map
+//		--> moved to maps.js inside window.GEOCHAT_MAP object, initialized via google callback after script loading 
+//		-->	look at the url used in auth.js - loginAccepted()
+//
 
 /////////////////////////////////////////
 // File sharing events
@@ -163,6 +124,7 @@ window.onbeforeunload = function(e){
 	//sendMessage('bye');
 	webrtc.hangup();
 //	map.closeLocation();
+	//GEOCHAT_MAP.closeLocation();
 }
 
 /////////////////////////////////////////
@@ -189,7 +151,7 @@ var chatMessage = new ChatMessage()
 		console.log('Another peer made a request to join room ' + room);
 		console.log('This peer is the initiator of room ' + room + '!');
 		webrtc.setChannelReady(true);
-//		map.sendPosition();
+		//non testé : GEOCHAT_MAP.map.sendPosition();
 	})
 	// If you receive the message "joined" then joined an existing room.
 	// We are not the initiator, there is already someone (the appellant),
@@ -198,7 +160,7 @@ var chatMessage = new ChatMessage()
 		console.log('This peer has joined room ' + room);
 		webrtc.setChannelReady(true);
 		console.log('Send my position');
-//		map.sendPosition();
+		//non testé : GEOCHAT_MAP.map.sendPosition();
 	})
 	// Called by the server to make tracks in the connected clients
 	.on('log', function (array){
@@ -250,11 +212,13 @@ if (room !== '') {
 ////////////////////////////////////////////////
 // these 2 functions are called resp. after successfull login and logout
 //
-var globalInitialization = function(){
-	window.COURSES.initialize();
+var globalConnect = function(){
+	window.COURSES.connect();
+	window.GEOCHAT_MAP.connect();
 };
 
 var globalDisconnect = function(){
 	window.COURSES.disconnect(); 	
+	window.GEOCHAT_MAP.disconnect();
 };
 

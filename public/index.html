@@ -20,15 +20,19 @@
   </head>
   <body>
     <header>
-      <form id="loginForm">
-        <input id="login" type="text" placeholder="Login"><br>
-        <input id="pass" type="password" placeholder="Password">
-      </form>
-      <nav id="rooms" style="display:none"><span>Mon Projet</span></nav>
+     <form id="loginForm">
+      <input id="login" type="text" placeholder="Login"><br>
+      <input id="pass" type="password" placeholder="Password">
+    </form>
+    
+    <nav id="rooms" style="display:none"><span>Mon Projet</span></nav>
       <button id="logout" type="text" style="display:none">Deco</button>
     </header>
     <main>
       <aside id="geochat">
+        <a id="map-locate" href="#locate" style="display:none">
+          <span>Me localiser</span>
+        </a>
         <section id="geo">
           <div id="carte"></div>
         </section>
@@ -41,27 +45,51 @@
           <video id="localVideo" autoplay="true" muted="true"></video>
         </div>
       </section>
-      <section id="courses-div" style="display:none"><a id="courses-refresh" href="#refresh"><span>Refresh</span></a>
-        <form id="courses-creation-form" style="display:none"><span class="titre">Créer</span>
-          <p><span class="libelle">Nom</span>
-            <input id="courses-creation-name" type="text" class="data text-simple"><br><span class="libelle">Desc</span>
-            <input id="courses-creation-description" type="text" class="data text-area">
-          </p>
-          <input id="courses-creation-submit" type="submit">
-        </form>
-        <form id="courses-details-form" style="display:none"><span class="titre"></span>
-          <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom :&nbsp;</span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant :&nbsp;</span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description :&nbsp;</span><span id="courses-details-description" class="data label-area"></span></p>
-        </form>
-        <form id="courses-edition-form" style="display:none">
-          <input id="courses-edition-id" type="hidden"><span class="titre">Modifier un cours :&nbsp;</span>
-          <p><span class="libelle">Nom :&nbsp;</span>
-            <input id="courses-edition-name" type="text" class="data text-simple"><br><span class="libelle">Description :&nbsp;</span>
-            <input id="courses-edition-description" type="text" class="data text-area">
-            <!-- Manque liste des teachers-->
-          </p>
-          <input id="courses-edition-submit-update" type="submit" value="Mettre à jour">
-          <input id="courses-edition-submit-delete" type="submit" value="Supprimer">
-        </form>
+      <section id="courses-div" style="display:none">
+  
+        <a id="courses-refresh" href="#refresh">
+          <span>Rafraîchir la liste des cours disponibles</span>
+        </a>
+        
+        <div id="courses-info"></div>
+        <div id="courses-list"></div>
+    
+          <form id="courses-creation-form" style="display:none;">
+            <span class="titre">Créer un cours :  :&nbsp;</span>
+            <p>
+              <span class="libelle">Nom :&nbsp;</span> <input id="courses-creation-name" type="text" class="data text-simple" /> <br />
+              <span class="libelle">Description :&nbsp;</span> <input id="courses-creation-description" type="text" class="data text-area" /> 
+            </p>
+            <input id="courses-creation-submit" type="submit" value="Créer le cours" />
+          </form>
+      
+          <form id="courses-details-form" style="display:none;">
+            <span class="titre">Détails d'un cours :  :&nbsp;</span>
+            <p>
+              <span id="courses-details-id" class="data label-simple"  style="display:none;"></span>
+              <span class="libelle">Nom :&nbsp;</span> <span id="courses-details-name" class="data label-simple" ></span> <br />
+              <span class="libelle">Enseignant :&nbsp;</span> <span id="courses-details-teacher" class="data label-simple" ></span> <br />
+              <span class="libelle">Description :&nbsp;</span> <span id="courses-details-description" class="data label-area" ></span>
+            </p>
+            <p>
+              <input id="courses-details-submit-modify" type="submit" value="Modifier le cours" />
+              <input id="courses-details-submit-enrol" type="submit" value="S'inscrire" />
+              <input id="courses-details-submit-quit" type="submit" value="Se désinscrire" style="display:none;" />
+              <span id="courses-details-message" class="data label-area" ></span>
+            </p>
+          </form>
+      
+          <form id="courses-edition-form" style="display:none;">
+            <input type="hidden" id="courses-edition-id" />
+            <span class="titre">Modifier un cours :  :&nbsp;</span>
+            <p>
+              <span class="libelle">Nom :&nbsp;</span> <input id="courses-edition-name" type="text" class="data text-simple" /> <br />
+              <span class="libelle">Description :&nbsp;</span> <input id="courses-edition-description" type="text" class="data text-area" /> 
+              <!-- Manque liste des teachers -->
+            </p>
+            <input id="courses-edition-submit-update" type="submit" value="Mettre à jour" />
+            <input id="courses-edition-submit-delete" type="submit" value="Supprimer" />
+          </form>
       </section>
       <aside id="files"></aside>
     </main>

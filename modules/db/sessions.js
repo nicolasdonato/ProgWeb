@@ -68,15 +68,19 @@ var makeSessionInfo = function(success, message, data, callback) {
 module.exports.requestLogin = function(req, res) {
 
 	if (req.body.token != undefined) {
-		module.exports.authenticate(req.body.token, function(sessionInfo) {
-			res.send(sessionInfo);
-		}); 
+		if (mod_db.checkParams(req, res, ['token'])) {
+			module.exports.authenticate(req.body.token, function(sessionInfo) {
+				res.send(sessionInfo);
+			}); 
+		}
 	}
 
 	else if (req.body.login != undefined) {
-		module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
-			res.send(sessionInfo);
-		}); 
+		if (mod_db.checkParams(req, res, ['login', 'password'])) {
+			module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
+				res.send(sessionInfo);
+			}); 
+		}
 	}
 
 	else {
@@ -87,10 +91,12 @@ module.exports.requestLogin = function(req, res) {
 
 module.exports.requestLogout = function(req, res) {
 
-	module.exports.logout(req.body.token, function(result) {
+	if (mod_db.checkParams(req, res, ['token'])) {
+		module.exports.logout(req.body.token, function(result) {
 
-		res.send(result); 
-	});
+			res.send(result); 
+		});
+	}
 }
 
 
@@ -183,17 +189,24 @@ module.exports.authenticate = function(token, callback) {
 
 var dbToSession = function(that, s, callback) {
 
-	mod_db_users.getUser(s.user, function(userInfo) {
+	if (typeof s.user == 'string') {
 
-		if (userInfo == null) {
-			throw new Error('User info is null'); 
-		} else if (! userInfo.success) {
-			throw new Error('There should be a user <' + s.login + '> in DB'); 
-		}
+		mod_db_users.getUser(s.user, function(userInfo) {
 
-		var session = new Session(s.token, userInfo.result, s.begin);
-		callback(that, session); 
-	}); 
+			if (userInfo == null) {
+				throw new Error('User info is null'); 
+			} else if (! userInfo.success) {
+				throw new Error('There should be a user <' + s.user + '> in DB'); 
+			}
+
+			var session = new Session(s.token, userInfo.result, s.begin);
+			callback(that, session); 
+		}); 
+
+	} else {
+		var session = new Session(s.token, s.user, s.begin);
+		callback(that, s); 
+	}
 }
 
 
