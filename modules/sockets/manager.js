@@ -1,12 +1,25 @@
 
 var logger = require('../logger'); 
 
-
+var http = require("http");
 module.exports.connect = function(io) {
 
 	io.on('connection', function (socket) {
 
-
+		function getServersTurn() {
+			http.get("http://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913", function(res) {
+				console.log("Got response: " + res.statusCode);
+				res.on('data', function(data) {
+					var tmp=""+data; 
+					console.log("Got server Turn: " + tmp);
+					log("Got server Turn: " + tmp);
+					socket.emit('webrtc_component', { type: 'serversTurn', data: tmp });
+				});
+			}).on('error', function(e) {
+				console.log("Got error: " + e.message);
+			});
+		}
+		
 		function log() {
 
 			var array = [">>> [socket] "];
@@ -21,7 +34,7 @@ module.exports.connect = function(io) {
 		socket.on('message', function (message) {
 
 			if (message.type === 'create or join') {
-
+				getServersTurn();
 				var room = message.data;
 				var numClients = io.sockets.clients(room).length;
 
