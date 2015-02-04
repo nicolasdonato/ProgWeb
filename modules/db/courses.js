@@ -471,7 +471,7 @@ function dbToCourse(that, c, callback) {
 
 	if (typeof c.teacher == 'string') {
 
-		mod_db_users.getUser(c.teacher, function(userInfo) {
+		mod_db_users.get(c.teacher, function(userInfo) {
 
 			if (userInfo == null) {
 				throw new Error('User info is null'); 

@@ -70,34 +70,43 @@ module.exports.Roles = Roles;
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-module.exports.create = function(req, res) {
-
-
+module.exports.requestCreate = function(req, res) {
+	// TODO
 }
 
 
-module.exports.list = function(req, res) {
+module.exports.requestList = function(req, res) {
 
-	module.exports.listUsers(function(err, userInfos){
+	if (mod_db.checkParams(req, res, ['token'])) {
 
-		res.send(userInfos); 
-	});
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to list the users: ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.list(function(err, userInfos){
+				res.send(userInfos); 
+			});
+		});
+	}
 }
 
 
-module.exports.get = function(req, res) {
+module.exports.requestGet = function(req, res) {
 	// TODO
 }
 
 
 
-module.exports.update = function(req, res) {
+module.exports.requestUpdate = function(req, res) {
 	// TODO
 }
 
 
 
-module.exports.remove = function(req, res) {
+module.exports.requestRemove = function(req, res) {
 	// TODO
 }
 
@@ -153,7 +162,7 @@ module.exports.authenticate = function(login, password, callback) {
 }
 
 
-module.exports.listUsers = function(callback) {
+module.exports.list = function(callback) {
 
 	mod_db.find(DbName, { }, function(result) {
 
@@ -162,7 +171,7 @@ module.exports.listUsers = function(callback) {
 }
 
 
-module.exports.getUser = function(login, callback) {
+module.exports.get = function(login, callback) {
 
 	mod_db.find(DbName, { login: login }, function(result) {
 

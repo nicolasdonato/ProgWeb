@@ -191,7 +191,7 @@ var dbToSession = function(that, s, callback) {
 
 	if (typeof s.user == 'string') {
 
-		mod_db_users.getUser(s.user, function(userInfo) {
+		mod_db_users.get(s.user, function(userInfo) {
 
 			if (userInfo == null) {
 				throw new Error('User info is null'); 

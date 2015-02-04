@@ -4,19 +4,22 @@ var mod_db_sessions = require('../db/sessions');
 var mod_db_courses = require('../db/courses'); 
 var mod_db_classes = require('../db/classes'); 
 
+
 exports.setup = function(app) {
 
+	
 	// User management
 
 	app.route('/manage/users').
-	post(mod_db_users.create).
-	get(mod_db_users.list);
+	post(mod_db_users.requestCreate).
+	get(mod_db_users.requestList);
 
 	app.route('/manage/users/:id').
-	get(mod_db_users.get).
-	put(mod_db_users.update).
-	delete(mod_db_users.remove);	
+	get(mod_db_users.requestGet).
+	put(mod_db_users.requestUpdate).
+	delete(mod_db_users.requestRemove);	
 
+	
 	// Course management
 
 	app.route('/manage/courses').
@@ -34,6 +37,7 @@ exports.setup = function(app) {
 	app.route('/manage/courses/student/:id').
 			delete(mod_db_courses.requestQuit);
 
+	
 	// Class management
 
 	app.route('/manage/classes').
