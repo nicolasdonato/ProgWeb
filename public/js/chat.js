@@ -51,17 +51,17 @@
  */
 var ChatMessage = Class.create({
 	socket: null,
-	
+
 	/**
 	 * The component which is this class is initialized
 	 */
 	component: null,
-	
+
 	/**
 	 * The event binding for the different messages of SocketIO
 	 */
 	mapFunctionOn: null,
-	
+
 	/**
 	 * Initialize method
 	 */
@@ -71,38 +71,38 @@ var ChatMessage = Class.create({
 		console.log('socket')
 		this.socket.on(this.component, this.receiveMessage.bind(this));
 		this.mapFunctionOn = {};
-    },
-	
-    /**
-     * Method which binding the event message
-     */
+	},
+
+	/**
+	 * Method which binding the event message
+	 */
 	on: function (messageType, functionToExecute) {
 		if (functionToExecute && jQuery.isFunction(functionToExecute)) {
 			this.mapFunctionOn[messageType] = functionToExecute;
 		}
 		return this;
 	},
-    
+
 	/**
 	 * Send the message to SocketIO
 	 */
 	sendMessage: function(messageType, data) {
 		var message = {
-			type: messageType,
-			data: data
+				type: messageType,
+				data: data
 		};
 		console.log('Sending message: ', message);
 		this.socket.emit(this.component, message);
 		return this;
 	},
-	
+
 	/**
 	 * Method callback executed by the SocketIO api by event message
 	 */
 	receiveMessage: function(message) {
 		console.log('------------------ Received message:', message);
 		console.log('------------------ Received messagetype:', message.type);
-		
+
 		if (this.mapFunctionOn) {
 			jQuery.each(this.mapFunctionOn, function(messageType, functionToExecute) {
 				if (message.type === messageType
@@ -114,4 +114,88 @@ var ChatMessage = Class.create({
 	}
 });
 
-var chatMessage = new ChatMessage();
+
+//
+//<<< Refactoring encapsulation >>>
+//
+//	avant : var chatMessage dans main.js 
+//	après : window.CHAT.component
+//
+window.CHAT = {
+		
+	component	: null,
+	
+	initialize 	: function(){
+		/////////////////////////////////////////
+		// Chat component initialization
+		//
+
+		// init the chat socket and define the different events
+		CHAT.component = new ChatMessage().
+		// Connection request to the socket server. Looking at the server code
+		// in server.js we will see that if you are the first customer is 
+		// connected will receive a message "created", otherwise the message "joined"
+
+		// If you receive the message "created" when it is the initiator of the call
+		on('created', function (room){
+			console.log('Created room ' + room);
+			WEB_RTC_NODE.component.webrtc.setInitiator(true);
+		}).
+		// We tried to get a room that is already full
+		on('full', function (room){
+			console.log('Room ' + room + ' is full');
+		}).
+		// Called when an other user join the chat room
+		on('join', function (room){
+			console.log('Another peer made a request to join room ' + room);
+			console.log('This peer is the initiator of room ' + room + '!');
+			WEB_RTC_NODE.component.webrtc.setChannelReady(true);
+			//non testé : GEOCHAT_MAP.map.sendPosition();
+		}).
+		// If you receive the message "joined" then joined an existing room.
+		// We are not the initiator, there is already someone (the appellant),
+		// so it is ready to communicate ...
+		on('joined', function (room){
+			console.log('This peer has joined room ' + room);
+			WEB_RTC_NODE.component.webrtc.setChannelReady(true);
+			console.log('Send my position');
+			//non testé : GEOCHAT_MAP.map.sendPosition();
+		}).
+		// Called by the server to make tracks in the connected clients
+		on('log', function (array){
+			console.log.apply(console, array);
+		}).
+
+		on('messageChat', function(messageChat) {
+			GEOCHAT_VIEW.writeChat(messageChat.user, messageChat.message);
+		}).
+		// do refresh the GitHub file list
+		on('refreshFileList', function (fileToRefresh) {
+			console.log('Refresh the Gitub file list');
+		});
+
+	},
+	
+	
+	connect 	: function(){
+		$("#geochat").show();
+		
+	},
+	
+	
+	disconnect 	: function(){
+		$("#geochat").hide();
+	},
+
+	
+	/*
+	 * Sending generic message, the server broadcasted to all members of the room.
+	 */
+	sendMessage : function(messageType, data){
+		CHAT.component.sendMessage(messageType, data);
+	}
+};
+
+
+
+

@@ -48,6 +48,9 @@ server.listen(portNumber);
 
 // SOCKET
 /////////
+//
+// TODO http://socket.io/docs/migrating-from-0-9/#
+//
 
 var io = node_io.listen(server);
 
