@@ -35,7 +35,7 @@ Classe = function(course, subject, begin, end) {
 	} else {
 		this.end = end;
 	}
-}
+};
 
 
 function ClasseInfo(success, message, data) {
@@ -64,7 +64,7 @@ var makeClasseInfo = function(success, message, data, callback) {
 
 	var classeInfo = new ClasseInfo(success, message, data); 
 	classeInfo.update(callback); 
-}
+};
 
 
 //External API
@@ -78,7 +78,7 @@ module.exports.requestStart = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
-				callback(new CourseInfo(false, 'Failed to list the courses : ' + sessionInfo.message)); 
+				callback(new CourseInfo(false, 'Failed to create a classroom: ' + sessionInfo.message)); 
 				return;
 			}
 
@@ -87,27 +87,55 @@ module.exports.requestStart = function(req, res) {
 			}); 
 		}); 
 	}
-}
+};
 
 
 module.exports.requestList = function(req, res) {
-	// TODO
-}
+
+	if (mod_db.checkParams(req, res, ['token'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to list the classrooms: ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.list(function(infos) {
+				res.send(infos); 
+			}); 
+		}); 
+	}
+};
 
 
 module.exports.requestGet = function(req, res) {
-	// TODO
-}
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to get classroom #' + id + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.get(req.param('id'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
+};
 
 
 module.exports.requestUpdate = function(req, res) {
 	// TODO
-}
+};
 
 
 module.exports.requestEnd = function(req, res) {
 	// TODO
-}
+};
 
 
 //Local API
@@ -116,7 +144,7 @@ module.exports.requestEnd = function(req, res) {
 
 module.exports.getCollectionName = function() {
 	return DbName; 
-}
+};
 
 
 module.exports.initialize = function(db) {
@@ -126,59 +154,98 @@ module.exports.initialize = function(db) {
 	var date2 = new Date(); 
 	date2.setDate(date2.getDate() - 3); 
 	var classe1 = new Classe(1, 'NoSQL', date1, date2); 
-	
+
 	date1 = new Date(); 
 	date1.setHours(date1.getHours() - 1); 
 	var classe2 = new Classe(2, 'HTML 5', date1); 
-	
+
 	date1 = new Date(); 
 	date1.setDate(date1.getDate() + 2); 
 	date2 = new Date(); 
 	date2.setDate(date2.getDate() + 2); 
 	date2.setHours(date2.getHours() + 2); 
 	var classe3 = new Classe(1, 'NodeJs', date1, date2); 
-	
+
 	var initializationData = [classe1, classe2, classe3];
 
 	var collection = db.collection(DbName);
 	for (var index in initializationData) {
 		collection.insert(initializationData[index]); 
 	}
-}
+};
+
+
+module.exports.list = function(callback) {
+
+	mod_db.find(DbName, { }, function(result) {
+
+		makeClasseInfo(true, '', result, callback); 
+	});
+}; 
 
 
 module.exports.create = function(user, course, subject, begin, end, callback) {
-	
+
 	if (user.role < mod_db_users.Roles.TEACHER) {
 		callback(new ClasseInfo(false, 'Only a teacher can create a classroom'));
+		return; 
 	} 
-	
+
 	mod_db_courses.get(course, function(courseInfo) {
-		
+
 		if (! courseInfo.success) {
 			callback(new ClasseInfo(false, 'Failed to create a classroom : ' + courseInfo.message)); 
+			return; 
 		}
-		
+
 		if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher) {
 			callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
+			return; 
 		}
-		
+
 		if (end != null && end != 0 && end != '') {
 			if (end < Date()) {
 				callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
+				return; 
 			}
 			if (begin != null && begin != 0 && begin != '') {
 				if (begin >= end) {
 					callback(new ClasseInfo(false, 'A class must begin before ending'));
+					return; 
 				}
 			}
 		}
-		
+
 		var classe = new Classe(course, subject, begin, end); 
 		mod_db.insert(DbName, classe); 
 		makeClasseInfo(true, '', classe, callback); 
 	})
-}
+};
+
+
+module.exports.findById = function(id, callback) {
+
+	mod_db.find(DbName, { id: +id }, function(result) {
+
+		if (result.length == 0) {
+			logger.out('No classroom #' + id + ' found')
+			callback(new ClasseInfo(false, 'Classroom #' + id + ' unknown')); 
+			return;
+		} else if (result.length > 1) {
+			throw new Error('More than one classroom with the same ID were found');
+		}
+
+		makeClasseInfo(true, '', result[0], callback); 
+	});
+};
+
+
+module.exports.get = function(id, callback) {
+
+	module.exports.findById(id, function(classeInfo) {
+		callback(classeInfo); 
+	}); 
+};
 
 
 //Useful functions

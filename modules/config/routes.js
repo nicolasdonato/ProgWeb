@@ -20,19 +20,19 @@ exports.setup = function(app) {
 	// Course management
 
 	app.route('/manage/courses').
-	post(mod_db_courses.createRequest).
-	get(mod_db_courses.listRequest);
+	post(mod_db_courses.requestCreate).
+	get(mod_db_courses.requestList);
 
 	app.route('/manage/courses/:id').
-	get(mod_db_courses.getRequest).
-	post(mod_db_courses.enrolRequest).
-	put(mod_db_courses.updateRequest);
+	get(mod_db_courses.requestGet).
+	post(mod_db_courses.requestEnrol).
+	put(mod_db_courses.requestUpdate);
 
 	app.route('/manage/courses/teacher/:id').
-			delete(mod_db_courses.removeRequest);
+			delete(mod_db_courses.requestRemove);
 			
 	app.route('/manage/courses/student/:id').
-			delete(mod_db_courses.quitRequest);
+			delete(mod_db_courses.requestQuit);
 
 	// Class management
 
