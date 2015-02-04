@@ -18,14 +18,12 @@ iceServers.push({
     'url': 'stun:stun.anyfirewall.com:3478'
 });
 iceServers.push({
-    'url': 'turn:turn.bistri.com:80',
-    'credential': 'homeo',
-    'username': 'homeo'
+    'url': 'turn:homeo@turn.bistri.com:80',
+    'credential': 'homeo'
 });
 iceServers.push({
-    'url': 'turn:turn.anyfirewall.com:443?transport=tcp',
-    'credential': 'webrtc',
-    'username': 'webrtc'
+    'url': 'turn:webrtc@turn.anyfirewall.com:443?transport=tcp',
+    'credential': 'webrtc'
 });
 
 // WebRTC Initialization
