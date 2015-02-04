@@ -198,16 +198,13 @@ module.exports.getCollectionName = function() {
 
 module.exports.initialize = function(db) {
 
-	var collection = db.collection(module.exports.getCollectionName());
-
-	// Définir les cours de base
 	var web_srv = new Course('web_srv', 'peter', 'Programmation Web côté Serveur'); 
 	var web_cli = new Course('web_cli', 'michel', 'Programmation Web côté Client'); 
 	var web_sem = new Course('web_sem', 'peter', 'Web Sémantique'); 
 
 	var initializationData = [web_srv, web_cli, web_sem];
 
-	// Ajout des cours prédéfinis
+	var collection = db.collection(DbName);
 	for (var index in initializationData) {
 		collection.insert(initializationData[index]); 
 	}

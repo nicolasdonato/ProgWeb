@@ -93,7 +93,7 @@ module.exports.initialize = function(databaseName) {
 
 			mod_db_users.initialize(db);
 			mod_db_courses.initialize(db);
-
+			mod_db_classes.initialize(db);
 		}
 	});
 };

@@ -113,9 +113,6 @@ module.exports.getCollectionName = function() {
 
 module.exports.initialize = function(db) {
 
-	var collection = db.collection(module.exports.getCollectionName());
-
-	// Définir les utilisateurs de base
 	var admin = new User('admin', 'root'); 
 	admin.role = Roles.ADMIN; 
 	var damien = new User('damien', 'lepiller'); 
@@ -130,7 +127,7 @@ module.exports.initialize = function(db) {
 	buffa.role = Roles.TEACHER; 
 	var initializationData = [admin, damien, nicolas, romain, sander, buffa];
 
-	// Ajout des utilisateurs prédéfinis
+	var collection = db.collection(DbName);
 	for (var index in initializationData) {
 		var hash = mod_utils.getHash(initializationData[index].password); 
 		initializationData[index].password = hash; 
