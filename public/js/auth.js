@@ -1,14 +1,13 @@
 window.AUTH = {
-
-
+		
 		//Module management
 		/////////////////////////////////////////////////////////////////////////////////////
 
 		session: {},
 		
-		googleMapsApiLoaded : false, //google maps api should only be loaded once
+		googleMapsApiLoaded 			: false, //google maps api should only be loaded once
 
-		autoAuthenticationInProgress : false,
+		autoAuthenticationInProgress 	: false,
 
 		getMember: function() {
 			if(AUTH.session.length == 0){
@@ -23,7 +22,13 @@ window.AUTH = {
 
 
 		initialize: function() {
-
+		    $('#loginForm').on('keyup', GEOCHAT_VIEW.login);
+		    $('#logout').click(GEOCHAT_VIEW.logout);
+		},
+		
+		
+		load : function() {
+		    
 			if (AUTH.session.token == undefined) {
 				if (localStorage.token != undefined) {
 					AUTH.autoAuthenticationInProgress = true;
@@ -51,22 +56,12 @@ window.AUTH = {
 					AUTH.session.role = info.result.user.role; 
 					localStorage.role = info.result.user.role; 
 
-					view.loginSuccess();
-					// $("#user").text(AUTH.session.user);
-					// $("#loginHeader").hide();
-					// $("#login").val('');
-					// $("#pwd").val('');
-					// $("#logoutHeader").show();
-					// $("#logMessage").hide(); 
-
-					//
-					// globalInitialization est définie dans main.js et contient l'init des composants 
-					//
-					if(typeof globalConnect != "function"){
-						throw new Error("Function globalInitialization must be defined in main.js");
+					if(! GEOCHAT_COMPONENTS.initialized){
+						GEOCHAT_COMPONENTS.initialize();
 					}
 					
-					globalConnect();
+					GEOCHAT_VIEW.loginSuccess();
+
 				}).fail(function() {
 					console.error('Failed to find <'+ script +'>'); 
 				});
@@ -95,7 +90,8 @@ window.AUTH = {
 		    	AUTH.googleMapsApiLoaded = true;
 		    }
 		    scripts.push("js/webrtc.js");
-		    scripts.push("js/File.js");
+		    scripts.push("js/lib/File.js");
+		    scripts.push("js/fileSharing.js");
 		    scripts.push("js/courses.js");
 		    
 		    //
@@ -140,15 +136,10 @@ window.AUTH = {
 
 		loginRefused: function(info) {
 
-			view.loginFail();
-			// $("#loginHeader").show();
-			// $("#login").val('');
-			// $("#pwd").val('');
-			// $("#logoutHeader").hide();
-			// if(! AUTH.autoAuthenticationInProgress){
-			// 	$("#logMessage").text('Wrong login/password !');
-			// 	$("#logMessage").show(); 
-			// }
+			if(! AUTH.autoAuthenticationInProgress)
+			{
+				GEOCHAT_VIEW.loginFail();
+			}
 
 			AUTH.session = {}; 
 			delete localStorage.token; 
@@ -197,12 +188,10 @@ window.AUTH = {
 				delete localStorage.token; 
 				delete localStorage.user; 
 				delete localStorage.role; 
-
-				if(typeof globalDisconnect != "function"){
-					throw new Error("Function globalDisconnect must be defined in main.js");
-				}
-				
-				globalDisconnect();
+				//
+				//Devrait être appelée depuis la vue, à bon entendeur...
+				//
+		  		GEOCHAT_COMPONENTS.disconnect();
 
 			} else {
 				alert('Logout failed: ' + info.message); 
@@ -213,6 +202,6 @@ window.AUTH = {
 
 
 $(document).ready(function() {
-	window.AUTH.initialize();
+	window.AUTH.load();
 });
 
