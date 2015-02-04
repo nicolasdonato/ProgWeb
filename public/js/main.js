@@ -4,14 +4,39 @@
 // Objects initialization
 //
 
+var iceServers = [];
+if (webrtcDetectedBrowser === 'firefox') {
+	iceServers.push({
+		'url':'stun:23.21.150.121'
+	});
+} else {
+	iceServers.push({
+		'url': 'stun:stun.l.google.com:19302'
+	});
+}
+iceServers.push({
+    'url': 'stun:stun.anyfirewall.com:3478'
+});
+iceServers.push({
+    'url': 'turn:turn.bistri.com:80',
+    'credential': 'homeo',
+    'username': 'homeo'
+});
+iceServers.push({
+    'url': 'turn:turn.anyfirewall.com:443?transport=tcp',
+    'credential': 'webrtc',
+    'username': 'webrtc'
+});
+
 // WebRTC Initialization
 var webrtc = new WebRTC({
 	// constraint definitions
 	constraints: {video: true},
 	// Stun servers configuration...
-	pc_config: webrtcDetectedBrowser === 'firefox' ?
-		{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
-		{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+//	pc_config: webrtcDetectedBrowser === 'firefox' ?
+//		{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
+//		{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+	pc_config: {'iceServers' : iceServers},
 	//Peer connection constraints
 	pc_constraints: {
 		'optional': [
