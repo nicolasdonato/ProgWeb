@@ -6,6 +6,7 @@
 var mod_db = require('./manager');
 var mod_db_courses = require('./courses');
 var mod_db_users = require('./users'); 
+var mod_db_sessions = require('./sessions'); 
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
 
@@ -159,6 +160,44 @@ module.exports.requestUpdate = function(req, res) {
 			}
 
 			module.exports.update(req.param('id'), req.param('course'), req.param('begin'), req.param('end'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
+};
+
+
+module.exports.requestJoin = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to join classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.join(sessionInfo.result.user, req.param('id'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
+};
+
+
+module.exports.requestLeave = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to leave classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.leave(sessionInfo.result.user, req.param('id'), function(info) {
 				res.send(info); 
 			}); 
 		}); 
@@ -351,6 +390,16 @@ module.exports.get = function(id, callback) {
 		callback(classeInfo); 
 	}); 
 };
+
+
+module.exports.join = function(id, callback) {
+	callback(new ClasseInfo(false, 'TODO')); 
+}
+
+
+module.exports.leave = function(id, callback) {
+	callback(new ClasseInfo(false, 'TODO')); 
+}
 
 
 //Useful functions

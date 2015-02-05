@@ -100,16 +100,6 @@ module.exports.requestLogout = function(req, res) {
 }
 
 
-module.exports.requestJoin = function(req, res) {
-	// TODO
-}; 
-
-
-module.exports.requestLeave = function(req, res) {
-	// TODO
-}; 
-
-
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
 

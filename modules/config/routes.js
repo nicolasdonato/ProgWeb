@@ -38,21 +38,23 @@ exports.setup = function(app) {
 	delete(mod_db_courses.requestQuit);
 
 
-	// Class management
+	// Classroom management
 
 	app.route('/manage/classes').
-	post(mod_db_classes.requestStart).
 	get(mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
 	get(mod_db_classes.requestGet).
-	put(mod_db_classes.requestUpdate).
+	put(mod_db_classes.requestUpdate);
 
-	app.route('/manage/courses/teacher/:id').
-	delete(mod_db_courses.requestRemove);
+	app.route('/manage/classes/teacher').
+	post(mod_db_classes.requestStart);
+	app.route('/manage/classes/teacher/:id').
+	delete(mod_db_classes.requestEnd);
 
-	app.route('/manage/courses/student/:id').
-	delete(mod_db_courses.requestQuit);
+	app.route('/manage/classes/student/:id').
+	post(mod_db_classes.requestJoin).
+	delete(mod_db_classes.requestLeave);
 
 
 	// Session management
@@ -61,10 +63,6 @@ exports.setup = function(app) {
 	post(mod_db_sessions.requestLogin);
 	app.route('/session/logout').
 	post(mod_db_sessions.requestLogout);
-	app.route('/session/join/:id').
-	post(mod_db_sessions.requestJoin);
-	app.route('/session/leave').
-	post(mod_db_sessions.requestLeave);
 
 };
 

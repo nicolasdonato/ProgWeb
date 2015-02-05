@@ -93,6 +93,7 @@ window.AUTH = {
 		    scripts.push("js/lib/File.js");
 		    scripts.push("js/fileSharing.js");
 		    scripts.push("js/courses.js");
+		    scripts.push("js/classes.js");
 		    
 		    //
 		    //Chargé depuis index.html visiblement...
