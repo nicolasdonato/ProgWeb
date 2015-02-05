@@ -2,7 +2,7 @@
 // PARAMETERS
 /////////////
 
-var portNumber = 8888;
+var portNumber = 80;
 
 
 // MODULES
