@@ -78,11 +78,30 @@ module.exports.requestStart = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
-				callback(new CourseInfo(false, 'Failed to create a classroom: ' + sessionInfo.message)); 
+				callback(new CourseInfo(false, 'Failed to start a classroom: ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), req.param('begin'), req.param('end'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
+};
+
+
+module.exports.requestEnd = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to end a classroom #' + id + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.end(sessionInfo.result.user, req.param('id'), function(info) {
 				res.send(info); 
 			}); 
 		}); 
@@ -116,7 +135,7 @@ module.exports.requestGet = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
-				callback(new CourseInfo(false, 'Failed to get classroom #' + id + ' : ' + sessionInfo.message)); 
+				callback(new CourseInfo(false, 'Failed to get classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
@@ -129,12 +148,21 @@ module.exports.requestGet = function(req, res) {
 
 
 module.exports.requestUpdate = function(req, res) {
-	// TODO
-};
 
+	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'begin', 'end'])) {
 
-module.exports.requestEnd = function(req, res) {
-	// TODO
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				callback(new CourseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				return;
+			}
+
+			module.exports.update(req.param('id'), req.param('course'), req.param('begin'), req.param('end'), function(info) {
+				res.send(info); 
+			}); 
+		}); 
+	}
 };
 
 
@@ -187,7 +215,7 @@ module.exports.list = function(callback) {
 module.exports.create = function(user, course, subject, begin, end, callback) {
 
 	if (user.role < mod_db_users.Roles.TEACHER) {
-		callback(new ClasseInfo(false, 'Only a teacher can create a classroom'));
+		callback(new ClasseInfo(false, 'Only a teacher can end a classroom'));
 		return; 
 	} 
 
@@ -220,6 +248,78 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 		mod_db.insert(DbName, classe); 
 		makeClasseInfo(true, '', classe, callback); 
 	})
+};
+
+
+module.exports.end = function(user, classe, callback) {
+
+	if (user.role < mod_db_users.Roles.TEACHER) {
+		callback(new ClasseInfo(false, 'Only a teacher can end a classroom'));
+		return; 
+	} 
+
+	module.exports.findById(classe, function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to end a classroom : ' + classeInfo.message)); 
+			return; 
+		}
+		var classe = classeInfo.result; 
+
+		if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
+			callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
+			return; 
+		}
+
+		if (classe.end != null && classe.end != 0 && classe.end != '') {
+			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> has already ended'));
+			return; 
+		} else if (classe.start == null || classe.end == 0 || classe.end == '') {
+			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> hasn\'t begun yet'));
+			return; 
+		}
+
+		module.exports.updateClasse(DbName, new Classe(classe.course, classe.subject, classe.begin, classe.end), callback); 
+	})
+};
+
+
+module.exports.updateClasse = function(user, classe, callback) {
+
+	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, callback); 
+};
+
+
+module.exports.update = function(user, id, course, subject, begin, end, callback) {
+
+	if (user.role < mod_db_users.Roles.TEACHER) {
+		callback(new classInfo(false, 'The user <' + user.login + '> doesn\'t have permission to update a classroom')); 
+		return; 
+	} 
+
+	module.exports.findById(id, function(classInfo) {
+		if (classInfo.success) {
+
+			if (user.role < mod_db_users.Roles.ADMIN && classInfo.result.course.teacher.login != user.login) {
+				callback(new classInfo(false, 'A teacher can\'t update someone else\'s classroom')); 
+				return; 
+			}
+
+			mod_db.connect(function(db) {
+
+				var classe = new Classe(course, subject, begin, end); 
+				classe.id = +id; 
+				classe.begin = classInfo.result.begin;
+				classe.end = classInfo.result.end;
+				db.collection(DbName).update({ id: +id }, classe);
+
+				makeClasseInfo(true, '', classe, callback); 
+			});
+
+		} else {
+			callback(new CourseInfo(false, 'Failed to update classroom #' + id + ' : ' + makeClasseInfo.message));
+		}
+	});
 };
 
 

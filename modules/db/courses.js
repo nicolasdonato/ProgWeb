@@ -360,9 +360,9 @@ module.exports.remove = function(user, id, callback) {
 };
 
 
-module.exports.updateCourse = function(token, course, callback) {
+module.exports.updateCourse = function(user, course, callback) {
 
-	module.exports.update(token, course.id, course.name, course.teacher, course.description, course.students, callback); 
+	module.exports.update(user, course.id, course.name, course.teacher, course.description, course.students, callback); 
 };
 
 
