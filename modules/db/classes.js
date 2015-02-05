@@ -271,15 +271,20 @@ module.exports.end = function(user, classe, callback) {
 			return; 
 		}
 
+		var end; 
 		if (classe.end != null && classe.end != 0 && classe.end != '') {
 			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> has already ended'));
 			return; 
-		} else if (classe.start == null || classe.end == 0 || classe.end == '') {
+		} else {
+			end = new Date(); 
+		}
+		
+		if (classe.start == null || classe.start == 0 || classe.start == '') {
 			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> hasn\'t begun yet'));
 			return; 
 		}
 
-		module.exports.updateClasse(DbName, new Classe(classe.course, classe.subject, classe.begin, classe.end), callback); 
+		module.exports.updateClasse(DbName, new Classe(classe.course, classe.subject, classe.begin, end), callback); 
 	})
 };
 
