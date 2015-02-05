@@ -1,4 +1,4 @@
-window.view =
+window.GEOCHAT_VIEW =
 	login: (event) ->
 		if event.keyCode is 13
 			AUTH.requestLogin 	$('#login').val(),
@@ -6,6 +6,7 @@ window.view =
 
 	loginSuccess: ->
 		$("#loginForm")				.hide()
+		$("#pass")					.val ''
 		$("#rooms, #logout")		.show()
 		$("#localVideo").parent() 	.show()
 
@@ -27,8 +28,8 @@ window.view =
 			</div>
 			"""
 		)	.appendTo					('#cams')
-			.on 'dragover dragenter', 	view.dragCancel
-			.on 'drop', 				view.dropFile
+			.on 'dragover dragenter', 	GEOCHAT_VIEW.dragCancel
+			.on 'drop', 				GEOCHAT_VIEW.dropFile
 
 	writeChat: (user, msg) ->
 		$('#out').append 		user + ' : ' + msg + '<br>'
@@ -39,12 +40,12 @@ window.view =
 		if msg isnt '' and event.keyCode is 13
 			$(this).val ''
 			if typeof sendMessage is 'undefined'
-				view.writeChat 	'WARNING', 'You are not connected !'
+				GEOCHAT_VIEW.writeChat 	'WARNING', 'You are not connected !'
 			else
-				view.writeChat 	'me',
+				GEOCHAT_VIEW.writeChat 	'me',
 								msg
 				sendMessage 	'messageChat',
-								user: AUTH.session.user
+								user: AUTH.getMember()
 								message: msg
 
 	dragCancel: (event) ->
@@ -65,19 +66,16 @@ $ ->
 	# 				Event handlers			#
 	#########################################
 
-	# Login
-	$('#loginForm')		.on 'keyup', 				view.login
-
-	# Logout
-	$('#logout')		.on 'click', 				view.logout
+	# login / logout
+    window.AUTH.initialize()
 
 	# Drop on local video
 	$('#localMember')
-			.parent()	.on 'dragover dragenter', 	view.dragCancel
-						.on 'drop', 				view.dropFile
+		.parent()		.on 'dragover dragenter', 	GEOCHAT_VIEW.dragCancel
+						.on 'drop', 				GEOCHAT_VIEW.dropFile
 
 	# Chat
-	$('#in')			.on 'keyup', 				view.readChat
+	$('#in')			.on 'keyup', 				GEOCHAT_VIEW.readChat
 
 
 
@@ -94,7 +92,6 @@ $ ->
 	else
 		console.log 'NO FILELIST !'
 	
-
 	data = data: [
 		text: 'Projet 1'
 		children: [
@@ -107,5 +104,4 @@ $ ->
 		'Projet 2'
 	]
 
-	$('#files').jstree core: data
-
+	# $('#files').jstree core: data

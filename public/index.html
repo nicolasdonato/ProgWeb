@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="css/test.css">
     <link rel="stylesheet" href="js/lib/jsTree/themes/default/style.min.css">
     <script src="js/lib/jquery-2.1.3.js"></script>
-    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <script src="js/lib/jsTree/jstree.min.js"></script>
     <script src="js/lib/adapter.js"></script>
     <script src="js/lib/jquery.class.js"></script>
@@ -42,26 +41,33 @@
           <video id="localVideo" autoplay="true" muted="true"></video>
         </div>
       </section>
-      <section id="courses-div"><a id="courses-refresh" href="#refresh"><span>Refresh</span></a>
-        <form id="courses-creation-form"><span class="titre">Créer</span>
-          <p><span class="libelle">Nom</span>
-            <input id="courses-creation-name" type="text" class="data text-simple"><br><span class="libelle">Desc</span>
+      <section id="courses-div" style="display:none"><a id="courses-refresh" href="#refresh"><span>Refresh</span></a>
+        <div id="courses-info"></div>
+        <div id="courses-list"></div>
+        <form id="courses-creation-form" style="display:none"><span class="titre">Créer&nbsp;:</span>
+          <p><span class="libelle">Nom&nbsp;:</span>
+            <input id="courses-creation-name" type="text" class="data text-simple"><br><span class="libelle">Description&nbsp;:</span>
             <input id="courses-creation-description" type="text" class="data text-area">
           </p>
-          <input id="courses-creation-submit" type="submit">
+          <input id="courses-creation-submit" type="submit" value="Créer !">
         </form>
-        <form id="courses-details-form"><span class="titre"></span>
-          <p><span id="courses-details-id" class="data label-simple"></span><span class="libelle">Nom :&nbsp;</span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant :&nbsp;</span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description :&nbsp;</span><span id="courses-details-description" class="data label-area"></span></p>
+        <form id="courses-details-form" style="display:none"><span class="titre">Détails&nbsp;:</span>
+          <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom&nbsp;:</span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant&nbsp;:</span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description&nbsp;:</span><span id="courses-details-description" class="data label-area"></span></p>
+          <p>
+            <input id="courses-details-submit-modify" type="submit" value="Modifier !">
+            <input id="courses-details-submit-enrol" type="submit" value="S'inscrire !">
+            <input id="courses-details-submit-quit" type="submit" value="Se désinscrire !" style="display:none"><span id="courses-details-message" type="text" class="data label-area"></span>
+          </p>
         </form>
-        <form id="courses-edition-form">
-          <input id="courses-edition-id" type="hidden"><span class="titre">Modifier un cours :&nbsp;</span>
-          <p><span class="libelle">Nom :&nbsp;</span>
-            <input id="courses-edition-name" type="text" class="data text-simple"><br><span class="libelle">Description :&nbsp;</span>
+        <form id="courses-edition-form" style="display:none">
+          <input id="courses-edition-id" type="hidden"><span class="titre">Modifier un cours&nbsp;:</span>
+          <p><span class="libelle">Nom&nbsp;:</span>
+            <input id="courses-edition-name" type="text" class="data text-simple"><br><span class="libelle">Description&nbsp;:</span>
             <input id="courses-edition-description" type="text" class="data text-area">
             <!-- Manque liste des teachers-->
           </p>
-          <input id="courses-edition-submit-update" type="submit" value="Mettre à jour">
-          <input id="courses-edition-submit-delete" type="submit" value="Supprimer">
+          <input id="courses-edition-submit-update" type="submit" value="Mettre à jour !">
+          <input id="courses-edition-submit-delete" type="submit" value="Supprimer !">
         </form>
       </section>
       <aside id="files"></aside>

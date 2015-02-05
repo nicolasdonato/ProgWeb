@@ -40,6 +40,21 @@ module.exports.ServerInfo = ServerInfo;
 /////////////////////////////////////////////////////////////////////////////////////
 
 
+module.exports.checkParams = function(req, res, paramList) {
+	
+	for (var i = 0; i < paramList.length; i++) {
+		if (req.param(paramList[i]) == null) {
+			
+			var serverInfo = new ServerInfo(false, 'Property <' + parameters[i] + '> is missing'); 
+			res.send(serverInfo); 
+			return false; 
+		}
+	}
+	
+	return true; 
+}; 
+
+
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +93,7 @@ module.exports.initialize = function(databaseName) {
 
 			mod_db_users.initialize(db);
 			mod_db_courses.initialize(db);
-
+			mod_db_classes.initialize(db);
 		}
 	});
 };

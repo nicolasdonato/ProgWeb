@@ -153,10 +153,14 @@ var WebRTC = Class.create({
 		console.log('Getting user media with constraints', this.constraints);
 
 		// It is checked whether there is a need of a TURN server if it is not in localhost
-		if (location.hostname != "localhost") 
-		{
-			this.requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
-		}
+//		if (location.hostname != "localhost") 
+//		{
+//			try {
+//				this.requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
+//			} catch (ex) {
+//				console.log("An error has occured when searching the turn server [error: "+ex+"] [message: "+ex.message+"] [description: "+ex.description+"]");
+//			}
+//		}
 
 		return this;
 	},
@@ -206,7 +210,7 @@ var WebRTC = Class.create({
 			// No TURN server. Get one from computeengineondemand.appspot.com:
 			$.ajax({ 
 				type:'GET',
-				url : turn_url, 
+				url : turn_url + (turn_url.indexOf('?') >= 0 ? '&' : '?') + "callback=resultServerTurn", 
 				//
 				// Les deux paramètres qui suivent sembleraient nécessaire pour surpasser le cors... encore faudrait il que la requete OPTIONS soit envoyée
 				//
@@ -214,17 +218,35 @@ var WebRTC = Class.create({
 				xhrFields: {
 					withCredentials: true
 				},
-				dataType : "json"
-			}).done(function(data){
-				var turnServer = data;//JSON.parse(xhr.responseText);
-				console.log('Got TURN server: ', turnServer);
-				this.pc_config.iceServers.push({
-					'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
-					'credential': turnServer.password
-				});
-				turnReady = true;
-			}).fail(function(err){
-				console.log('Getting turn content failed : ' + err.message);
+				contentType: 'application/json',
+				//contentType: 'text/plain',
+//				jsonpCallback: "resultServerTurn",
+				dataType : "jsonp"
+			})
+//			.done(function(data){
+//				var turnServer = data;//JSON.parse(xhr.responseText);
+//				console.log('Got TURN server: ', turnServer);
+//				this.pc_config.iceServers.push({
+//					'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
+//					'credential': turnServer.password
+//				});
+//				turnReady = true;
+//			})
+			.fail(function(err){
+				console.log('Getting turn content failed : [error: ' + err + '] [message: ' + err.message + '] [description: ' + err.description + ']');
+			});
+		}
+	},
+	
+	resultServerTurn: function(data){
+		var turnServer = data;//JSON.parse(xhr.responseText);
+		console.log('Got TURN server: ', turnServer);
+		// example of the return object : {"username": "1422972884:41784574", "password": "viJLS+AuufNHQNzJ1VuZydc+kEQ=", "uris": ["turn:23.251.129.227:3478?transport=udp", "turn:23.251.129.227:3478?transport=tcp", "turn:23.251.129.227:3479?transport=udp", "turn:23.251.129.227:3479?transport=tcp"]}
+		for (var idx = 0; idx < turnServer.uris.length; idx++) {
+			this.pc_config.iceServers.push({
+				'url': turnServer.uris[idx],
+				'username': turnServer.username,
+				'credential': turnServer.password
 			});
 		}
 	},
@@ -277,6 +299,9 @@ var WebRTC = Class.create({
 			if (this.isStarted) {
 				this.handleRemoteHangup(data);
 			}
+		}).bind(this)).on('serversTurn', (function (data) { // return server turn for the webrtc
+			console.log('Got have the servers turn : ' + data);
+			this.resultServerTurn(JSON.parse(data));
 		}).bind(this));
 	},
 
@@ -788,3 +813,81 @@ var WebRTCNode = Class.create({
 		this.remoteSocketId = options.remoteSocketId || null;
 	}
 });
+
+/*
+ * 
+ * ce qui était avant la variable webrtc est maintenant accessible via 
+ * 	- window.WEB_RTC_NODE.component.webrtc 
+ * 
+ * */
+//
+//<<< Refactoring encapsulation >>>
+//
+//	avant : var webrtc dans main.js 
+//	après : window.WEB_RTC_NODE.component.webrtc
+//
+window.WEB_RTC_NODE = {
+		component 	: null,
+		initialize 	: function(){
+			// WebRTC Initialization
+			var webrtc = new WebRTC({
+				// constraint definitions
+				constraints: {video: true},
+				// Stun servers configuration...
+				pc_config: webrtcDetectedBrowser === 'firefox' ?
+					{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
+					{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+				//Peer connection constraints
+				pc_constraints: {
+					'optional': [
+					    {'DtlsSrtpKeyAgreement': true},
+						{'RtpDataChannels': true}
+					]
+				},
+				// Set up audio and video regardless of what devices are present.
+				sdpConstraints: {
+					'mandatory': {
+						'OfferToReceiveAudio':true,
+						'OfferToReceiveVideo':true
+					}
+				},
+				localVideo: document.querySelector('#localVideo'),
+				localMember: function() {
+					return AUTH.getMember();
+				},
+				addNewVideo: function(event) {
+					GEOCHAT_VIEW.addVideo(event.member, event.remoteVideo);
+				},
+				deleteVideo: function(event) {
+					jQuery(event.remoteVideo).parent().remove();
+				},
+				enableDataChannel: function (event) {
+					console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");
+				},
+				receiveMessageByDataChannel: function (event) {
+					console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
+					FileTransfer.receiveFile(event);
+				}
+			});
+
+			
+			WEB_RTC_NODE.component = new WebRTCNode ({
+				webrtc			: webrtc,
+				member			: null,
+				remoteSocketId	: null
+			});
+		},
+
+		
+		connect 	: function(){
+			$("#cams").show();
+			
+		},
+		
+		
+		disconnect 	: function(){
+			$("#cams").hide();
+		}
+};
+
+

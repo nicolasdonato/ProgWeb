@@ -20,7 +20,7 @@ module.exports.configure = function (io, socketPath) {
 		socket.on('listUsers', function () {
 			log('Client asked for users');
 			
-			mod_db_users.listUsers(function(userInfo) {
+			mod_db_users.list(function(userInfo) {
 				
 				for (var index in userInfo.result) {
 					log('Found user ' + userInfo.result[index].login);
