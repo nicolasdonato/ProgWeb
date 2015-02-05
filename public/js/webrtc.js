@@ -188,6 +188,14 @@ var WebRTC = Class.create({
 	 */
 	handleUserMediaError: function (error){
 		console.log('getUserMedia error: ', error);
+		
+		console.log('Adding local stream.');
+
+		// It sends a message to everyone saying that the video has overt connection to the web cam.
+		this.sendMessageWebRtc('got user media', {
+			memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
+					isInitiatorOfTheConnection: true
+		});
 	},
 
 	/**
@@ -293,7 +301,10 @@ var WebRTC = Class.create({
 				// This application is added to the p2p connection.
 				var candidate = new RTCIceCandidate({sdpMLineIndex:data.label,
 					candidate:data.candidate});
-				this.getPC(data.memberSender).pc.addIceCandidate(candidate);
+				var node = this.getPC(data.memberSender);
+				if (node && node.pc) {
+					node.pc.addIceCandidate(candidate);
+				}
 			}
 		}).bind(this)).on('bye', (function(data) {
 			if (this.isStarted) {
@@ -829,14 +840,21 @@ var WebRTCNode = Class.create({
 window.WEB_RTC_NODE = {
 		component 	: null,
 		initialize 	: function(){
+			var iceServers = [];
+			if (webrtcDetectedBrowser === 'firefox') {
+				iceServers.push({'url':'stun:23.21.150.121'});
+			} else {
+				iceServers.push({'url': 'stun:stun.l.google.com:19302'});
+			}
+			iceServers.push({url: 'turn:turn.bistri.com:80', credential: 'homeo', username: 'homeo'});
+			iceServers.push({url: 'turn:turn.anyfirewall.com:443?transport=tcp', credential: 'webrtc', username: 'webrtc'});
+			
 			// WebRTC Initialization
 			var webrtc = new WebRTC({
 				// constraint definitions
 				constraints: {video: true},
 				// Stun servers configuration...
-				pc_config: webrtcDetectedBrowser === 'firefox' ?
-					{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
-					{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+				pc_config: {iceServers: iceServers},
 				//Peer connection constraints
 				pc_constraints: {
 					'optional': [
@@ -887,6 +905,7 @@ window.WEB_RTC_NODE = {
 		
 		disconnect 	: function(){
 			$("#cams").hide();
+			this.component.webrtc.hangup();
 		}
 };
 

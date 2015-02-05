@@ -105,6 +105,7 @@ window.GEOCHAT_COMPONENTS = {
 		disconnect 	: function(){
 			COURSES.disconnect(); 	
 			GEOCHAT_MAP.disconnect();
+			WEB_RTC_NODE.disconnect();
 			// TO IMPLEMENT : disconnect for 
 			//		- WEB_RTC_NODE
 			//		- CHAT
