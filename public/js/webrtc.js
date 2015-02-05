@@ -813,3 +813,81 @@ var WebRTCNode = Class.create({
 		this.remoteSocketId = options.remoteSocketId || null;
 	}
 });
+
+/*
+ * 
+ * ce qui était avant la variable webrtc est maintenant accessible via 
+ * 	- window.WEB_RTC_NODE.component.webrtc 
+ * 
+ * */
+//
+//<<< Refactoring encapsulation >>>
+//
+//	avant : var webrtc dans main.js 
+//	après : window.WEB_RTC_NODE.component.webrtc
+//
+window.WEB_RTC_NODE = {
+		component 	: null,
+		initialize 	: function(){
+			// WebRTC Initialization
+			var webrtc = new WebRTC({
+				// constraint definitions
+				constraints: {video: true},
+				// Stun servers configuration...
+				pc_config: webrtcDetectedBrowser === 'firefox' ?
+					{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
+					{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+				//Peer connection constraints
+				pc_constraints: {
+					'optional': [
+					    {'DtlsSrtpKeyAgreement': true},
+						{'RtpDataChannels': true}
+					]
+				},
+				// Set up audio and video regardless of what devices are present.
+				sdpConstraints: {
+					'mandatory': {
+						'OfferToReceiveAudio':true,
+						'OfferToReceiveVideo':true
+					}
+				},
+				localVideo: document.querySelector('#localVideo'),
+				localMember: function() {
+					return AUTH.getMember();
+				},
+				addNewVideo: function(event) {
+					GEOCHAT_VIEW.addVideo(event.member, event.remoteVideo);
+				},
+				deleteVideo: function(event) {
+					jQuery(event.remoteVideo).parent().remove();
+				},
+				enableDataChannel: function (event) {
+					console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");
+				},
+				receiveMessageByDataChannel: function (event) {
+					console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
+					FileTransfer.receiveFile(event);
+				}
+			});
+
+			
+			WEB_RTC_NODE.component = new WebRTCNode ({
+				webrtc			: webrtc,
+				member			: null,
+				remoteSocketId	: null
+			});
+		},
+
+		
+		connect 	: function(){
+			$("#cams").show();
+			
+		},
+		
+		
+		disconnect 	: function(){
+			$("#cams").hide();
+		}
+};
+
+

@@ -4,36 +4,40 @@ var mod_db_sessions = require('../db/sessions');
 var mod_db_courses = require('../db/courses'); 
 var mod_db_classes = require('../db/classes'); 
 
+
 exports.setup = function(app) {
 
+	
 	// User management
 
 	app.route('/manage/users').
-	post(mod_db_users.create).
-	get(mod_db_users.list);
+	post(mod_db_users.requestCreate).
+	get(mod_db_users.requestList);
 
 	app.route('/manage/users/:id').
-	get(mod_db_users.get).
-	put(mod_db_users.update).
-	delete(mod_db_users.remove);	
+	get(mod_db_users.requestGet).
+	put(mod_db_users.requestUpdate).
+	delete(mod_db_users.requestRemove);	
 
+	
 	// Course management
 
 	app.route('/manage/courses').
-	post(mod_db_courses.createRequest).
-	get(mod_db_courses.listRequest);
+	post(mod_db_courses.requestCreate).
+	get(mod_db_courses.requestList);
 
 	app.route('/manage/courses/:id').
-	get(mod_db_courses.getRequest).
-	post(mod_db_courses.enrolRequest).
-	put(mod_db_courses.updateRequest);
+	get(mod_db_courses.requestGet).
+	post(mod_db_courses.requestEnrol).
+	put(mod_db_courses.requestUpdate);
 
 	app.route('/manage/courses/teacher/:id').
-			delete(mod_db_courses.removeRequest);
+			delete(mod_db_courses.requestRemove);
 			
 	app.route('/manage/courses/student/:id').
-			delete(mod_db_courses.quitRequest);
+			delete(mod_db_courses.requestQuit);
 
+	
 	// Class management
 
 	app.route('/manage/classes').
