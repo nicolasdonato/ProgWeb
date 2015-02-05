@@ -403,7 +403,7 @@ window.COURSES = {
 			if (info.success) {
 				COURSES.list();
 			} else {
-				$("#courses-info").text('');
+//				$("#courses-info").text('');
 				alert(info.message); 
 			}
 		},
@@ -414,7 +414,7 @@ window.COURSES = {
 			if (info.success) {
 				COURSES.list();
 			} else {
-				$("#courses-info").text('');
+//				$("#courses-info").text('');
 				alert(info.message); 
 			}
 
@@ -431,7 +431,7 @@ window.COURSES = {
 				$("#courses-details-form").show();
 
 			} else {
-				$("#courses-info").text('');
+//				$("#courses-info").text('');
 				$("#courses-details-form").hide();
 				$("#courses-edition-form").hide();
 				alert(info.message); 

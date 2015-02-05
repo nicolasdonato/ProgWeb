@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html>
+
+
+
   <head>
     <title>ProgWeb Project</title>
     <meta name="keywords" content="WebRTC, HTML5, JavaScript">
@@ -18,42 +21,59 @@
     <script src="js/test.js"></script>
     <script src="js/auth.js"></script>
   </head>
+  
+  
+  
   <body>
+  
+  
     <header>
-     <form id="loginForm">
-      <input id="login" type="text" placeholder="Login"><br>
-      <input id="pass" type="password" placeholder="Password">
-    </form>
+      <form id="loginForm">
+        <input id="login" type="text" placeholder="Login"><br>
+        <input id="pass" type="password" placeholder="Password">
+      </form>
     
-    <nav id="rooms" style="display:none"><span>Mon Projet</span></nav>
-      <button id="logout" type="text" style="display:none">Deco</button>
+    <nav id="rooms" style="display:none">
+      <span>Mon Projet</span>
+    </nav>
+    <button id="logout" type="text" style="display:none">Deco</button>
+    
     </header>
+    
+    
     <main>
+    
       <aside id="geochat">
+      
         <a id="map-locate" href="#locate" style="display:none">
           <span>Me localiser</span>
         </a>
+        
         <section id="geo">
           <div id="carte"></div>
         </section>
+        
         <section id="out"></section>
         <input id="in" type="text">
+        
       </aside>
+      
       <section id="cams">
         <div class="cam">
           <p id="localMember"></p>
           <video id="localVideo" autoplay="true" muted="true"></video>
         </div>
       </section>
+      
       <section id="courses-div" style="display:none">
   
         <a id="courses-refresh" href="#refresh">
           <span>Rafraîchir la liste des cours disponibles</span>
         </a>
         
-        <div id="courses-info"></div>
+        <!-- <div id="courses-info"></div> -->        
         <div id="courses-list"></div>
-    
+
           <form id="courses-creation-form" style="display:none;">
             <span class="titre">Créer un cours :  :&nbsp;</span>
             <p>
@@ -90,9 +110,44 @@
             <input id="courses-edition-submit-update" type="submit" value="Mettre à jour" />
             <input id="courses-edition-submit-delete" type="submit" value="Supprimer" />
           </form>
+
       </section>
+          
+      <section id="classes-div" style="display:none">
+  
+          <form id="classes-details-form" style="display:none;">
+          <span class="titre">Classes en cours ou à venir :  :&nbsp;</span>
+            <p>
+              <span id="classes-details-id" class="data label-simple"  style="display:none;"></span>
+              <span class="libelle">Subject :&nbsp;</span> <span id="classes-details-subject" class="data label-simple" ></span> <br />
+              <span id="classes-details-start" class="data label-simple" ></span> <br />
+              <span id="classes-details-length" class="data label-simple" ></span> <br />
+            </p>
+            <p>
+              <input id="classes-details-submit-start" type="submit" value="Démarrer une classe" />
+              <input id="classes-details-submit-end" type="submit" value="Terminer la lasse" />
+              <input id="classes-details-submit-join" type="submit" value="Rejoindre la classe" />
+              <input id="classes-details-submit-quit" type="submit" value="Quitter la classe" />
+            </p>
+          </form>
+      
+          <form id="classes-edition-form" style="display:none;">
+          <span class="titre">Classes en cours ou à venir :  :&nbsp;</span>
+            <p>
+              
+            </p>
+          </form>
+      
+      </section>
+      
       <aside id="files"></aside>
+      
     </main>
+    
     <footer>footer</footer>
+    
   </body>
+  
+  
+  
 </html>
