@@ -8,15 +8,16 @@
     },
     loginSuccess: function() {
       $("#loginForm").hide();
-      return $("#rooms, #logout").show();
+      $("#rooms, #logout").show();
+      return $("#localVideo").parent().show();
     },
     loginFail: function() {
       return $('#loginForm').addClass('fail');
     },
     logout: function() {
       AUTH.requestLogout();
-      $("#loginForm").hide();
-      return $("#rooms, #logout").show();
+      $("#loginForm").show();
+      return $("#rooms, #logout").hide();
     },
     addVideo: function(member, video) {
       return $("<div id=\"" + member + "\" class=\"cam\">\n	<p>" + member + "</p>\n	" + ($(video).prop('outerHTML')) + "\n</div>").appendTo('#cams').on('dragover dragenter', view.dragCancel).on('drop', view.dropFile);
@@ -35,24 +36,23 @@
         } else {
           view.writeChat('me', msg);
           return sendMessage('messageChat', {
-            user: AUTH.connectionData.userName,
+            user: AUTH.session.user,
             message: msg
           });
         }
       }
     },
     dragCancel: function(event) {
-      if (event.preventDefault) {
-        event.preventDefault();
-      }
+      event.preventDefault();
+      event.stopPropagation();
       return false;
     },
     dropFile: function(event) {
-      if (event.preventDefault) {
-        event.preventDefault();
-      }
-      event = event.originalEvent;
-      return console.log(event.dataTransfer.files[0]);
+      var files, member;
+      view.dragCancel(event);
+      member = this.id;
+      files = event.originalEvent.dataTransfer.files;
+      return FileTransfer.sendFile(member, files);
     }
   };
 

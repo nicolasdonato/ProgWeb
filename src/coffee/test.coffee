@@ -5,16 +5,17 @@ window.view =
 								$('#pass').val()
 
 	loginSuccess: ->
-		$("#loginForm")			.hide()
-		$("#rooms, #logout")	.show()
+		$("#loginForm")				.hide()
+		$("#rooms, #logout")		.show()
+		$("#localVideo").parent() 	.show()
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
 
 	logout: ->
 		AUTH.requestLogout()
-		$("#loginForm")			.hide()
-		$("#rooms, #logout")	.show()
+		$("#loginForm")			.show()
+		$("#rooms, #logout")	.hide()
 
 
 	addVideo: (member, video) ->
@@ -43,22 +44,21 @@ window.view =
 				view.writeChat 	'me',
 								msg
 				sendMessage 	'messageChat',
-								user: AUTH.connectionData.userName
+								user: AUTH.session.user
 								message: msg
 
 	dragCancel: (event) ->
-		if event.preventDefault
-			event.preventDefault()
+		event.preventDefault()
+		event.stopPropagation()
 		return off
 
 	dropFile: (event) ->
-		if event.preventDefault
-			event.preventDefault()
+		view.dragCancel event
 
-		event = event.originalEvent
-		# console.log 'drop event, target: ' + event.target
-		console.log event.dataTransfer.files[0]
-		# console.log event.target.file
+		member 	= this.id
+		files 	= event.originalEvent.dataTransfer.files
+
+		FileTransfer.sendFile member, files	
 
 $ ->
 	#########################################
@@ -73,7 +73,7 @@ $ ->
 
 	# Drop on local video
 	$('#localMember')
-		.parent()		.on 'dragover dragenter', 	view.dragCancel
+			.parent()	.on 'dragover dragenter', 	view.dragCancel
 						.on 'drop', 				view.dropFile
 
 	# Chat

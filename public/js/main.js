@@ -189,7 +189,7 @@ var chatMessage = new ChatMessage()
 		console.log('Another peer made a request to join room ' + room);
 		console.log('This peer is the initiator of room ' + room + '!');
 		webrtc.setChannelReady(true);
-//		map.sendPosition();
+		map.sendPosition();
 	})
 	// If you receive the message "joined" then joined an existing room.
 	// We are not the initiator, there is already someone (the appellant),
@@ -198,7 +198,7 @@ var chatMessage = new ChatMessage()
 		console.log('This peer has joined room ' + room);
 		webrtc.setChannelReady(true);
 		console.log('Send my position');
-//		map.sendPosition();
+		map.sendPosition();
 	})
 	// Called by the server to make tracks in the connected clients
 	.on('log', function (array){

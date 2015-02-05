@@ -16,7 +16,7 @@ window.AUTH = {
 		initialize: function() {
 
 			$("#loginForm").submit(AUTH.requestLogin);
-			$("#logoutForm").submit(AUTH.requestLogout);
+			// $("#logoutForm").submit(AUTH.requestLogout);
 
 			if (AUTH.session.token == undefined) {
 				if (localStorage.token != undefined) {
@@ -70,7 +70,9 @@ window.AUTH = {
 			// Les scripts sont chargés dans cet ordre
 			//
 		    var scripts = [];
-		    scripts.push("http://maps.google.com/maps/api/js?sensor=false");
+
+		    // Pas bien !
+		    // scripts.push("http://maps.google.com/maps/api/js?sensor=false");
 		    
 		    scripts.push((localSocket ? "" : "..") + "/socket.io/socket.io.js");
 		    scripts.push("js/chat.js");
@@ -119,14 +121,6 @@ window.AUTH = {
 		loginRefused: function(info) {
 
 			view.loginFail();
-			// $("#loginHeader").show();
-			// $("#login").val('');
-			// $("#pwd").val('');
-			// $("#logoutHeader").hide();
-			// if(! AUTH.autoAuthenticationInProgress){
-			// 	$("#logMessage").text('Wrong login/password !');
-			// 	$("#logMessage").show(); 
-			// }
 
 			AUTH.session = {}; 
 			delete localStorage.token; 
