@@ -7,7 +7,7 @@ var mod_db_classes = require('../db/classes');
 
 exports.setup = function(app) {
 
-	
+
 	// User management
 
 	app.route('/manage/users').
@@ -19,7 +19,7 @@ exports.setup = function(app) {
 	put(mod_db_users.requestUpdate).
 	delete(mod_db_users.requestRemove);	
 
-	
+
 	// Course management
 
 	app.route('/manage/courses').
@@ -32,22 +32,29 @@ exports.setup = function(app) {
 	put(mod_db_courses.requestUpdate);
 
 	app.route('/manage/courses/teacher/:id').
-			delete(mod_db_courses.requestRemove);
-			
-	app.route('/manage/courses/student/:id').
-			delete(mod_db_courses.requestQuit);
+	delete(mod_db_courses.requestRemove);
 
-	
-	// Class management
+	app.route('/manage/courses/student/:id').
+	delete(mod_db_courses.requestQuit);
+
+
+	// Classroom management
 
 	app.route('/manage/classes').
-	post(mod_db_classes.requestStart).
 	get(mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
-	get(mod_db_classes.requestGet).
+	get(mod_db_classes.requestGet);
+
+	app.route('/manage/classes/teacher').
+	post(mod_db_classes.requestCreate);
+	app.route('/manage/classes/teacher/:id').
 	put(mod_db_classes.requestUpdate).
 	delete(mod_db_classes.requestEnd);
+
+	app.route('/manage/classes/student/:id').
+	post(mod_db_classes.requestJoin).
+	delete(mod_db_classes.requestLeave);
 
 
 	// Session management
@@ -56,10 +63,6 @@ exports.setup = function(app) {
 	post(mod_db_sessions.requestLogin);
 	app.route('/session/logout').
 	post(mod_db_sessions.requestLogout);
-	app.route('/session/join/:id').
-	post(mod_db_sessions.requestJoin);
-	app.route('/session/leave').
-	post(mod_db_sessions.requestLeave);
 
 };
 

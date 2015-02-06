@@ -91,6 +91,7 @@ window.AUTH = {
 		    scripts.push("js/lib/File.js");
 		    scripts.push("js/fileSharing.js");
 		    scripts.push("js/courses.js");
+		    scripts.push("js/classes.js");
 		    
 		    //
 		    //Chargé depuis index.html visiblement...
@@ -169,11 +170,13 @@ window.AUTH = {
 
 
 		login: function(info) {
+			
 			if (info.success) {
 				AUTH.loginAccepted(info);
 			} else {
 				AUTH.loginRefused(info);
 			}
+			
 			AUTH.autoAuthenticationInProgress = false;
 		},
 
@@ -186,10 +189,6 @@ window.AUTH = {
 				delete localStorage.token; 
 				delete localStorage.user; 
 				delete localStorage.role; 
-				//
-				//Devrait être appelée depuis la vue, à bon entendeur...
-				//
-		  		GEOCHAT_COMPONENTS.disconnect();
 
 			} else {
 				alert('Logout failed: ' + info.message); 

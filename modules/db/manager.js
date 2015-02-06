@@ -45,7 +45,7 @@ module.exports.checkParams = function(req, res, paramList) {
 	for (var i = 0; i < paramList.length; i++) {
 		if (req.param(paramList[i]) == null) {
 			
-			var serverInfo = new ServerInfo(false, 'Property <' + parameters[i] + '> is missing'); 
+			var serverInfo = new ServerInfo(false, 'Property <' + paramList[i] + '> is missing'); 
 			res.send(serverInfo); 
 			return false; 
 		}

@@ -89,3 +89,9 @@ html body footer {
   flex: 1 0 100px;
   background-color: #00f;
 }
+
+.selected-course , .selected-classe {
+	color: red;
+}
+
+

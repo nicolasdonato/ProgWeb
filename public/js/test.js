@@ -9,6 +9,7 @@
       }
     },
     loginSuccess: function() {
+      GEOCHAT_COMPONENTS.connect(); 
       $("#loginForm").hide();
       $("#pass").val('');
       $("#rooms, #logout").show();
@@ -19,6 +20,7 @@
     },
     logout: function() {
       AUTH.requestLogout();
+      GEOCHAT_COMPONENTS.disconnect();
       $("#loginForm").show();
       return $("#rooms, #logout").hide();
     },
