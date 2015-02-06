@@ -45,8 +45,39 @@ Classe = function(course, subject, begin, end) {
 		}
 		this.end = endDate;
 	}
-	
+
 	this.students = new Array(); 
+
+	this.addStudent = function(user) {
+		if (! this.hasStudent(user)) {
+			this.students.push(user); 
+		}
+	};
+
+	this.removeStudent = function(user) {
+		var hasBeenRemoved = false; 
+		var i = 0; 
+		while (! hasBeenRemoved && i < this.students.length) {
+			if(this.students[i] == user) {
+				this.students.splice(i, 1); 
+				hasBeenRemoved = true;
+			}
+			i++;
+		}
+		if(!hasBeenRemoved){
+			throw new Error('Student could not be found for removal');
+		}
+	};
+
+	this.hasStudent = function(user) {
+		var isStudent = false; 
+		var i = 0; 
+		while (! isStudent && i < this.students.length) {
+			isStudent = (this.students[i] == user);
+			i++;
+		}
+		return isStudent; 
+	};
 };
 
 
@@ -309,7 +340,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 				var classe = classeInfo.result[i]; 
 				if ((classe.end.getTime() >= begin.getTime() && classe.begin.getTime() <= end.getTime())
 						|| (classe.begin.getTime() <= end.getTime() && classe.end.getTime() >= begin.getTime())) {
-					callback(new ClasseInfo(false, 'Failed to create a classroom: the period overlaps other class #' + classe.id)); 
+					callback(new ClasseInfo(false, 'Failed to create a classroom: you have another class at the same time')); 
 					return;
 				}
 			}
@@ -329,7 +360,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 						return;
 					}
 				}
-				
+
 				if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
 					callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
 					return; 
@@ -349,8 +380,8 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 					}
 				}
 
-				var classe = new Classe(course, subject, begin, end); 
-				mod_db.insert(DbName, classe); 
+				var classe = new Classe(courseInfo.result, subject, begin, end); 
+				mod_db.insert(DbName, classeToDb(classe)); 
 				makeClasseInfo(true, '', classe, callback); 
 			}); 
 		}); 
@@ -423,7 +454,7 @@ module.exports.update = function(user, id, course, subject, begin, end, callback
 				classe.id = +id; 
 				classe.begin = classInfo.result.begin;
 				classe.end = classInfo.result.end;
-				db.collection(DbName).update({ id: +id }, classe);
+				db.collection(DbName).update({ id: +id }, classeToDb(classe));
 
 				makeClasseInfo(true, '', classe, callback); 
 			});
@@ -466,7 +497,7 @@ module.exports.findByTeacher = function(login, callback) {
 	mod_db_courses.findByTeacher(login, function(courseInfo) {
 
 		if (! courseInfo.success) {
-			callback(new ClasseInfo(false, 'Failed to find the classes associated to teacher <' + login + '>')); 
+			callback(new ClasseInfo(false, 'Failed to find the classrooms associated to teacher <' + login + '>')); 
 		}
 
 		var courses = new Array(); 
@@ -491,12 +522,53 @@ module.exports.get = function(id, callback) {
 
 
 module.exports.join = function(user, id, callback) {
-	callback(new ClasseInfo(false, 'TODO')); 
+
+	module.exports.findById(id, function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to join classroom #' + id + " : " + classeInfo.message)); 
+			return; 
+		}
+		var classe = classeInfo.result; 
+
+		if (classe.hasStudent(user.login)) {
+			callback(new ClasseInfo(false, 'The user <' + user.login + '> has already joined classroom #' + id)); 
+			return; 
+		}
+		classe.addStudent(user.login); 
+
+		mod_db.connect(function(db) {
+
+			db.collection(DbName).update({ id: +(classe.id) }, classeToDb(classe));
+			makeClasseInfo(true, '', classe, callback); 
+		}); 
+	}); 
 }
 
 
 module.exports.leave = function(user, id, callback) {
-	callback(new ClasseInfo(false, 'TODO')); 
+
+	module.exports.findById(id, function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to leave classroom #' + id + ' : ' + classeInfo.message)); 
+			return;
+		}
+		var classe = classeInfo.result; 
+
+		if (! classe.hasStudent(user.login)) {
+			callback(new ClasseInfo(false, 'The user <' + user.login + '> isn\'t in classroom #' + id)); 
+			return; 
+		} 
+
+		classe.removeStudent(user.login); 
+
+		mod_db.connect(function(db) {
+
+			db.collection(DbName).update({ id: +(classe.id) }, classeToDb(classe));
+			makeClasseInfo(true, '', classe, callback); 
+		}); 
+	});
 }
 
 
@@ -506,20 +578,45 @@ module.exports.leave = function(user, id, callback) {
 
 function dbToClasse(that, c, callback) {
 
-	mod_db_courses.get(c.course, function(courseInfo) {
+	if (typeof c.course == 'number') {
 
-		if (courseInfo == null) {
-			throw new Error('Course info is null'); 
-		} else if (! courseInfo.success) {
-			throw new Error('There should be a course <' + c.course + '> in DB'); 
-		}
+		mod_db_courses.get(c.course, function(courseInfo) {
 
-		var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
+			if (courseInfo == null) {
+				throw new Error('Course info is null'); 
+			} else if (! courseInfo.success) {
+				throw new Error('There should be a course <' + c.course + '> in DB'); 
+			}
+
+			var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
+			classe.id = c.id; 
+			classe.students = c.students; 
+			callback(that, classe); 
+		}); 
+
+	} else {
+		
+		var classe = new Classe(c.course, c.subject, c.begin, c.end); 
 		classe.id = c.id; 
-		classe.students = new Array(c.students); 
+		classe.students = c.students; 
 		callback(that, classe); 
-	}); 
+	}
+}
 
+
+function classeToDb(c) {
+
+	var course; 
+	if (typeof c.course != 'number') {
+		course = c.course.id; 
+	} else {
+		course = c.course; 
+	}
+	var classe = new Classe(course, c.subject, c.begin, c.end); 
+	classe.id = c.id; 
+	classe.students = c.students;
+
+	return classe; 
 }
 
 
