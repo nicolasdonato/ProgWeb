@@ -309,7 +309,7 @@ window.CLASSES = {
 				e.preventDefault();
 			}
 
-			//	app.post('/manage/classes/teacher', mod_db_classes.requestStart);
+			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestUpdate);
 			if (CLASSES.startCommandInProgress) {
 
 				var data = { token: AUTH.session.token };
@@ -319,8 +319,8 @@ window.CLASSES = {
 				data.end = ''; 
 
 				$.ajax({
-					type: "POST",
-					url: "/manage/classes/teacher",
+					type: "PUT",
+					url: "/manage/classes/teacher/" + CLASSES.selectedClasse.id,
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -332,7 +332,7 @@ window.CLASSES = {
 
 				$.ajax({
 					type: "DELETE",
-					url: "/manage/classes/teacher" + $("#courses-details-id").text(),
+					url: "/manage/classes/teacher/" + CLASSES.selectedClasse.id,
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -344,7 +344,7 @@ window.CLASSES = {
 
 				$.ajax({
 					type: "POST",
-					url: "/manage/classes/student/" + $("#classes-details-id").text(),
+					url: "/manage/classes/student/" + CLASSES.selectedClasse.id,
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -356,7 +356,7 @@ window.CLASSES = {
 
 				$.ajax({
 					type: "DELETE",
-					url: "/manage/classes/student/" + $("#courses-details-id").text(),
+					url: "/manage/classes/student/" + CLASSES.selectedClasse.id,
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -431,7 +431,7 @@ window.CLASSES = {
 
 				var currentTime = new Date();
 				if (beginTime.getTime() <= currentTime.getTime() && currentTime.getTime() <= endTime.getTime()) {
-					CLASSES.engageStartCommand = true; 
+					CLASSES.startCommandInProgress = true; 
 					CLASSES.processDetailsCommand(); 
 				}
 

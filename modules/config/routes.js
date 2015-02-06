@@ -44,12 +44,12 @@ exports.setup = function(app) {
 	get(mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
-	get(mod_db_classes.requestGet).
-	put(mod_db_classes.requestUpdate);
+	get(mod_db_classes.requestGet);
 
 	app.route('/manage/classes/teacher').
-	post(mod_db_classes.requestStart);
+	post(mod_db_classes.requestCreate);
 	app.route('/manage/classes/teacher/:id').
+	put(mod_db_classes.requestUpdate).
 	delete(mod_db_classes.requestEnd);
 
 	app.route('/manage/classes/student/:id').
