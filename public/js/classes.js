@@ -26,7 +26,7 @@ window.CLASSES = {
 			});
 			//voir options : https://jonthornton.github.io/jquery-timepicker/
 			$('#classes-creation-startHour').timepicker({ 
-				timeFormat: 'h:i',
+				timeFormat: 'H:i',
 				//showDuration: true,
 				//useSelect: true ,
 				scrollDefault: 'now' });
@@ -89,7 +89,7 @@ window.CLASSES = {
 
 			$("#classes-list a").click(CLASSES.processHashLink);
 
-			$("#classes-creation-form").submit(classes.create);
+			$("#classes-creation-form").submit(CLASSES.create);
 
 			$("#classes-details-form input[type=submit]").hide();
 			$("#classes-details-submit-start").click(CLASSES.engageStartCommand);
@@ -111,6 +111,8 @@ window.CLASSES = {
 
 			CLASSES.clean(); 
 
+			$("#classes-creation-form").unbind("submit", CLASSES.create);
+
 			$("#classes-details-submit-start").unbind("click", CLASSES.engageStartCommand);
 			$("#classes-details-submit-end").unbind("click", CLASSES.engageEndCommand);
 			$("#classes-details-submit-join").unbind("click", CLASSES.engageJoinCommand);
@@ -121,6 +123,7 @@ window.CLASSES = {
 			$("#classes-creation-form").hide();
 			$("#classes-details-form").hide();
 			$("#classes-edition-form").hide();
+			
 			$("#classes-div").hide();
 		},
 
@@ -144,7 +147,8 @@ window.CLASSES = {
 				$("#classes-details-course").text('');
 				$("#classes-details-subject").text('');
 				$("#classes-details-start").text('');
-				$("#classes-details-duration").text('');
+				$("#classes-details-durationHours").text('');
+				$("#classes-details-durationMinutes").text('');
 
 			} else {
 
@@ -154,9 +158,12 @@ window.CLASSES = {
 
 				$("#classes-details-start").text(CLASSES.selectedClasse.begin);
 				if( CLASSES.selectedClasse.end != 0) {
-					$("#classes-details-duration").text(CLASSES.selectedClasse.end - CLASSES.selectedClasse.begin);
+					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
+					$("#classes-details-durationHours").text(duration.getHours() - 1);
+					$("#classes-details-durationMinutes").text(duration.getMinutes());
 				} else {
-					$("#classes-details-duration").text("");
+					$("#classes-details-durationHours").text("");
+					$("#classes-details-durationMinutes").text("");
 				}
 			}
 
@@ -261,19 +268,28 @@ window.CLASSES = {
 			data.course = course.id 
 			data.subject = $("#classes-creation-subject").val();
 
-			var startDate; 
-			var endDate; 
-			if ($("#classes-creation-startAt").selected()) {
+			var beginDate = 0; 
+			var endDate = 0; 
+			var startMode = $('#classes-creation-form').find('input[name=classes-creation-start-when]:checked').val();
+			if ($('#classes-creation-startAt').val() == startMode) {
 
-				startDate = $("#classes-creation-startDate").datepicker('getDate'); 
-				var startHour = $("#classes-creation-startHour").datepicker('getTime');
-				startDate.setHours(startHour.getHours(), startHour.getMinutes()); 
+				beginDate = $("#classes-creation-startDate").datepicker('getDate'); 
+				var startHour = $("#classes-creation-startHour").timepicker('getTime');
+				beginDate.setHours(startHour.getHours(), startHour.getMinutes()); 
 
-				endDate = startDate; 
+				endDate = new Date(); 
 				var duration = $('#classes-creation-duration').timepicker('getTime'); 
-				endDate.setTime(endDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
+				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
+				
+			} else {
+				
+				beginDate = new Date(); 
+				
+				endDate = new Date(); 
+				endDate.setTime(beginDate.getTime() + 8*3600000); 
 			}
-			data.start = startDate; 
+			
+			data.begin = beginDate; 
 			data.end = endDate; 
 
 			$.ajax({
@@ -299,8 +315,8 @@ window.CLASSES = {
 				var data = { token: AUTH.session.token };
 				data.course = CLASSES.selectedClasse.course.id; 
 				data.subject = CLASSES.selectedClasse.subject;
-				data.start = new Date(); 
-				data.end = 0; 
+				data.begin = new Date(); 
+				data.end = ''; 
 
 				$.ajax({
 					type: "POST",
@@ -383,6 +399,12 @@ window.CLASSES = {
 
 			if (info.success) {
 
+				var classeInfo = info.result; 
+				var beginTime = new Date(info.result.begin); 
+				classeInfo.begin = beginTime; 
+				var endTime = new Date(info.result.end);
+				classeInfo.end = endTime; 
+				
 				CLASSES.setSelected(info.result); 
 
 			} else {
@@ -398,12 +420,17 @@ window.CLASSES = {
 
 				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has been created"); 
 
-				CLASSES.setSelected(info.result); 
+				var classeInfo = info.result; 
+				var beginTime = new Date(info.result.begin); 
+				classeInfo.begin = beginTime; 
+				var endTime = new Date(info.result.end);
+				classeInfo.end = endTime; 
+				
+				CLASSES.list(); 
+				CLASSES.setSelected(classeInfo); 
 
-				var startTime = info.result.start.getTime(); 
-				var endTime = info.result.end.getTime();
-				var currentTime = (new Date()).getTime();
-				if (startTime < currentTime && currentTime < endTime) {
+				var currentTime = new Date();
+				if (beginTime.getTime() <= currentTime.getTime() && currentTime.getTime() <= endTime.getTime()) {
 					CLASSES.engageStartCommand = true; 
 					CLASSES.processDetailsCommand(); 
 				}
@@ -417,7 +444,18 @@ window.CLASSES = {
 		startComplete: function(info) {
 
 			if (info.success) {
+				
 				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has started"); 
+				
+				var classeInfo = info.result; 
+				var beginTime = new Date(info.result.begin); 
+				classeInfo.begin = beginTime; 
+				var endTime = new Date(info.result.end);
+				classeInfo.end = endTime; 
+				
+				CLASSES.list(); 
+				CLASSES.setSelected(classeInfo); 
+				
 			} else {
 				alert(info.message); 
 			}
@@ -427,7 +465,18 @@ window.CLASSES = {
 		endComplete: function(info) {
 
 			if (info.success) {
+				
 				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has ended");
+				
+				var classeInfo = info.result; 
+				var beginTime = new Date(info.result.begin); 
+				classeInfo.begin = beginTime; 
+				var endTime = new Date(info.result.end);
+				classeInfo.end = endTime; 
+				
+				CLASSES.list(); 
+				CLASSES.setSelected(classeInfo); 
+				
 			} else {
 				alert(info.message); 
 			}

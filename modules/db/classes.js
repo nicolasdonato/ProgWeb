@@ -26,13 +26,13 @@ Classe = function(course, subject, begin, end) {
 	this.course = course; 
 	this.subject = subject; 
 
-	if (begin == undefined || begin == null || begin == 0 || begin == '') {
+	if (begin == undefined || begin == null) {
 		this.begin = new Date(); 
 	} else {
 		this.begin = begin;
 	}
-	if (end == undefined || end == null || end == 0 || end == '') {
-		this.end = 0; 
+	if (end == undefined || end == null) {
+		this.end = null; 
 	} else {
 		this.end = end;
 	}
@@ -83,7 +83,18 @@ module.exports.requestStart = function(req, res) {
 				return;
 			}
 
-			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), req.param('begin'), req.param('end'), function(info) {
+			var begin = req.param('begin'); 
+			var beginDate = null; 
+			if (begin != 0 && begin != '') {
+				beginDate = new Date(begin); 
+			}
+			var end = req.param('end'); 
+			var endDate = null; 
+			if (end != 0 && end != '') {
+				endDate = new Date(end); 
+			}
+			
+			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
 				res.send(info); 
 			}); 
 		}); 
@@ -159,7 +170,18 @@ module.exports.requestUpdate = function(req, res) {
 				return;
 			}
 
-			module.exports.update(req.param('id'), req.param('course'), req.param('begin'), req.param('end'), function(info) {
+			var begin = req.param('begin'); 
+			var beginDate = null; 
+			if (begin != 0 && begin != '') {
+				beginDate = new Date(begin); 
+			}
+			var end = req.param('end'); 
+			var endDate = null; 
+			if (end != 0 && end != '') {
+				endDate = new Date(end); 
+			}
+			
+			module.exports.update(req.param('id'), req.param('course'), beginDate, endDate, function(info) {
 				res.send(info); 
 			}); 
 		}); 
@@ -220,6 +242,7 @@ module.exports.initialize = function(db) {
 	date1.setDate(date1.getDate() - 3); 
 	var date2 = new Date(); 
 	date2.setDate(date2.getDate() - 3); 
+	date2.setHours(date2.getHours() + 1); 
 	var classe1 = new Classe(1, 'NoSQL', date1, date2); 
 
 	date1 = new Date(); 
@@ -265,18 +288,19 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 			return; 
 		}
 
-		if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher) {
+		if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
 			callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
 			return; 
 		}
 
-		if (end != null && end != 0 && end != '') {
-			if (end < Date()) {
+		if (end != null) {
+			var current = new Date(); 
+			if (end.getTime() < current.getTime()) {
 				callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
 				return; 
 			}
-			if (begin != null && begin != 0 && begin != '') {
-				if (begin >= end) {
+			if (begin != null) {
+				if (begin.getTime() >= end.getTime()) {
 					callback(new ClasseInfo(false, 'A class must begin before ending'));
 					return; 
 				}
@@ -311,14 +335,14 @@ module.exports.end = function(user, classe, callback) {
 		}
 
 		var end; 
-		if (classe.end != null && classe.end != 0 && classe.end != '') {
+		if (classe.end != null) {
 			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> has already ended'));
 			return; 
 		} else {
 			end = new Date(); 
 		}
 		
-		if (classe.start == null || classe.start == 0 || classe.start == '') {
+		if (classe.start == null) {
 			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> hasn\'t begun yet'));
 			return; 
 		}
@@ -416,7 +440,16 @@ function dbToClasse(that, c, callback) {
 			throw new Error('There should be a course <' + c.course + '> in DB'); 
 		}
 
-		var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
+		var beginDate = c.begin; 
+		if (beginDate instanceof String) {
+			beginDate = new Date(beginDate); 
+		}
+		var endDate = c.end; 
+		if (endDate instanceof String) {
+			endDate = new Date(endDate); 
+		}
+		
+		var classe = new Classe(courseInfo.result, c.subject, beginDate, endDate); 
 		classe.id = c.id; 
 		callback(that, classe); 
 	}); 
