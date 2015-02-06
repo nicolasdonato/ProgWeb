@@ -162,6 +162,7 @@ window.COURSES = {
 
 			COURSES.clean(e, params); 
 			COURSES.list(e, params);
+			CLASSES.refresh(); 
 
 			$("#courses-list").show();
 

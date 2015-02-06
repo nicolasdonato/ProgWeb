@@ -45,6 +45,8 @@ Classe = function(course, subject, begin, end) {
 		}
 		this.end = endDate;
 	}
+	
+	this.students = new Array(); 
 };
 
 
@@ -488,12 +490,12 @@ module.exports.get = function(id, callback) {
 };
 
 
-module.exports.join = function(id, callback) {
+module.exports.join = function(user, id, callback) {
 	callback(new ClasseInfo(false, 'TODO')); 
 }
 
 
-module.exports.leave = function(id, callback) {
+module.exports.leave = function(user, id, callback) {
 	callback(new ClasseInfo(false, 'TODO')); 
 }
 
@@ -514,6 +516,7 @@ function dbToClasse(that, c, callback) {
 
 		var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
 		classe.id = c.id; 
+		classe.students = new Array(c.students); 
 		callback(that, classe); 
 	}); 
 
