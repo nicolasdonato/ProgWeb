@@ -29,12 +29,21 @@ Classe = function(course, subject, begin, end) {
 	if (begin == undefined || begin == null) {
 		this.begin = new Date(); 
 	} else {
-		this.begin = begin;
+		var beginDate = begin; 
+		if (beginDate instanceof String) {
+			beginDate = new Date(beginDate); 
+		}
+		this.begin = beginDate;
 	}
+
 	if (end == undefined || end == null) {
 		this.end = null; 
 	} else {
-		this.end = end;
+		var endDate = end; 
+		if (endDate instanceof String) {
+			endDate = new Date(endDate); 
+		}
+		this.end = endDate;
 	}
 };
 
@@ -48,7 +57,6 @@ function ClasseInfo(success, message, data) {
 		if (this.result == undefined || this.result == null) {
 			callback(this); 
 		} else if (this.result instanceof Array) {
-			// TODO
 			callback(this); 
 		} else {
 			dbToClasse(this, this.result, function(that, classe) {
@@ -93,7 +101,7 @@ module.exports.requestCreate = function(req, res) {
 			if (end != 0 && end != '') {
 				endDate = new Date(end); 
 			}
-			
+
 			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
 				res.send(info); 
 			}); 
@@ -180,7 +188,7 @@ module.exports.requestUpdate = function(req, res) {
 			if (end != 0 && end != '') {
 				endDate = new Date(end); 
 			}
-			
+
 			module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
 				res.send(info); 
 			}); 
@@ -284,33 +292,52 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 	mod_db_courses.get(course, function(courseInfo) {
 
 		if (! courseInfo.success) {
-			callback(new ClasseInfo(false, 'Failed to create a classroom : ' + courseInfo.message)); 
+			callback(new ClasseInfo(false, 'Failed to create a classroom: ' + courseInfo.message)); 
 			return; 
 		}
 
-		if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
-			callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
-			return; 
-		}
+		module.exports.findByTeacher(courseInfo.result.teacher.login, function(classeInfo) {
 
-		if (end != null) {
-			var current = new Date(); 
-			if (end.getTime() < current.getTime()) {
-				callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
+			if (! classeInfo.success) {
+				callback(new ClasseInfo(false, 'Failed to create a classroom: ' + classeInfo.message)); 
 				return; 
 			}
-			if (begin != null) {
-				if (begin.getTime() >= end.getTime()) {
-					callback(new ClasseInfo(false, 'A class must begin before ending'));
-					return; 
+
+			for (var i = 0; i < classeInfo.result.length; i++) {
+				var classe = classeInfo.result[i]; 
+				if ((classe.end.getTime() >= begin.getTime() && classe.begin.getTime() <= end.getTime())
+						|| (classe.begin.getTime() <= end.getTime() && classe.end.getTime() >= begin.getTime())) {
+					callback(new ClasseInfo(false, 'Failed to create a classroom: the period overlaps other class #' + classe.id)); 
+					return;
 				}
 			}
-		}
 
-		var classe = new Classe(course, subject, begin, end); 
-		mod_db.insert(DbName, classe); 
-		makeClasseInfo(true, '', classe, callback); 
-	})
+			// TEST : une classe du même cours existe déjà pour la même période
+
+			if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
+				callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
+				return; 
+			}
+
+			if (end != null) {
+				var current = new Date(); 
+				if (end.getTime() < current.getTime()) {
+					callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
+					return; 
+				}
+				if (begin != null) {
+					if (begin.getTime() >= end.getTime()) {
+						callback(new ClasseInfo(false, 'A class must begin before ending'));
+						return; 
+					}
+				}
+			}
+
+			var classe = new Classe(course, subject, begin, end); 
+			mod_db.insert(DbName, classe); 
+			makeClasseInfo(true, '', classe, callback); 
+		})
+	}); 
 };
 
 
@@ -341,7 +368,7 @@ module.exports.end = function(user, classe, callback) {
 		} else {
 			end = new Date(); 
 		}
-		
+
 		if (classe.start == null) {
 			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> hasn\'t begun yet'));
 			return; 
@@ -408,6 +435,27 @@ module.exports.findById = function(id, callback) {
 };
 
 
+module.exports.findByTeacher = function(login, callback) {
+
+	mod_db_courses.findByTeacher(login, function(courseInfo) {
+
+		if (! courseInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to find the classes associated to teacher <' + login + '>')); 
+		}
+
+		var courses = new Array(); 
+		for (var i = 0; i < courseInfo.result.length; i++) {
+			courses.push(courseInfo.result[i].id); 
+		}
+
+		mod_db.find(DbName, { course: { $in: courses } }, function(result) {
+
+			makeClasseInfo(true, '', result, callback);
+		}); 
+	});
+};
+
+
 module.exports.get = function(id, callback) {
 
 	module.exports.findById(id, function(classeInfo) {
@@ -440,16 +488,7 @@ function dbToClasse(that, c, callback) {
 			throw new Error('There should be a course <' + c.course + '> in DB'); 
 		}
 
-		var beginDate = c.begin; 
-		if (beginDate instanceof String) {
-			beginDate = new Date(beginDate); 
-		}
-		var endDate = c.end; 
-		if (endDate instanceof String) {
-			endDate = new Date(endDate); 
-		}
-		
-		var classe = new Classe(courseInfo.result, c.subject, beginDate, endDate); 
+		var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
 		classe.id = c.id; 
 		callback(that, classe); 
 	}); 

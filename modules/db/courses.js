@@ -70,7 +70,6 @@ function CourseInfo(success, message, data) {
 		if (this.result == undefined || this.result == null) {
 			callback(this); 
 		} else if (this.result instanceof Array) {
-			// TODO
 			callback(this); 
 		} else {
 			dbToCourse(this, this.result, function(that, course) {
@@ -281,6 +280,15 @@ module.exports.findById = function(id, callback) {
 		}
 
 		makeCourseInfo(true, '', result[0], callback); 
+	});
+};
+
+
+module.exports.findByTeacher = function(login, callback) {
+
+	mod_db.find(DbName, { teacher: login }, function(result) {
+
+		makeCourseInfo(true, '', result, callback); 
 	});
 };
 
