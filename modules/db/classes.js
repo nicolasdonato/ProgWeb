@@ -312,31 +312,46 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 				}
 			}
 
-			// TEST : une classe du même cours existe déjà pour la même période
+			module.exports.findByCourse(course, function(classeInfoBis) {
 
-			if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
-				callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
-				return; 
-			}
-
-			if (end != null) {
-				var current = new Date(); 
-				if (end.getTime() < current.getTime()) {
-					callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
+				if (! classeInfoBis.success) {
+					callback(new ClasseInfo(false, 'Failed to create a classroom: ' + classeInfoBis.message)); 
 					return; 
 				}
-				if (begin != null) {
-					if (begin.getTime() >= end.getTime()) {
-						callback(new ClasseInfo(false, 'A class must begin before ending'));
-						return; 
+
+				for (var i = 0; i < classeInfoBis.result.length; i++) {
+					var classe = classeInfoBis.result[i]; 
+					if ((classe.end.getTime() >= begin.getTime() && classe.begin.getTime() <= end.getTime())
+							|| (classe.begin.getTime() <= end.getTime() && classe.end.getTime() >= begin.getTime())) {
+						callback(new ClasseInfo(false, 'Failed to create a classroom: the other class #' + classe.id + " already exists at the same period for the same course")); 
+						return;
 					}
 				}
-			}
+				
+				if (user.role < mod_db_users.Roles.ADMIN && user.login != courseInfo.result.teacher.login) {
+					callback(new ClasseInfo(false, 'Only the teacher of a course can create a classroom for it'));
+					return; 
+				}
 
-			var classe = new Classe(course, subject, begin, end); 
-			mod_db.insert(DbName, classe); 
-			makeClasseInfo(true, '', classe, callback); 
-		})
+				if (end != null) {
+					var current = new Date(); 
+					if (end.getTime() < current.getTime()) {
+						callback(new ClasseInfo(false, 'A class can\'t be created in the past'));
+						return; 
+					}
+					if (begin != null) {
+						if (begin.getTime() >= end.getTime()) {
+							callback(new ClasseInfo(false, 'A class must begin before ending'));
+							return; 
+						}
+					}
+				}
+
+				var classe = new Classe(course, subject, begin, end); 
+				mod_db.insert(DbName, classe); 
+				makeClasseInfo(true, '', classe, callback); 
+			}); 
+		}); 
 	}); 
 };
 
@@ -431,6 +446,15 @@ module.exports.findById = function(id, callback) {
 		}
 
 		makeClasseInfo(true, '', result[0], callback); 
+	});
+};
+
+
+module.exports.findByCourse = function(courseId, callback) {
+
+	mod_db.find(DbName, { course: +courseId }, function(result) {
+
+		makeClasseInfo(true, '', result, callback); 
 	});
 };
 
