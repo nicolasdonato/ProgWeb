@@ -85,6 +85,11 @@ html body main #files {
   overflow: hidden;
   background-color: #0f9;
 }
+html body main #repository {
+	background : none repeat scroll 0 0 #0f0;
+  max-height: 200px;
+  min-width: 200px
+}
 html body footer {
   flex: 1 0 100px;
   background-color: #00f;

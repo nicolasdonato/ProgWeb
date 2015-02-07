@@ -35,6 +35,9 @@
 	"es-hash": "",
 	"async": "",
 	"q": "",
-	"cors":""
+	"cors":"",
+	"multer":"",
+	"path":"",
+	"assert":""
   }
 }
