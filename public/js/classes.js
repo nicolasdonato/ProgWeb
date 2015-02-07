@@ -177,6 +177,7 @@ window.CLASSES = {
 				$("#classes-details-start").text('');
 				$("#classes-details-durationHours").text('');
 				$("#classes-details-durationMinutes").text('');
+				$("#classes-details-active").text('');
 
 				$("#classes-details-submit-start").hide();
 				$("#classes-details-submit-end").hide();
@@ -213,6 +214,8 @@ window.CLASSES = {
 				}
 
 				if (CLASSES.selectedClasse.active) {
+					
+					$("#classes-details-active").text('OUI');
 
 					if (CLASSES.hasJoined(AUTH.getMember())) {
 
@@ -237,6 +240,9 @@ window.CLASSES = {
 					}
 					
 				} else {
+					
+					$("#classes-details-active").text('NON');
+
 					$("#classes-details-submit-join").hide();
 					$("#classes-details-submit-leave").hide();
 				}
