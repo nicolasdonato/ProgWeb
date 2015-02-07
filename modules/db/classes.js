@@ -669,14 +669,13 @@ module.exports.remove = function(user, id, callback) {
 
 module.exports.removeAll = function(user, ids, callback) {
 
+	removeList = new Array(); 
+
 	if (ids.length == 0) {
 		callback(new ClasseInfo(true, '', [ ])); 
-		return; 
-	} 
-	
-	removeList = new Array(); 
-	
-	removeRec(user, ids, 0, callback); 
+	} else {
+		removeRec(user, ids, 0, callback);
+	}
 };
 
 
@@ -729,18 +728,18 @@ function classeToDb(c) {
 var removeList; 
 
 var removeRec = function(user, ids, index, callback) {
-	
+
 	if (index >= ids.length) {
-		throw new Error('removeRec: index <' + index + '> is bigger than length of array <' + ids.length + '>'); 
+		throw new Error('(classes.js) removeRec: index <' + index + '> is bigger than length of array <' + ids.length + '>'); 
 	} 
 
 	module.exports.remove(user, ids[index], function(classeInfo) {
-		
+
 		if (! classeInfo.success) {
 			callback(new ClasseInfo(false, 'Failed to remove classroom #' + ids[index] + " : " + classeInfo.message));
 			return; 
 		}
-		
+
 		removeList.push(classeInfo.result); 
 		index++; 
 

@@ -385,6 +385,18 @@ module.exports.remove = function(user, id, callback) {
 };
 
 
+module.exports.removeAll = function(user, ids, callback) {
+
+	removeList = new Array(); 
+
+	if (ids.length == 0) {
+		callback(new CourseInfo(true, '', removeList)); 
+	} else {
+		removeRec(user, ids, 0, callback); 
+	}
+};
+
+
 module.exports.updateCourse = function(user, course, callback) {
 
 	module.exports.update(user, course.id, course.name, course.teacher, course.description, course.students, callback); 
@@ -533,5 +545,32 @@ function courseToDb(c) {
 	course.students = c.students; 
 
 	return course; 
+}
+
+
+var removeList; 
+
+var removeRec = function(user, ids, index, callback) {
+
+	if (index >= ids.length) {
+		throw new Error('(courses.js) removeRec: index <' + index + '> is bigger than length of array <' + ids.length + '>'); 
+	} 
+
+	module.exports.remove(user, ids[index], function(courseInfo) {
+
+		if (! courseInfo.success) {
+			callback(new CourseInfo(false, 'Failed to remove course #' + ids[index] + " : " + courseInfo.message));
+			return; 
+		}
+
+		removeList.push(courseInfo.result); 
+		index++; 
+
+		if (index < ids.length) {
+			removeRec(user, ids, index, callback); 
+		} else {
+			callback(new CourseInfo(true, '', removeList)); 
+		}
+	}); 
 }
 
