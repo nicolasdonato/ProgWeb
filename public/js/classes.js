@@ -72,6 +72,8 @@ window.CLASSES = {
 
 		setSelected: function(classe) {
 
+			CLASSES.selectedClasse = classe; 
+			
 			$("#classes-list a").removeClass("selected-classe");
 			if (classe != null) {
 				$("#classes-list a[id="+ classe.id +"]").addClass("selected-classe");
@@ -95,8 +97,6 @@ window.CLASSES = {
 					}
 				}
 			}
-
-			CLASSES.selectedClasse = classe; 
 
 			CLASSES.refreshDetails(); 
 		}, 
@@ -177,6 +177,7 @@ window.CLASSES = {
 				$("#classes-details-start").text('');
 				$("#classes-details-durationHours").text('');
 				$("#classes-details-durationMinutes").text('');
+				$("#classes-details-active").text('');
 
 				$("#classes-details-submit-start").hide();
 				$("#classes-details-submit-end").hide();
@@ -213,14 +214,37 @@ window.CLASSES = {
 				}
 
 				if (CLASSES.selectedClasse.active) {
+					
+					$("#classes-details-active").text('OUI');
+
 					if (CLASSES.hasJoined(AUTH.getMember())) {
+
 						$("#classes-details-submit-join").hide();
 						$("#classes-details-submit-leave").show();
+
 					} else {
-						// TODO 
-						$("#classes-details-submit-join").show();
+
+						var isStudent = false; 
+						var i = 0; 
+						while (! isStudent && i < CLASSES.selectedClasse.course.students.length) {
+							isStudent = (CLASSES.selectedClasse.course.students[i] == AUTH.getMember()); 
+							i++; 
+						}
+						if (isStudent) {
+							$("#classes-details-submit-join").show();
+						} else {
+							$("#classes-details-submit-join").hide();
+						}
+						
 						$("#classes-details-submit-leave").hide();
 					}
+					
+				} else {
+					
+					$("#classes-details-active").text('NON');
+
+					$("#classes-details-submit-join").hide();
+					$("#classes-details-submit-leave").hide();
 				}
 			}
 		},
@@ -251,6 +275,7 @@ window.CLASSES = {
 
 			CLASSES.clean(e, params); 
 			CLASSES.list(e, params);
+			CLASSES.refreshCreation(); 
 
 			$("#classes-list").show();
 
@@ -349,16 +374,13 @@ window.CLASSES = {
 
 				endDate = new Date(); 
 				var duration = $('#classes-creation-duration').timepicker('getTime'); 
+				if (duration == null || duration == 0 || duration == '') {
+					alert('You must specify a duration for delayed classroom creation'); 
+					return false; 
+				}
 				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
-
-			} else {
-
-				beginDate = new Date(); 
-
-				endDate = new Date(); 
-				endDate.setTime(beginDate.getTime() + 8*3600000); 
 			}
-
+			
 			data.begin = beginDate; 
 			data.end = endDate; 
 

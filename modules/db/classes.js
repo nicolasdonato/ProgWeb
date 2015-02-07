@@ -18,7 +18,7 @@ var DbName = 'classes';
 
 
 //Template of document 'Classe' in database
-Classe = function(course, subject, begin, end) {
+Classe = function(course, subject, begin, end, students) {
 
 	this.id = mod_utils.idGen.get(); 
 
@@ -45,7 +45,11 @@ Classe = function(course, subject, begin, end) {
 		this.end = endDate;
 	}
 
-	this.students = new Array(); 
+	if (students == null) {
+		this.students = new Array(); 
+	} else {
+		this.students = students; 
+	}
 
 	this.addStudent = function(user) {
 		if (! this.hasStudent(user)) {
@@ -91,22 +95,26 @@ Classe = function(course, subject, begin, end) {
 		}
 		return false; 
 	};
-	
+
 	this.active = this.isActive(); 
 
 	this.doesOverlap = function(beginRange, endRange) {
+		if (beginRange == null) {
+			beginRange = new Date(); 
+		}
 		if (this.end == null) {
-			if (this.endRange == null) {
+			if (endRange == null) {
 				return true; 
 			} else {
-				if (this.begin.getTime() <= this.endRange.getTime()) {
-					return true; 
+				if (this.begin.getTime() <= endRange.getTime()) {
+//					return true; 
+					return false; 
 				} else {
 					return false; 
 				}
 			}
 		} else {
-			if (this.endRange == null) {
+			if (endRange == null) {
 				if (beginRange.getTime() < this.end.getTime()) {
 //					return true; 
 					return false; 
@@ -228,7 +236,7 @@ module.exports.requestGet = function(req, res) {
 
 module.exports.requestStart = function(req, res) {
 
-	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'subject', 'begin'])) {
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
@@ -236,29 +244,42 @@ module.exports.requestStart = function(req, res) {
 				res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
+			var user = sessionInfo.result.user; 
 
 			module.exports.get(req.param('id'), function(classeInfo) {
 
 				if (! classeInfo.success) { 
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
-				}
-				
-				if (classeInfo.result.isActive()) {
-					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : classroom already active')); 
+				}	
+				var classe = classeInfo.result; 
+
+				if (classe.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : classroom already active')); 
 					return;
 				}
-				
-				var begin = req.param('begin'); 
-				var beginDate = null; 
-				if (begin != 0 && begin != '') {
-					beginDate = new Date(begin); 
-				}
+				classe.begin = new Date(); 
+				classe.end = null; 
 
-				module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, null, function(info) {
-					res.send(info); 
-				}); 
+				module.exports.findByTeacher(user.login, function(classeInfoBis) {
 
+					if (! classeInfoBis.success) {
+						res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : ' + classeInfoBis.message)); 
+						return;
+					}
+
+					for (var i = 0; i < classeInfoBis.result.length; i++) {
+						var classeBis = classeInfoBis.result[i]; 
+						if (classe.id != classeBis.id && classe.doesOverlap(classeBis.begin, classeBis.end)) {
+							res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : your other class #' + classeBis.id + ' is already active')); 
+							return;
+						}
+					}
+
+					module.exports.updateClasse(user, classe, function(info) {
+						res.send(info); 
+					}); 
+				});
 			}); 
 		}); 
 	}
@@ -284,7 +305,7 @@ module.exports.requestEnd = function(req, res) {
 					return;
 				}
 				var classe = classeInfo.result; 
-				
+
 				if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
 					callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
 					return; 
@@ -294,9 +315,9 @@ module.exports.requestEnd = function(req, res) {
 					res.send(new ClasseInfo(false, 'Failed to end classroom #' + classe.id + ' : classroom already inactive')); 
 					return;
 				}
-				
+
 				var end = new Date(); 
-				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, function(info) {
+				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, null, function(info) {
 					res.send(info); 
 				}); 
 
@@ -413,7 +434,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 			}
 
 			for (var i = 0; i < classeInfo.result.length; i++) {
-				var classe = new Classe(classeInfo.result[i].course, classeInfo.result[i].subject, classeInfo.result[i].begin, classeInfo.result[i].end); 
+				var classe = new Classe(classeInfo.result[i].course, classeInfo.result[i].subject, classeInfo.result[i].begin, classeInfo.result[i].end, classeInfo.result[i].students); 
 				if (classe.doesOverlap(begin, end)) {
 					callback(new ClasseInfo(false, 'Failed to create a classroom: you have the other class #' + classe.id + ' at the same time')); 
 					return;
@@ -428,7 +449,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 				}
 
 				for (var i = 0; i < classeInfoBis.result.length; i++) {
-					var classe = new Classe(classeInfoBis.result[i].course, classeInfoBis.result[i].subject, classeInfoBis.result[i].begin, classeInfoBis.result[i].end); 
+					var classe = new Classe(classeInfoBis.result[i].course, classeInfoBis.result[i].subject, classeInfoBis.result[i].begin, classeInfoBis.result[i].end, classeInfo.result[i].students); 
 					if (classe.doesOverlap(begin, end)) {
 						callback(new ClasseInfo(false, 'Failed to create a classroom: the other class #' + classe.id + " already exists at the same period for the same course")); 
 						return;
@@ -465,11 +486,11 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 
 module.exports.updateClasse = function(user, classe, callback) {
 
-	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, callback); 
+	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, classe.students, callback); 
 };
 
 
-module.exports.update = function(user, id, course, subject, begin, end, callback) {
+module.exports.update = function(user, id, course, subject, begin, end, students, callback) {
 
 	if (user.role < mod_db_users.Roles.TEACHER) {
 		callback(new ClasseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to update a classroom')); 
@@ -486,7 +507,7 @@ module.exports.update = function(user, id, course, subject, begin, end, callback
 
 			mod_db.connect(function(db) {
 
-				var classe = new Classe(course, subject, begin, end); 
+				var classe = new Classe(course, subject, begin, end, students); 
 				classe.id = +id; 
 				db.collection(DbName).update({ id: +id }, classeToDb(classe));
 
@@ -582,7 +603,7 @@ module.exports.join = function(user, id, callback) {
 			makeClasseInfo(true, '', classe, callback); 
 		}); 
 	}); 
-}
+};
 
 
 module.exports.leave = function(user, id, callback) {
@@ -608,7 +629,54 @@ module.exports.leave = function(user, id, callback) {
 			makeClasseInfo(true, '', classe, callback); 
 		}); 
 	});
-}
+};
+
+
+module.exports.remove = function(user, id, callback) {
+
+	if (user.role < mod_db_users.Roles.TEACHER) {
+		callback(new ClasseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to remove a classroom')); 
+		return; 
+	} 
+
+	module.exports.findById(id, function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to remove classroom #' + id + ' : ' + classeInfo.message)); 
+			return;
+		}
+		var classe = classeInfo.result; 
+
+		if (user.role < mod_db_users.Roles.ADMIN && classe.course.teacher.login != user.login) {
+			callback(new ClasseInfo(false, 'A teacher can\'t remove someone else\'s classroom')); 
+			return; 
+		}
+
+		mod_db.remove(DbName, { id: +id }, function(result) {
+
+			if (result.length == 0) {
+				callback(new ClasseInfo(false, 'Failed to remove a classroom: The classroom #' + id + ' is unknown')); 
+				return;
+			} else if (result.length > 1) {
+				throw new Error("More than one classroom with the same ID were found");
+			}
+
+			makeClasseInfo(true, '', result[0], callback); 
+		}); 
+	}); 
+};
+
+
+module.exports.removeAll = function(user, ids, callback) {
+
+	removeList = new Array(); 
+
+	if (ids.length == 0) {
+		callback(new ClasseInfo(true, '', [ ])); 
+	} else {
+		removeRec(user, ids, 0, callback);
+	}
+};
 
 
 //Useful functions
@@ -627,17 +695,15 @@ function dbToClasse(that, c, callback) {
 				throw new Error('There should be a course <' + c.course + '> in DB'); 
 			}
 
-			var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
+			var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end, c.students); 
 			classe.id = c.id; 
-			classe.students = c.students; 
 			callback(that, classe); 
 		}); 
 
 	} else {
 
-		var classe = new Classe(c.course, c.subject, c.begin, c.end); 
+		var classe = new Classe(c.course, c.subject, c.begin, c.end, c.students); 
 		classe.id = c.id; 
-		classe.students = c.students; 
 		callback(that, classe); 
 	}
 }
@@ -651,12 +717,37 @@ function classeToDb(c) {
 	} else {
 		course = c.course; 
 	}
-	var classe = new Classe(course, c.subject, c.begin, c.end); 
+	var classe = new Classe(course, c.subject, c.begin, c.end, c.students); 
 	classe.id = c.id; 
-	classe.students = c.students;
 	delete classe.active; 
 
 	return classe; 
 }
 
+
+var removeList; 
+
+var removeRec = function(user, ids, index, callback) {
+
+	if (index >= ids.length) {
+		throw new Error('(classes.js) removeRec: index <' + index + '> is bigger than length of array <' + ids.length + '>'); 
+	} 
+
+	module.exports.remove(user, ids[index], function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to remove classroom #' + ids[index] + " : " + classeInfo.message));
+			return; 
+		}
+
+		removeList.push(classeInfo.result); 
+		index++; 
+
+		if (index < ids.length) {
+			removeRec(user, ids, index, callback); 
+		} else {
+			callback(new ClasseInfo(true, '', removeList)); 
+		}
+	}); 
+}
 
