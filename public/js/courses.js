@@ -32,8 +32,7 @@ window.COURSES = {
 			}
 			
 			COURSES.selectedCourse = course; 
-			CLASSES.list(); 
-			CLASSES.refreshCreation(); 
+			CLASSES.refresh(); 
 		}, 
 
 
