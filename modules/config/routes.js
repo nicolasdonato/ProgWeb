@@ -11,6 +11,7 @@ exports.setup = function(app) {
 	
 	app.param('token', mod_db_sessions.requestTokenValidation);
 	
+	
 	// User management
 
 	app.route('/manage/users').
@@ -32,15 +33,10 @@ exports.setup = function(app) {
 	app.route('/manage/courses/:id').
 	get(mod_db_courses.requestGet).
 	subscribe(mod_db_courses.requestEnrol).
-	unsubscribe(mod_db_courses.requestQuit).//post(mod_db_courses.requestEnrol).
+	unsubscribe(mod_db_courses.requestQuit).
 	put(mod_db_courses.requestUpdate).
 	delete(mod_db_courses.requestRemove);
 
-//	app.route('/manage/courses/teacher/:id').
-//			delete(mod_db_courses.requestRemove);
-//			
-//	app.route('/manage/courses/student/:id').
-//			delete(mod_db_courses.requestQuit);
 
 	// Classroom management
 
@@ -48,12 +44,14 @@ exports.setup = function(app) {
 	get(mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
-	get(mod_db_classes.requestGet);
+	get(mod_db_classes.requestGet).
+	delete(mod_db_classes.requestRemove);
 
 	app.route('/manage/classes/teacher').
 	post(mod_db_classes.requestCreate);
 	app.route('/manage/classes/teacher/:id').
-	put(mod_db_classes.requestStart).
+	post(mod_db_classes.requestStart).
+	put(mod_db_classes.requestUpdate).
 	delete(mod_db_classes.requestEnd);
 
 	app.route('/manage/classes/student/:id').

@@ -234,6 +234,60 @@ module.exports.requestGet = function(req, res) {
 };
 
 
+module.exports.requestUpdate = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'subject', 'students', 'begin', 'end'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				res.send(new ClasseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				return;
+			}
+			var user = sessionInfo.result.user; 
+
+			module.exports.get(req.param('id'), function(classeInfo) {
+
+				if (! classeInfo.success) { 
+					res.send(new ClasseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+					return;
+				}	
+				
+				if (classeInfo.result.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to update classroom #' + classe.id + ' : can\'t update an active classroom')); 
+					return;
+				}
+
+				var classe = new Classe(); 
+				
+				classe.id = classeInfo.result.id; 
+				classe.course = req.param('course'); 
+				classe.subject = req.param('subject'); 
+				classe.students = req.param('students'); 
+
+				var begin = req.param('begin'); 
+				var beginDate = null; 
+				if (begin != 0 && begin != '') {
+					beginDate = new Date(begin); 
+				}
+				var end = req.param('end'); 
+				var endDate = null; 
+				if (end != 0 && end != '') {
+					endDate = new Date(end); 
+				}
+
+				classe.begin = beginDate; 
+				classe.end = endDate; 
+
+				module.exports.updateClasse(user, classe, function(info) {
+					res.send(info); 
+				}); 
+			});
+		}); 
+	} 
+}; 
+
+
 module.exports.requestStart = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token', 'id'])) {
@@ -363,6 +417,40 @@ module.exports.requestLeave = function(req, res) {
 		}); 
 	}
 };
+
+
+module.exports.requestRemove = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				res.send(new ClasseInfo(false, 'Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				return;
+			}
+			var user = sessionInfo.result.user; 
+
+			module.exports.get(req.param('id'), function(classeInfo) {
+
+				if (! classeInfo.success) { 
+					res.send(new ClasseInfo(false, 'Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+					return;
+				}	
+				var classe = classeInfo.result; 
+
+				if (classe.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to remove classroom #' + classe.id + ' : classroom in activity')); 
+					return;
+				}
+
+				module.exports.remove(user, classe.id, function(info) {
+					res.send(info); 
+				}); 
+			}); 
+		}); 
+	}
+}; 
 
 
 //Local API

@@ -7,6 +7,9 @@ window.CLASSES = {
 		leaveCommandInProgress: false, 
 		modifyCommandInProgress: false,
 
+		updateCommandInProgress: false, 
+		deleteCommandInProgress: false,
+
 
 		selectedClasse : null, 
 
@@ -98,7 +101,7 @@ window.CLASSES = {
 			} else {
 				$("#classes-details-form").hide();
 			}
-		    $("#classes-edition-form").hide();
+			$("#classes-edition-form").hide();
 
 			if (classe != null) {
 
@@ -145,6 +148,10 @@ window.CLASSES = {
 			$("#classes-details-submit-modify").click(CLASSES.engageModifyCommand);
 			$("#classes-details-form").submit(CLASSES.processDetailsCommand);
 
+			$("#classes-edition-submit-update").click(CLASSES.engageUpdateCommand);
+			$("#classes-edition-submit-delete").click(CLASSES.engageDeleteCommand);
+			$("#classes-edition-form").submit(CLASSES.processEditionCommand);
+
 			CLASSES.list(); 
 
 			CLASSES.refreshCreation(); 
@@ -167,6 +174,10 @@ window.CLASSES = {
 			$("#classes-details-submit-modify").unbind("click", CLASSES.engageModifyCommand);
 			$("#classes-details-form").unbind("submit", CLASSES.processDetailsCommand);
 			$("#classes-list a").unbind("click", CLASSES.processHashLink);
+
+			$("#classes-edition-submit-update").unbind("click", CLASSES.engageUpdateCommand);
+			$("#classes-edition-submit-delete").unbind("click", CLASSES.engageDeleteCommand);
+			$("#classes-edition-form").unbind("submit", CLASSES.processEditionCommand);
 
 			$("#classes-creation-form").hide();
 			$("#classes-details-form").hide();
@@ -283,7 +294,7 @@ window.CLASSES = {
 			} else {
 
 				$('#classes-edition-course').text(CLASSES.selectedClasse.course.id); 
-				$('#classes-edition-classes-edition-subject').text(CLASSES.selectedClasse.subject);
+				$('#classes-edition-subject').val(CLASSES.selectedClasse.subject);
 				$('#classes-edition-startDate').datepicker('setDate', CLASSES.selectedClasse.begin);
 				$('#classes-edition-startHour').timepicker('setTime', CLASSES.selectedClasse.begin.getTime()); 
 
@@ -291,7 +302,7 @@ window.CLASSES = {
 					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
 					$('#classes-edition-duration').timepicker('setTime', duration.getTime());
 				} else {
-					$('#classes-edition-duration').text(''); 
+					$('#classes-edition-duration').val(''); 
 				}
 
 				if (CLASSES.selectedClasse.active) {
@@ -359,6 +370,17 @@ window.CLASSES = {
 		engageModifyCommand: function(e, params) {
 
 			CLASSES.modifyCommandInProgress = true; 
+		},
+
+
+		engageUpdateCommand: function(e, params) {
+
+			CLASSES.updateCommandInProgress = true; 
+		},
+
+		engageDeleteCommand: function(e, params) {
+
+			CLASSES.deleteCommandInProgress = true; 
 		},
 
 
@@ -459,7 +481,7 @@ window.CLASSES = {
 				e.preventDefault();
 			}
 
-			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestStart);
+			//	app.post('/manage/classes/teacher/:id', mod_db_classes.requestStart);
 			if (CLASSES.startCommandInProgress) {
 
 				var data = { token: AUTH.session.token };
@@ -468,7 +490,7 @@ window.CLASSES = {
 				data.begin = new Date(); 
 
 				$.ajax({
-					type: "PUT",
+					type: "POST",
 					url: "/manage/classes/teacher/" + CLASSES.selectedClasse.id,
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
@@ -528,6 +550,59 @@ window.CLASSES = {
 
 			return false;
 		},
+
+
+		processEditionCommand: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
+
+			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestUpdate);
+			if (CLASSES.updateCommandInProgress) {
+
+				var data = { token: AUTH.session.token };
+				data.course = CLASSES.selectedClasse.course.id; 
+				data.subject = $('#classes-edition-subject').val();
+				data.students = CLASSES.selectedClasse.students;
+
+				var beginDate = $("#classes-edition-startDate").datepicker('getDate'); 
+				var startHour = $("#classes-edition-startHour").timepicker('getTime');
+				beginDate.setHours(startHour.getHours(), startHour.getMinutes()); 
+
+				var endDate = new Date(); 
+				var duration = $('#classes-edition-duration').timepicker('getTime'); 
+				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
+
+				data.begin = beginDate; 
+				data.end = endDate; 
+
+				$.ajax({
+					type: "PUT",
+					url: "/manage/classes/teacher/" + CLASSES.selectedClasse.id,
+					data: JSON.stringify(data),
+					contentType: "application/json; charset=utf-8",
+					dataType: "json"
+				}).done(CLASSES.updateComplete);
+			}
+
+			//	app.delete('/manage/classes/:id', mod_db_classes.requestRemove);
+			if (CLASSES.deleteCommandInProgress) {
+
+				$.ajax({
+					type: "DELETE",
+					url: "/manage/classes/" + CLASSES.selectedClasse.id,
+					data: JSON.stringify({ token: AUTH.session.token, id: CLASSES.selectedClasse.id }),
+					contentType: "application/json; charset=utf-8",
+					dataType: "json"
+				}).done(CLASSES.deleteComplete);
+			}
+
+			CLASSES.updateCommandInProgress = false;
+			CLASSES.deleteCommandInProgress = false;
+
+			return false;
+		},
+
 
 
 		//RECEIVE functions
@@ -609,6 +684,32 @@ window.CLASSES = {
 
 			if (info.success) {
 				CLASSES.setSelected(info.result); 
+			} else {
+				alert(info.message); 
+			}
+		},
+
+
+		updateComplete: function(info) {
+
+			if (info.success) {
+
+				CLASSES.list(); 
+				CLASSES.setSelected(info.result); 
+
+				$("#classes-edition-form").hide();		
+				$("#classes-details-form").show();
+
+			} else {
+				alert(info.message); 
+			}
+		},
+
+
+		deleteComplete: function(info) {
+
+			if (info.success) {
+				CLASSES.refresh();
 			} else {
 				alert(info.message); 
 			}
