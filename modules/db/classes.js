@@ -91,6 +91,8 @@ Classe = function(course, subject, begin, end) {
 		}
 		return false; 
 	};
+	
+	this.active = this.isActive(); 
 
 	this.doesOverlap = function(beginRange, endRange) {
 		if (this.end == null) {
@@ -106,7 +108,8 @@ Classe = function(course, subject, begin, end) {
 		} else {
 			if (this.endRange == null) {
 				if (beginRange.getTime() < this.end.getTime()) {
-					return true; 
+//					return true; 
+					return false; 
 				} else {
 					return false; 
 				}
@@ -410,9 +413,9 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 			}
 
 			for (var i = 0; i < classeInfo.result.length; i++) {
-				var classe = classeInfo.result[i]; 
+				var classe = new Classe(classeInfo.result[i].course, classeInfo.result[i].subject, classeInfo.result[i].begin, classeInfo.result[i].end); 
 				if (classe.doesOverlap(begin, end)) {
-					callback(new ClasseInfo(false, 'Failed to create a classroom: you have another class at the same time')); 
+					callback(new ClasseInfo(false, 'Failed to create a classroom: you have the other class #' + classe.id + ' at the same time')); 
 					return;
 				}
 			}
@@ -425,7 +428,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 				}
 
 				for (var i = 0; i < classeInfoBis.result.length; i++) {
-					var classe = classeInfoBis.result[i]; 
+					var classe = new Classe(classeInfoBis.result[i].course, classeInfoBis.result[i].subject, classeInfoBis.result[i].begin, classeInfoBis.result[i].end); 
 					if (classe.doesOverlap(begin, end)) {
 						callback(new ClasseInfo(false, 'Failed to create a classroom: the other class #' + classe.id + " already exists at the same period for the same course")); 
 						return;
@@ -651,6 +654,7 @@ function classeToDb(c) {
 	var classe = new Classe(course, c.subject, c.begin, c.end); 
 	classe.id = c.id; 
 	classe.students = c.students;
+	delete classe.active; 
 
 	return classe; 
 }
