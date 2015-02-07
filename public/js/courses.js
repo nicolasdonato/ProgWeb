@@ -25,13 +25,15 @@ window.COURSES = {
 
 
 		setSelected: function(course) {
-			
+
+			COURSES.selectedCourse = course; 
+
 			$("#courses-list a").removeClass("selected-course");
-			if( course != null){
+			if (course != null) {
 				$("#courses-list a[id="+ course.id +"]").addClass("selected-course");
 			}
-			
-			COURSES.selectedCourse = course; 
+
+			COURSES.refreshDetails(); 
 			CLASSES.refresh(); 
 		}, 
 
@@ -96,40 +98,52 @@ window.COURSES = {
 
 		refreshDetails: function() {
 
-			$("#courses-details-id").text(COURSES.selectedCourse.id);
-			$("#courses-details-name").text(COURSES.selectedCourse.name);
-			$("#courses-details-teacher").text(COURSES.selectedCourse.teacher.login);
-			$("#courses-details-description").text(COURSES.selectedCourse.description);
+			if (COURSES.selectedCourse == null) {
 
-			var user = AUTH.getMember(); 
-			var isStudent = false; 
-			var i = 0; 
-			while (! isStudent && i < COURSES.selectedCourse.students.length) {
-				isStudent = (COURSES.selectedCourse.students[i] == user);
-				i++;
-			}
-
-			if (isStudent) {
-
+				$("#courses-details-id").text('');
+				$("#courses-details-name").text('');
+				$("#courses-details-teacher").text('');
+				$("#courses-details-description").text('');
+				
 				$("#courses-details-submit-enrol").hide();
-				$("#courses-details-submit-quit").show();
-
-			} else {
-
 				$("#courses-details-submit-quit").hide();
-				if (user != COURSES.selectedCourse.teacher.login) {
-					$("#courses-details-submit-enrol").show();
-					$("#courses-details-message").hide(); 
-				} else {
-					$("#courses-details-submit-enrol").hide();
-					$("#courses-details-message").hide(); 
-				}
-			}
-
-			if (AUTH.getRole() < 3 && COURSES.selectedCourse.teacher.login != user) {
 				$("#courses-details-submit-modify").hide();
+
 			} else {
-				$("#courses-details-submit-modify").show();
+
+				$("#courses-details-id").text(COURSES.selectedCourse.id);
+				$("#courses-details-name").text(COURSES.selectedCourse.name);
+				$("#courses-details-teacher").text(COURSES.selectedCourse.teacher.login);
+				$("#courses-details-description").text(COURSES.selectedCourse.description);
+
+				var user = AUTH.getMember(); 
+				var isStudent = false; 
+				var i = 0; 
+				while (! isStudent && i < COURSES.selectedCourse.students.length) {
+					isStudent = (COURSES.selectedCourse.students[i] == user);
+					i++;
+				}
+
+				if (isStudent) {
+
+					$("#courses-details-submit-enrol").hide();
+					$("#courses-details-submit-quit").show();
+
+				} else {
+
+					$("#courses-details-submit-quit").hide();
+					if (user != COURSES.selectedCourse.teacher.login) {
+						$("#courses-details-submit-enrol").show();
+					} else {
+						$("#courses-details-submit-enrol").hide();
+					}
+				}
+
+				if (AUTH.getRole() < 3 && COURSES.selectedCourse.teacher.login != user) {
+					$("#courses-details-submit-modify").hide();
+				} else {
+					$("#courses-details-submit-modify").show();
+				}
 			}
 		},
 
@@ -161,7 +175,6 @@ window.COURSES = {
 
 			COURSES.clean(e, params); 
 			COURSES.list(e, params);
-			CLASSES.refresh(); 
 
 			$("#courses-list").show();
 
@@ -363,7 +376,8 @@ window.COURSES = {
 		creationComplete: function(info) {
 
 			if (info.success) {
-				COURSES.list();
+				COURSES.list(); 
+				COURSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}
@@ -373,12 +387,10 @@ window.COURSES = {
 		deleteComplete: function(info) {
 
 			if (info.success) {
-				COURSES.list();
+				COURSES.refresh();
 			} else {
 				alert(info.message); 
 			}
-
-			COURSES.clean(); 
 		},
 
 
@@ -388,11 +400,10 @@ window.COURSES = {
 
 				COURSES.setSelected(info.result); 
 
-				COURSES.refreshDetails(); 
 				$("#courses-details-form").show();
 
 			} else {
-				COURSES.clean(); 
+				COURSES.refresh(); 
 				alert(info.message); 
 			}
 		},
@@ -417,11 +428,7 @@ window.COURSES = {
 		enrolComplete: function(info) {
 
 			if (info.success) {
-
 				COURSES.setSelected(info.result);
-
-				COURSES.refreshDetails(); 
-
 			} else {
 				alert(info.message); 
 			}
@@ -431,11 +438,7 @@ window.COURSES = {
 		quitComplete: function(info) {
 
 			if (info.success) {
-
 				COURSES.setSelected(info.result);
-
-				COURSES.refreshDetails(); 
-
 			} else {
 				alert(info.message); 
 			}
@@ -448,14 +451,8 @@ window.COURSES = {
 
 				COURSES.setSelected(info.result); 
 
-				COURSES.list();
-
-				$("#courses-details-name").val(COURSES.selectedCourse.name);
-				$("#courses-details-teacher").val(COURSES.selectedCourse.teacher.login);
-				$("#courses-details-description").val(COURSES.selectedCourse.description);
-
 				$("#courses-edition-form").hide();		
-				$("#courses-details-form").hide();
+				$("#courses-details-form").show();
 
 			} else {
 				alert(info.message); 

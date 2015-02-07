@@ -6,6 +6,7 @@
 var mod_db = require('./manager');
 var mod_db_sessions = require('./sessions'); 
 var mod_db_users = require('./users'); 
+var mod_db_classes = require('./classes'); 
 var mod_utils = require('../utils'); 
 var logger = require('../logger'); 
 
@@ -349,16 +350,32 @@ module.exports.remove = function(user, id, callback) {
 				return; 
 			}
 
-			mod_db.remove(DbName, { id: +id }, function(result) {
+			mod_db_classes.findByCourse(id, function(classeInfo) {
 
-				if (result.length == 0) {
-					callback(new CourseInfo(false, 'Failed to delete a course: The course #' + id + ' unknown')); 
-					return;
-				} else if (result.length > 1) {
-					throw new Error("More than one course with the same ID were found");
+				ids = new Array(); 
+				for (var i = 0; i < classeInfo.result.length; i++) {
+					ids.push(classeInfo.result[i].id); 
 				}
 
-				makeCourseInfo(true, '', result[0], callback); 
+				mod_db_classes.removeAll(user, ids, function(classeInfoBis) { 
+
+					if (! classeInfoBis.success) {
+						throw new Error('Failed to remove classes linked to course #' + id + ' to be removed : ' + classeInfoBis.message); 
+					}
+
+					mod_db.remove(DbName, { id: +id }, function(result) {
+
+						if (result.length == 0) {
+							callback(new CourseInfo(false, 'Failed to delete a course: The course #' + id + ' is unknown')); 
+							return;
+						} else if (result.length > 1) {
+							throw new Error("More than one course with the same ID were found");
+						}
+
+						makeCourseInfo(true, '', result[0], callback); 
+					}); 
+
+				}); 
 			}); 
 
 		} else {
@@ -494,7 +511,7 @@ function dbToCourse(that, c, callback) {
 		}); 
 
 	} else {
-		
+
 		var course = new Course(c.name, c.teacher, c.description); 
 		course.id = c.id; 
 		course.students = c.students; 

@@ -275,7 +275,7 @@ module.exports.requestStart = function(req, res) {
 							return;
 						}
 					}
-					
+
 					module.exports.updateClasse(user, classe, function(info) {
 						res.send(info); 
 					}); 
@@ -603,7 +603,7 @@ module.exports.join = function(user, id, callback) {
 			makeClasseInfo(true, '', classe, callback); 
 		}); 
 	}); 
-}
+};
 
 
 module.exports.leave = function(user, id, callback) {
@@ -629,7 +629,55 @@ module.exports.leave = function(user, id, callback) {
 			makeClasseInfo(true, '', classe, callback); 
 		}); 
 	});
-}
+};
+
+
+module.exports.remove = function(user, id, callback) {
+
+	if (user.role < mod_db_users.Roles.TEACHER) {
+		callback(new ClasseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to remove a classroom')); 
+		return; 
+	} 
+
+	module.exports.findById(id, function(classeInfo) {
+
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to remove classroom #' + id + ' : ' + classeInfo.message)); 
+			return;
+		}
+		var classe = classeInfo.result; 
+
+		if (user.role < mod_db_users.Roles.ADMIN && classe.course.teacher.login != user.login) {
+			callback(new ClasseInfo(false, 'A teacher can\'t remove someone else\'s classroom')); 
+			return; 
+		}
+
+		mod_db.remove(DbName, { id: +id }, function(result) {
+
+			if (result.length == 0) {
+				callback(new ClasseInfo(false, 'Failed to remove a classroom: The classroom #' + id + ' is unknown')); 
+				return;
+			} else if (result.length > 1) {
+				throw new Error("More than one classroom with the same ID were found");
+			}
+
+			makeClasseInfo(true, '', result[0], callback); 
+		}); 
+	}); 
+};
+
+
+module.exports.removeAll = function(user, ids, callback) {
+
+	if (ids.length == 0) {
+		callback(new ClasseInfo(true, '', [ ])); 
+		return; 
+	} 
+	
+	removeList = new Array(); 
+	
+	removeRec(user, ids, 0, callback); 
+};
 
 
 //Useful functions
@@ -677,4 +725,30 @@ function classeToDb(c) {
 	return classe; 
 }
 
+
+var removeList; 
+
+var removeRec = function(user, ids, index, callback) {
+	
+	if (index >= ids.length) {
+		throw new Error('removeRec: index <' + index + '> is bigger than length of array <' + ids.length + '>'); 
+	} 
+
+	module.exports.remove(user, ids[index], function(classeInfo) {
+		
+		if (! classeInfo.success) {
+			callback(new ClasseInfo(false, 'Failed to remove classroom #' + ids[index] + " : " + classeInfo.message));
+			return; 
+		}
+		
+		removeList.push(classeInfo.result); 
+		index++; 
+
+		if (index < ids.length) {
+			removeRec(user, ids, index, callback); 
+		} else {
+			callback(new ClasseInfo(true, '', removeList)); 
+		}
+	}); 
+}
 

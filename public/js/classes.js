@@ -72,6 +72,8 @@ window.CLASSES = {
 
 		setSelected: function(classe) {
 
+			CLASSES.selectedClasse = classe; 
+			
 			$("#classes-list a").removeClass("selected-classe");
 			if (classe != null) {
 				$("#classes-list a[id="+ classe.id +"]").addClass("selected-classe");
@@ -95,8 +97,6 @@ window.CLASSES = {
 					}
 				}
 			}
-
-			CLASSES.selectedClasse = classe; 
 
 			CLASSES.refreshDetails(); 
 		}, 
