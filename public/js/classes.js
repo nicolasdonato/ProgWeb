@@ -205,9 +205,9 @@ window.CLASSES = {
 				$("#classes-details-id").text('');
 				$("#classes-details-course").text('');
 				$("#classes-details-subject").text('');
-				$("#classes-details-start").text('');
-				$("#classes-details-durationHours").text('');
-				$("#classes-details-durationMinutes").text('');
+				$("#classes-details-startDate").text('');
+				$("#classes-details-startHour").text('');
+				$("#classes-details-duration").text('');
 				$("#classes-details-active").text('');
 
 				$("#classes-details-submit-start").hide();
@@ -222,14 +222,24 @@ window.CLASSES = {
 				$("#classes-details-course").text(CLASSES.selectedClasse.course.name);
 				$("#classes-details-subject").text(CLASSES.selectedClasse.subject);
 
-				$("#classes-details-start").text(CLASSES.selectedClasse.begin);
+				$("#classes-details-startDate").text(
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getMonth() + 1) + '/' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getDate()) + '/' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getFullYear())
+						);
+				$("#classes-details-startHour").text(
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getHours()) + ':' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getMinutes())
+						); 
+				
 				if (CLASSES.selectedClasse.end != null) {
 					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
-					$("#classes-details-durationHours").text(duration.getHours() - 1);
-					$("#classes-details-durationMinutes").text(duration.getMinutes());
+					$("#classes-details-duration").text(
+							GEOCHAT_COMPONENTS.formatNumber(duration.getHours() - 1) + ':' + 
+							GEOCHAT_COMPONENTS.formatNumber(duration.getMinutes())
+							);
 				} else {
-					$("#classes-details-durationHours").text("~");
-					$("#classes-details-durationMinutes").text("~");
+					$("#classes-details-duration").text("~");
 				}
 
 				if (AUTH.getRole() >= 3 || AUTH.getMember() == CLASSES.selectedClasse.course.teacher.login) {
