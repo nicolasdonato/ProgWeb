@@ -194,6 +194,16 @@ window.GEOCHAT_COMPONENTS = {
 
 				alert('Failed to parse hash link <' + hash + '> : ' + err.message); 
 			}
+		}, 
+		
+		
+		formatNumber: function(number) {
+			
+			if (number < 10) {
+				return '0' + number; 
+			} else {
+				return number; 
+			}
 		}
 
 };

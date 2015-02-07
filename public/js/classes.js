@@ -295,12 +295,23 @@ window.CLASSES = {
 
 				$('#classes-edition-course').text(CLASSES.selectedClasse.course.id); 
 				$('#classes-edition-subject').val(CLASSES.selectedClasse.subject);
-				$('#classes-edition-startDate').datepicker('setDate', CLASSES.selectedClasse.begin);
-				$('#classes-edition-startHour').timepicker('setTime', CLASSES.selectedClasse.begin.getTime()); 
+				
+				$('#classes-edition-startDate').val(
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getMonth() + 1) + '/' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getDate()) + '/' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getFullYear())
+						);
+				$('#classes-edition-startHour').val(
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getHours()) + ':' + 
+						GEOCHAT_COMPONENTS.formatNumber(CLASSES.selectedClasse.begin.getMinutes())
+						); 
 
 				if (CLASSES.selectedClasse.end != null) {
 					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
-					$('#classes-edition-duration').timepicker('setTime', duration.getTime());
+					$('#classes-edition-duration').val(
+							GEOCHAT_COMPONENTS.formatNumber(duration.getHours() - 1) + ':' + 
+							GEOCHAT_COMPONENTS.formatNumber(duration.getMinutes())
+							);
 				} else {
 					$('#classes-edition-duration').val(''); 
 				}
