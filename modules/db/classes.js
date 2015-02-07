@@ -103,17 +103,18 @@ Classe = function(course, subject, begin, end, students) {
 			beginRange = new Date(); 
 		}
 		if (this.end == null) {
-			if (this.endRange == null) {
+			if (endRange == null) {
 				return true; 
 			} else {
-				if (this.begin.getTime() <= this.endRange.getTime()) {
-					return true; 
+				if (this.begin.getTime() <= endRange.getTime()) {
+//					return true; 
+					return false; 
 				} else {
 					return false; 
 				}
 			}
 		} else {
-			if (this.endRange == null) {
+			if (endRange == null) {
 				if (beginRange.getTime() < this.end.getTime()) {
 //					return true; 
 					return false; 
@@ -235,7 +236,7 @@ module.exports.requestGet = function(req, res) {
 
 module.exports.requestStart = function(req, res) {
 
-	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'subject', 'begin'])) {
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
 
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
@@ -243,29 +244,42 @@ module.exports.requestStart = function(req, res) {
 				res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
+			var user = sessionInfo.result.user; 
 
 			module.exports.get(req.param('id'), function(classeInfo) {
 
 				if (! classeInfo.success) { 
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
-				}
+				}	
+				var classe = classeInfo.result; 
 
-				if (classeInfo.result.isActive()) {
-					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : classroom already active')); 
+				if (classe.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : classroom already active')); 
 					return;
 				}
+				classe.begin = new Date(); 
+				classe.end = null; 
 
-				var begin = req.param('begin'); 
-				var beginDate = null; 
-				if (begin != 0 && begin != '') {
-					beginDate = new Date(begin); 
-				}
+				module.exports.findByTeacher(user.login, function(classeInfoBis) {
 
-				module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, null, null, function(info) {
-					res.send(info); 
-				}); 
+					if (! classeInfoBis.success) {
+						res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : ' + classeInfoBis.message)); 
+						return;
+					}
 
+					for (var i = 0; i < classeInfoBis.result.length; i++) {
+						var classeBis = classeInfoBis.result[i]; 
+						if (classe.id != classeBis.id && classe.doesOverlap(classeBis.begin, classeBis.end)) {
+							res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : your other class #' + classeBis.id + ' is already active')); 
+							return;
+						}
+					}
+					
+					module.exports.updateClasse(user, classe, function(info) {
+						res.send(info); 
+					}); 
+				});
 			}); 
 		}); 
 	}
@@ -472,7 +486,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 
 module.exports.updateClasse = function(user, classe, callback) {
 
-	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, classe.student, callback); 
+	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, classe.students, callback); 
 };
 
 
