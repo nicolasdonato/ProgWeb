@@ -18,7 +18,7 @@ var DbName = 'classes';
 
 
 //Template of document 'Classe' in database
-Classe = function(course, subject, begin, end) {
+Classe = function(course, subject, begin, end, students) {
 
 	this.id = mod_utils.idGen.get(); 
 
@@ -45,7 +45,11 @@ Classe = function(course, subject, begin, end) {
 		this.end = endDate;
 	}
 
-	this.students = new Array(); 
+	if (students == null) {
+		this.students = new Array(); 
+	} else {
+		this.students = students; 
+	}
 
 	this.addStudent = function(user) {
 		if (! this.hasStudent(user)) {
@@ -91,7 +95,7 @@ Classe = function(course, subject, begin, end) {
 		}
 		return false; 
 	};
-	
+
 	this.active = this.isActive(); 
 
 	this.doesOverlap = function(beginRange, endRange) {
@@ -243,19 +247,19 @@ module.exports.requestStart = function(req, res) {
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
 				}
-				
+
 				if (classeInfo.result.isActive()) {
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : classroom already active')); 
 					return;
 				}
-				
+
 				var begin = req.param('begin'); 
 				var beginDate = null; 
 				if (begin != 0 && begin != '') {
 					beginDate = new Date(begin); 
 				}
 
-				module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, null, function(info) {
+				module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, null, null, function(info) {
 					res.send(info); 
 				}); 
 
@@ -284,7 +288,7 @@ module.exports.requestEnd = function(req, res) {
 					return;
 				}
 				var classe = classeInfo.result; 
-				
+
 				if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
 					callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
 					return; 
@@ -294,9 +298,9 @@ module.exports.requestEnd = function(req, res) {
 					res.send(new ClasseInfo(false, 'Failed to end classroom #' + classe.id + ' : classroom already inactive')); 
 					return;
 				}
-				
+
 				var end = new Date(); 
-				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, function(info) {
+				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, null, function(info) {
 					res.send(info); 
 				}); 
 
@@ -413,7 +417,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 			}
 
 			for (var i = 0; i < classeInfo.result.length; i++) {
-				var classe = new Classe(classeInfo.result[i].course, classeInfo.result[i].subject, classeInfo.result[i].begin, classeInfo.result[i].end); 
+				var classe = new Classe(classeInfo.result[i].course, classeInfo.result[i].subject, classeInfo.result[i].begin, classeInfo.result[i].end, classeInfo.result[i].students); 
 				if (classe.doesOverlap(begin, end)) {
 					callback(new ClasseInfo(false, 'Failed to create a classroom: you have the other class #' + classe.id + ' at the same time')); 
 					return;
@@ -428,7 +432,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 				}
 
 				for (var i = 0; i < classeInfoBis.result.length; i++) {
-					var classe = new Classe(classeInfoBis.result[i].course, classeInfoBis.result[i].subject, classeInfoBis.result[i].begin, classeInfoBis.result[i].end); 
+					var classe = new Classe(classeInfoBis.result[i].course, classeInfoBis.result[i].subject, classeInfoBis.result[i].begin, classeInfoBis.result[i].end, classeInfo.result[i].students); 
 					if (classe.doesOverlap(begin, end)) {
 						callback(new ClasseInfo(false, 'Failed to create a classroom: the other class #' + classe.id + " already exists at the same period for the same course")); 
 						return;
@@ -465,11 +469,11 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 
 module.exports.updateClasse = function(user, classe, callback) {
 
-	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, callback); 
+	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, classe.student, callback); 
 };
 
 
-module.exports.update = function(user, id, course, subject, begin, end, callback) {
+module.exports.update = function(user, id, course, subject, begin, end, students, callback) {
 
 	if (user.role < mod_db_users.Roles.TEACHER) {
 		callback(new ClasseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to update a classroom')); 
@@ -486,7 +490,7 @@ module.exports.update = function(user, id, course, subject, begin, end, callback
 
 			mod_db.connect(function(db) {
 
-				var classe = new Classe(course, subject, begin, end); 
+				var classe = new Classe(course, subject, begin, end, students); 
 				classe.id = +id; 
 				db.collection(DbName).update({ id: +id }, classeToDb(classe));
 
@@ -627,17 +631,15 @@ function dbToClasse(that, c, callback) {
 				throw new Error('There should be a course <' + c.course + '> in DB'); 
 			}
 
-			var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end); 
+			var classe = new Classe(courseInfo.result, c.subject, c.begin, c.end, c.students); 
 			classe.id = c.id; 
-			classe.students = c.students; 
 			callback(that, classe); 
 		}); 
 
 	} else {
 
-		var classe = new Classe(c.course, c.subject, c.begin, c.end); 
+		var classe = new Classe(c.course, c.subject, c.begin, c.end, c.students); 
 		classe.id = c.id; 
-		classe.students = c.students; 
 		callback(that, classe); 
 	}
 }
@@ -651,9 +653,8 @@ function classeToDb(c) {
 	} else {
 		course = c.course; 
 	}
-	var classe = new Classe(course, c.subject, c.begin, c.end); 
+	var classe = new Classe(course, c.subject, c.begin, c.end, c.students); 
 	classe.id = c.id; 
-	classe.students = c.students;
 	delete classe.active; 
 
 	return classe; 
