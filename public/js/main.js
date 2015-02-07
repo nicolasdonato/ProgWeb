@@ -191,7 +191,7 @@ window.GEOCHAT_COMPONENTS = {
 
 			} catch (err) {
 
-				alert(err.message); 
+				alert('Failed to parse hash link <' + hash + '> : ' + err.message); 
 			}
 		}
 

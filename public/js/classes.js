@@ -80,16 +80,19 @@ window.CLASSES = {
 				$("#classes-details-form").hide();
 			}
 
-			var beginTime = classe.begin; 
-			if (typeof beginTime == 'string') {
-				classe.begin = new Date(beginTime); 
-			}
-			if (classe.end == null || classe.end == 0 || classe.end == '') {
-				classe.end == null; 
-			} else {
-				var endTime = classe.end; 
-				if (typeof endTime == 'string') {
-					classe.end = new Date(endTime); 
+			if (classe != null) {
+
+				var beginTime = classe.begin; 
+				if (typeof beginTime == 'string') {
+					classe.begin = new Date(beginTime); 
+				}
+				if (classe.end == null || classe.end == 0 || classe.end == '') {
+					classe.end == null; 
+				} else {
+					var endTime = classe.end; 
+					if (typeof endTime == 'string') {
+						classe.end = new Date(endTime); 
+					}
 				}
 			}
 
@@ -214,6 +217,7 @@ window.CLASSES = {
 						$("#classes-details-submit-join").hide();
 						$("#classes-details-submit-leave").show();
 					} else {
+						// TODO 
 						$("#classes-details-submit-join").show();
 						$("#classes-details-submit-leave").hide();
 					}
