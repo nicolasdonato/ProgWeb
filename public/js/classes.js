@@ -80,9 +80,34 @@ window.CLASSES = {
 				$("#classes-details-form").hide();
 			}
 
+			var beginTime = classe.begin; 
+			if (typeof beginTime == 'string') {
+				classe.begin = new Date(beginTime); 
+			}
+			if (classe.end == null || classe.end == 0 || classe.end == '') {
+				classe.end == null; 
+			} else {
+				var endTime = classe.end; 
+				if (typeof endTime == 'string') {
+					classe.end = new Date(endTime); 
+				}
+			}
+
 			CLASSES.selectedClasse = classe; 
+
 			CLASSES.refreshDetails(); 
 		}, 
+
+
+		hasJoined: function(user) {
+
+			for (var i = 0; i < CLASSES.selectedClasse.students.length; i++) {
+				if (CLASSES.selectedClasse.students[i] == user) {
+					return true; 
+				}
+			}
+			return false; 
+		},
 
 
 		connect: function() {
@@ -123,7 +148,7 @@ window.CLASSES = {
 			$("#classes-creation-form").hide();
 			$("#classes-details-form").hide();
 			$("#classes-edition-form").hide();
-			
+
 			$("#classes-div").hide();
 		},
 
@@ -150,6 +175,11 @@ window.CLASSES = {
 				$("#classes-details-durationHours").text('');
 				$("#classes-details-durationMinutes").text('');
 
+				$("#classes-details-submit-start").hide();
+				$("#classes-details-submit-end").hide();
+				$("#classes-details-submit-join").hide();
+				$("#classes-details-submit-leave").hide();
+
 			} else {
 
 				$("#classes-details-id").text(CLASSES.selectedClasse.course.id);
@@ -157,21 +187,38 @@ window.CLASSES = {
 				$("#classes-details-subject").text(CLASSES.selectedClasse.subject);
 
 				$("#classes-details-start").text(CLASSES.selectedClasse.begin);
-				if( CLASSES.selectedClasse.end != 0) {
+				if( CLASSES.selectedClasse.end != null) {
 					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
 					$("#classes-details-durationHours").text(duration.getHours() - 1);
 					$("#classes-details-durationMinutes").text(duration.getMinutes());
 				} else {
-					$("#classes-details-durationHours").text("");
-					$("#classes-details-durationMinutes").text("");
+					$("#classes-details-durationHours").text("~");
+					$("#classes-details-durationMinutes").text("~");
+				}
+
+				if (AUTH.getRole() >= 3 || AUTH.getMember() == CLASSES.selectedClasse.course.teacher.login) {
+					if (CLASSES.selectedClasse.active) {
+						$("#classes-details-submit-start").hide();
+						$("#classes-details-submit-end").show();
+					} else {
+						$("#classes-details-submit-start").show();
+						$("#classes-details-submit-end").hide();
+					}
+				} else {
+					$("#classes-details-submit-start").hide();
+					$("#classes-details-submit-end").hide();
+				}
+
+				if (CLASSES.selectedClasse.active) {
+					if (CLASSES.hasJoined(AUTH.getMember())) {
+						$("#classes-details-submit-join").hide();
+						$("#classes-details-submit-leave").show();
+					} else {
+						$("#classes-details-submit-join").show();
+						$("#classes-details-submit-leave").hide();
+					}
 				}
 			}
-
-			// TODO 
-			$("#classes-details-submit-start").show();
-			$("#classes-details-submit-end").hide();
-			$("#classes-details-submit-join").hide();
-			$("#classes-details-submit-leave").hide();
 		},
 
 
@@ -187,6 +234,25 @@ window.CLASSES = {
 
 			return false;
 		},
+
+
+		refresh: function(e, params) {
+			if (e != null) {
+				e.preventDefault();
+			}
+
+			$("#classes-details-form").hide();
+			$("#classes-edition-form").hide();
+			$("#classes-list").empty();
+
+			CLASSES.clean(e, params); 
+			CLASSES.list(e, params);
+
+			$("#classes-list").show();
+
+			return false;
+		},
+
 
 		engageStartCommand: function(e, params) {
 
@@ -280,15 +346,15 @@ window.CLASSES = {
 				endDate = new Date(); 
 				var duration = $('#classes-creation-duration').timepicker('getTime'); 
 				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
-				
+
 			} else {
-				
+
 				beginDate = new Date(); 
-				
+
 				endDate = new Date(); 
 				endDate.setTime(beginDate.getTime() + 8*3600000); 
 			}
-			
+
 			data.begin = beginDate; 
 			data.end = endDate; 
 
@@ -309,14 +375,13 @@ window.CLASSES = {
 				e.preventDefault();
 			}
 
-			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestUpdate);
+			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestStart);
 			if (CLASSES.startCommandInProgress) {
 
 				var data = { token: AUTH.session.token };
 				data.course = CLASSES.selectedClasse.course.id; 
 				data.subject = CLASSES.selectedClasse.subject;
 				data.begin = new Date(); 
-				data.end = ''; 
 
 				$.ajax({
 					type: "PUT",
@@ -398,15 +463,7 @@ window.CLASSES = {
 		getComplete: function(info) {
 
 			if (info.success) {
-
-				var classeInfo = info.result; 
-				var beginTime = new Date(info.result.begin); 
-				classeInfo.begin = beginTime; 
-				var endTime = new Date(info.result.end);
-				classeInfo.end = endTime; 
-				
 				CLASSES.setSelected(info.result); 
-
 			} else {
 				CLASSES.clean(); 
 				alert(info.message); 
@@ -417,24 +474,8 @@ window.CLASSES = {
 		createComplete: function(info) {
 
 			if (info.success) {
-
-				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has been created"); 
-
-				var classeInfo = info.result; 
-				var beginTime = new Date(info.result.begin); 
-				classeInfo.begin = beginTime; 
-				var endTime = new Date(info.result.end);
-				classeInfo.end = endTime; 
-				
 				CLASSES.list(); 
-				CLASSES.setSelected(classeInfo); 
-
-				var currentTime = new Date();
-				if (beginTime.getTime() <= currentTime.getTime() && currentTime.getTime() <= endTime.getTime()) {
-					CLASSES.startCommandInProgress = true; 
-					CLASSES.processDetailsCommand(); 
-				}
-
+				CLASSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}
@@ -444,18 +485,7 @@ window.CLASSES = {
 		startComplete: function(info) {
 
 			if (info.success) {
-				
-				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has started"); 
-				
-				var classeInfo = info.result; 
-				var beginTime = new Date(info.result.begin); 
-				classeInfo.begin = beginTime; 
-				var endTime = new Date(info.result.end);
-				classeInfo.end = endTime; 
-				
-				CLASSES.list(); 
-				CLASSES.setSelected(classeInfo); 
-				
+				CLASSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}
@@ -465,18 +495,7 @@ window.CLASSES = {
 		endComplete: function(info) {
 
 			if (info.success) {
-				
-				alert("Class #" + info.result.id + " : \"" + info.result.subject + "\" has ended");
-				
-				var classeInfo = info.result; 
-				var beginTime = new Date(info.result.begin); 
-				classeInfo.begin = beginTime; 
-				var endTime = new Date(info.result.end);
-				classeInfo.end = endTime; 
-				
-				CLASSES.list(); 
-				CLASSES.setSelected(classeInfo); 
-				
+				CLASSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}
@@ -486,7 +505,7 @@ window.CLASSES = {
 		joinComplete: function(info) {
 
 			if (info.success) {
-				alert("You have joined class #" + info.result.id + " : \"" + info.result.subject + "\""); 
+				CLASSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}
@@ -496,7 +515,7 @@ window.CLASSES = {
 		leaveComplete: function(info) {
 
 			if (info.success) {
-				alert("You have left class #" + info.result.id + " : \"" + info.result.subject + "\""); 
+				CLASSES.setSelected(info.result); 
 			} else {
 				alert(info.message); 
 			}

@@ -327,7 +327,7 @@ module.exports.create = function(user, name, description, callback) {
 			callback(new CourseInfo(false, 'Failed to create a course: A course with the same name <' + name + '> already exists'));
 		} else {
 			var course = new Course(name, user.login, description); 
-			mod_db.insert(DbName, course); 
+			mod_db.insert(DbName, courseToDb(course)); 
 			makeCourseInfo(true, '', course, callback); 
 		}
 	}); 
@@ -402,7 +402,7 @@ module.exports.update = function(user, id, name, teacher, description, students,
 				students.forEach(function(student) {
 					course.students.push(student); 
 				}); 
-				db.collection(DbName).update({ id: +id }, course);
+				db.collection(DbName).update({ id: +id }, courseToDb(course));
 
 				makeCourseInfo(true, '', course, callback); 
 			});
@@ -427,7 +427,7 @@ module.exports.enrol = function(user, id, callback) {
 		if (course.hasStudent(user.login)) {
 			callback(new CourseInfo(false, 'The user <' + user.login + '> is already enrolled in course #' + id)); 
 			return; 
-		} else if (course.teacher == user.login) {
+		} else if (course.teacher.login == user.login) {
 			callback(new CourseInfo(false, 'A teacher can\'t be enrolled in its own course')); 
 			return; 
 		}
@@ -436,7 +436,7 @@ module.exports.enrol = function(user, id, callback) {
 
 		mod_db.connect(function(db) {
 
-			db.collection(DbName).update({ id: +(course.id) }, course);
+			db.collection(DbName).update({ id: +(course.id) }, courseToDb(course));
 			makeCourseInfo(true, '', course, callback); 
 		}); 
 	});
@@ -462,7 +462,7 @@ module.exports.quit = function(user, id, callback) {
 
 		mod_db.connect(function(db) {
 
-			db.collection(DbName).update({ id: +(course.id) }, course);
+			db.collection(DbName).update({ id: +(course.id) }, courseToDb(course));
 			makeCourseInfo(true, '', course, callback); 
 		}); 
 	});
@@ -494,13 +494,27 @@ function dbToCourse(that, c, callback) {
 		}); 
 
 	} else {
+		
 		var course = new Course(c.name, c.teacher, c.description); 
 		course.id = c.id; 
 		course.students = c.students; 
 		callback(that, course); 
 	}
-
 }
 
 
+function courseToDb(c) {
+
+	var teacher; 
+	if (typeof c.teacher != 'string') {
+		teacher = c.teacher.login; 
+	} else {
+		teacher = c.teacher; 
+	}
+	var course = new Course(c.name, teacher, c.description); 
+	course.id = c.id; 
+	course.students = c.students; 
+
+	return course; 
+}
 
