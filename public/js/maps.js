@@ -283,7 +283,9 @@ window.GEOCHAT_MAP = {
 	disconnect : function(){
 		$("#carte").hide();
 		$("#map-locate").hide();
-		GEOCHAT_MAP.map.closeLocation();
+		if( GEOCHAT_MAP.map != null) {
+			GEOCHAT_MAP.map.closeLocation();
+		}
 	},
 	locate : function(e){
 		e.preventDefault();

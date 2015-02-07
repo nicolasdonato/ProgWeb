@@ -54,7 +54,7 @@
     },
     dropFile: function(event) {
       var files, member;
-      view.dragCancel(event);
+      GEOCHAT_VIEW.dragCancel(event);
       member = this.id;
       files = event.originalEvent.dataTransfer.files;
       return FileTransfer.sendFile(member, files);
