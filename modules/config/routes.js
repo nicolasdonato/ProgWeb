@@ -49,7 +49,7 @@ exports.setup = function(app) {
 	app.route('/manage/classes/teacher').
 	post(mod_db_classes.requestCreate);
 	app.route('/manage/classes/teacher/:id').
-	put(mod_db_classes.requestUpdate).
+	put(mod_db_classes.requestStart).
 	delete(mod_db_classes.requestEnd);
 
 	app.route('/manage/classes/student/:id').

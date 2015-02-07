@@ -337,14 +337,13 @@ window.CLASSES = {
 				e.preventDefault();
 			}
 
-			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestUpdate);
+			//	app.put('/manage/classes/teacher/:id', mod_db_classes.requestStart);
 			if (CLASSES.startCommandInProgress) {
 
 				var data = { token: AUTH.session.token };
 				data.course = CLASSES.selectedClasse.course.id; 
 				data.subject = CLASSES.selectedClasse.subject;
 				data.begin = new Date(); 
-				data.end = ''; 
 
 				$.ajax({
 					type: "PUT",

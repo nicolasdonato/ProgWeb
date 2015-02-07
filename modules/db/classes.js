@@ -22,7 +22,6 @@ Classe = function(course, subject, begin, end) {
 
 	this.id = mod_utils.idGen.get(); 
 
-	// Mandatory information
 	this.course = course; 
 	this.subject = subject; 
 
@@ -77,6 +76,49 @@ Classe = function(course, subject, begin, end) {
 			i++;
 		}
 		return isStudent; 
+	};
+
+	this.isActive = function() {
+		var current = new Date(); 
+		if (this.begin.getTime() <= current.getTime()) {
+			if (this.end == null) {
+				return true; 
+			} else {
+				if (current.getTime() <= this.end.getTime()) {
+					return true; 
+				}
+			}
+		}
+		return false; 
+	};
+
+	this.doesOverlap = function(beginRange, endRange) {
+		if (this.end == null) {
+			if (this.endRange == null) {
+				return true; 
+			} else {
+				if (this.begin.getTime() <= this.endRange.getTime()) {
+					return true; 
+				} else {
+					return false; 
+				}
+			}
+		} else {
+			if (this.endRange == null) {
+				if (beginRange.getTime() < this.end.getTime()) {
+					return true; 
+				} else {
+					return false; 
+				}
+			} else {
+				if ((this.end.getTime() >= beginRange.getTime() && this.begin.getTime() <= endRange.getTime())
+						|| (this.begin.getTime() <= endRange.getTime() && this.end.getTime() >= beginRange.getTime())) {
+					return true; 
+				} else {
+					return false; 
+				}
+			}
+		}
 	};
 };
 
@@ -143,25 +185,6 @@ module.exports.requestCreate = function(req, res) {
 };
 
 
-module.exports.requestEnd = function(req, res) {
-
-	if (mod_db.checkParams(req, res, ['token', 'id'])) {
-
-		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
-
-			if (! sessionInfo.success) {
-				res.send(new ClasseInfo(false, 'Failed to end a classroom #' + id + ' : ' + sessionInfo.message)); 
-				return;
-			}
-
-			module.exports.end(sessionInfo.result.user, req.param('id'), function(info) {
-				res.send(info); 
-			}); 
-		}); 
-	}
-};
-
-
 module.exports.requestList = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token'])) {
@@ -200,30 +223,80 @@ module.exports.requestGet = function(req, res) {
 };
 
 
-module.exports.requestUpdate = function(req, res) {
+module.exports.requestStart = function(req, res) {
 
-	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'subject', 'begin', 'end'])) {
+	if (mod_db.checkParams(req, res, ['token', 'id', 'course', 'subject', 'begin'])) {
 
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
-				res.send(new ClasseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
-			var begin = req.param('begin'); 
-			var beginDate = null; 
-			if (begin != 0 && begin != '') {
-				beginDate = new Date(begin); 
-			}
-			var end = req.param('end'); 
-			var endDate = null; 
-			if (end != 0 && end != '') {
-				endDate = new Date(end); 
-			}
+			module.exports.get(req.param('id'), function(classeInfo) {
 
-			module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
-				res.send(info); 
+				if (! classeInfo.success) { 
+					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+					return;
+				}
+				
+				if (classeInfo.result.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : classroom already active')); 
+					return;
+				}
+				
+				var begin = req.param('begin'); 
+				var beginDate = null; 
+				if (begin != 0 && begin != '') {
+					beginDate = new Date(begin); 
+				}
+
+				module.exports.update(sessionInfo.result.user, req.param('id'), req.param('course'), req.param('subject'), beginDate, null, function(info) {
+					res.send(info); 
+				}); 
+
+			}); 
+		}); 
+	}
+};
+
+
+module.exports.requestEnd = function(req, res) {
+
+	if (mod_db.checkParams(req, res, ['token', 'id'])) {
+
+		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
+
+			if (! sessionInfo.success) {
+				res.send(new ClasseInfo(false, 'Failed to end a classroom #' + id + ' : ' + sessionInfo.message)); 
+				return;
+			}
+			var user = sessionInfo.result.user; 
+
+			module.exports.get(req.param('id'), function(classeInfo) {
+
+				if (! classeInfo.success) { 
+					res.send(new ClasseInfo(false, 'Failed to end classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
+					return;
+				}
+				var classe = classeInfo.result; 
+				
+				if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
+					callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
+					return; 
+				}
+
+				if (! classe.isActive()) {
+					res.send(new ClasseInfo(false, 'Failed to end classroom #' + classe.id + ' : classroom already inactive')); 
+					return;
+				}
+				
+				var end = new Date(); 
+				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, function(info) {
+					res.send(info); 
+				}); 
+
 			}); 
 		}); 
 	}
@@ -338,8 +411,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 
 			for (var i = 0; i < classeInfo.result.length; i++) {
 				var classe = classeInfo.result[i]; 
-				if ((classe.end.getTime() >= begin.getTime() && classe.begin.getTime() <= end.getTime())
-						|| (classe.begin.getTime() <= end.getTime() && classe.end.getTime() >= begin.getTime())) {
+				if (classe.doesOverlap(begin, end)) {
 					callback(new ClasseInfo(false, 'Failed to create a classroom: you have another class at the same time')); 
 					return;
 				}
@@ -354,8 +426,7 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 
 				for (var i = 0; i < classeInfoBis.result.length; i++) {
 					var classe = classeInfoBis.result[i]; 
-					if ((classe.end.getTime() >= begin.getTime() && classe.begin.getTime() <= end.getTime())
-							|| (classe.begin.getTime() <= end.getTime() && classe.end.getTime() >= begin.getTime())) {
+					if (classe.doesOverlap(begin, end)) {
 						callback(new ClasseInfo(false, 'Failed to create a classroom: the other class #' + classe.id + " already exists at the same period for the same course")); 
 						return;
 					}
@@ -389,44 +460,6 @@ module.exports.create = function(user, course, subject, begin, end, callback) {
 };
 
 
-module.exports.end = function(user, classe, callback) {
-
-	if (user.role < mod_db_users.Roles.TEACHER) {
-		callback(new ClasseInfo(false, 'Only a teacher can end a classroom'));
-		return; 
-	} 
-
-	module.exports.findById(classe, function(classeInfo) {
-
-		if (! classeInfo.success) {
-			callback(new ClasseInfo(false, 'Failed to end a classroom : ' + classeInfo.message)); 
-			return; 
-		}
-		var classe = classeInfo.result; 
-
-		if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
-			callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
-			return; 
-		}
-
-		var end; 
-		if (classe.end != null) {
-			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> has already ended'));
-			return; 
-		} else {
-			end = new Date(); 
-		}
-
-		if (classe.start == null) {
-			callback(new ClasseInfo(false, 'The classroom <' + classe.id + '> hasn\'t begun yet'));
-			return; 
-		}
-
-		module.exports.updateClasse(DbName, new Classe(classe.course, classe.subject, classe.begin, end), callback); 
-	})
-};
-
-
 module.exports.updateClasse = function(user, classe, callback) {
 
 	module.exports.update(user, classe.id, classe.course, classe.subject, classe.begin, classe.end, callback); 
@@ -452,8 +485,6 @@ module.exports.update = function(user, id, course, subject, begin, end, callback
 
 				var classe = new Classe(course, subject, begin, end); 
 				classe.id = +id; 
-				classe.begin = classInfo.result.begin;
-				classe.end = classInfo.result.end;
 				db.collection(DbName).update({ id: +id }, classeToDb(classe));
 
 				makeClasseInfo(true, '', classe, callback); 
@@ -531,6 +562,11 @@ module.exports.join = function(user, id, callback) {
 		}
 		var classe = classeInfo.result; 
 
+		if (! classe.isActive()) {
+			callback(new ClasseInfo(false, 'Failed to join classroom #' + id + " : it's not active yet or anymore")); 
+			return; 
+		}
+
 		if (classe.hasStudent(user.login)) {
 			callback(new ClasseInfo(false, 'The user <' + user.login + '> has already joined classroom #' + id)); 
 			return; 
@@ -595,7 +631,7 @@ function dbToClasse(that, c, callback) {
 		}); 
 
 	} else {
-		
+
 		var classe = new Classe(c.course, c.subject, c.begin, c.end); 
 		classe.id = c.id; 
 		classe.students = c.students; 
