@@ -213,14 +213,32 @@ window.CLASSES = {
 				}
 
 				if (CLASSES.selectedClasse.active) {
+
 					if (CLASSES.hasJoined(AUTH.getMember())) {
+
 						$("#classes-details-submit-join").hide();
 						$("#classes-details-submit-leave").show();
+
 					} else {
-						// TODO 
-						$("#classes-details-submit-join").show();
+
+						var isStudent = false; 
+						var i = 0; 
+						while (! isStudent && i < CLASSES.selectedClasse.course.students.length) {
+							isStudent = (CLASSES.selectedClasse.course.students[i] == AUTH.getMember()); 
+							i++; 
+						}
+						if (isStudent) {
+							$("#classes-details-submit-join").show();
+						} else {
+							$("#classes-details-submit-join").show();
+						}
+						
 						$("#classes-details-submit-leave").hide();
 					}
+					
+				} else {
+					$("#classes-details-submit-join").hide();
+					$("#classes-details-submit-leave").hide();
 				}
 			}
 		},

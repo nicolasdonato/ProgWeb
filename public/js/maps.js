@@ -1,13 +1,13 @@
 ///////////////////////////////////////////
-// Geolocalization API using GoogleMap API
-//
-// see http://wrightshq.com/playground/placing-multiple-markers-on-a-google-map-using-api-3/
+//Geolocalization API using GoogleMap API
+
+//see http://wrightshq.com/playground/placing-multiple-markers-on-a-google-map-using-api-3/
 
 //jQuery(function($) {
-//    // Asynchronously Load the map API 
-//    var script = document.createElement('script');
-//    script.src = "http://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize";
-//    document.head.appendChild(script);
+//// Asynchronously Load the map API 
+//var script = document.createElement('script');
+//script.src = "http://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize";
+//document.head.appendChild(script);
 //});
 
 /**
@@ -38,6 +38,7 @@
  * });
  */
 var Map = Class.create({
+
 	
 	map: null,
 	isCarteEnable: false,
@@ -46,6 +47,7 @@ var Map = Class.create({
 	socketMap: null,
 	localMember: null,
 	markers: [],
+
 	
 	/**
 	 * Initialization of the class
@@ -57,42 +59,44 @@ var Map = Class.create({
 		this.showMap = options.showMap || null;
 		this.localMember = options.localMember || null;
 		this.createEventTask();
-    },
-    
-    /**
-     * Create the different event tasks to interact with the NodeJS server by socket.io
-     */
-    createEventTask: function() {
-    	
-    	// create the custom socket object
+	},
+
+	
+	/**
+	 * Create the different event tasks to interact with the NodeJS server by socket.io
+	 */
+	createEventTask: function() {
+
+		// create the custom socket object
 		this.socketMap = new ChatMessage({
 			component: "geolocalisation_component"
 		});
-		
+
 		// bind different events
 		this.socketMap
-			// fire event when other people send their location
-			.on('geolocation', (function(data) { 
-				console.log('Receiving geolocation of others people: ', data.coords);
-				this.createPositionOnMap(data);
-			}).bind(this))
-			// fire event when a person send disconnected notification
-			.on('bye', (function(data) {
-				var marker;
-				// search the person marker
-				for (var idx=0; idx < this.markers.length -1; idx ++) {
-					marker = this.markers[idx];
-					if (data.member === marker.member) {
-						marker.marker.setMap(null);
-						break;
-					}
+		// fire event when other people send their location
+		.on('geolocation', (function(data) { 
+			console.log('Receiving geolocation of others people: ', data.coords);
+			this.createPositionOnMap(data);
+		}).bind(this))
+		// fire event when a person send disconnected notification
+		.on('bye', (function(data) {
+			var marker;
+			// search the person marker
+			for (var idx=0; idx < this.markers.length -1; idx ++) {
+				marker = this.markers[idx];
+				if (data.member === marker.member) {
+					marker.marker.setMap(null);
+					break;
 				}
-				// delete the marker in the map
-				if (marker) {
-					this.markers.pop(marker);
-				}
-			}).bind(this));
+			}
+			// delete the marker in the map
+			if (marker) {
+				this.markers.pop(marker);
+			}
+		}).bind(this));
 	},
+
 	
 	/**
 	 * send a message to the server with the component message of this class
@@ -100,6 +104,7 @@ var Map = Class.create({
 	sendMessageMap: function(messageType, data) {
 		this.socketMap.sendMessage(messageType, data);
 	},
+
 	
 	/**
 	 * Show the location of the local member
@@ -113,6 +118,7 @@ var Map = Class.create({
 		}
 	},
 
+	
 	/**
 	 * create the location on the map with the data of the remote person
 	 */
@@ -123,28 +129,28 @@ var Map = Class.create({
 		console.log('Latitude : ' + crd.latitude);
 		console.log('Longitude: ' + crd.longitude);
 		console.log('More or less ' + crd.accuracy + ' meters.');
-		
+
 		// create the map if it does not exist
 		if (!this.isCarteEnable) {
 			// define default options for the map
 			var position = new google.maps.LatLng(crd.latitude, crd.longitude);
 			var options = {
-				center: position,
-				zoom: 19,
-				mapTypeId: google.maps.MapTypeId.ROADMAP
+					center: position,
+					zoom: 19,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
 			};
-			
+
 			// build the map by the GoogleMaps API
 			this.map = new google.maps.Map(this.divMap, options);
-			
+
 			// call the callback to show the map
 			if (this.showMap && jQuery.isFunction(this.showMap)) {
 				this.showMap(this.divMap);
 			}
-			
+
 			this.isCarteEnable = true;
 		}
-		
+
 		// search if the marker exists in the map
 		var createMarker = true;
 		for (var idx=0; idx < this.markers.length -1; idx ++) {
@@ -154,13 +160,13 @@ var Map = Class.create({
 				break;
 			}
 		}
-		
+
 		// if the marker does not exist then create the marker
 		if (createMarker) {
 			// create the position object which is added on the map
 			var position = new google.maps.LatLng(crd.latitude, crd.longitude);
 			this.bounds.extend(position);
-			
+
 			// create the marker
 			var marker = new google.maps.Marker({
 				position: position,
@@ -171,38 +177,39 @@ var Map = Class.create({
 				marker: marker,
 				member: data.member
 			});
-			
+
 			// Allow each marker to have an info window    
-//	        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-//	            return function() {
-//	                infoWindow.setContent(infoWindowContent[i][0]);
-//	                infoWindow.open(map, marker);
-//	            }
-//	        })(marker, i));
-			
+//			google.maps.event.addListener(marker, 'click', (function(marker, i) {
+//			return function() {
+//			infoWindow.setContent(infoWindowContent[i][0]);
+//			infoWindow.open(map, marker);
+//			}
+//			})(marker, i));
+
 			// Automatically center the map fitting all markers on the screen
 			this.map.fitBounds(this.bounds);
 		}
 	},
 
+	
 	/**
 	 * Send the position by socket message
 	 */
 	sendPosition: function() {
-		
+
 		// search the position of the local member
 		navigator.geolocation.getCurrentPosition((function (pos) {
 			console.log('Sending geolocation: ', pos.coords);
 			var coords = {
-				latitude: pos.coords.latitude,
-				longitude: pos.coords.longitude,
-				altitude: pos.coords.altitude,
-				accuracy: pos.coords.accuracy,
-				altitudeAccuracy: pos.coords.altitudeAccuracy,
-				heading: pos.coords.heading,
-				speed: pos.coords.speed
+					latitude: pos.coords.latitude,
+					longitude: pos.coords.longitude,
+					altitude: pos.coords.altitude,
+					accuracy: pos.coords.accuracy,
+					altitudeAccuracy: pos.coords.altitudeAccuracy,
+					heading: pos.coords.heading,
+					speed: pos.coords.speed
 			};
-			
+
 			// send the coords to all member of the room
 			this.sendMessageMap('geolocation', {
 				coords: coords,
@@ -212,6 +219,7 @@ var Map = Class.create({
 			timeout:10000
 		});
 	},
+
 	
 	/**
 	 * Delete marker of local member on the remote map
@@ -221,72 +229,93 @@ var Map = Class.create({
 			member: jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember
 		});
 	}
-	
+
 });
 
+
 window.GEOCHAT_MAP = {
-	map : null,
-	initialize : function(){
-		//
-		// le lien pour tester l'affichage local
-		//
-		$("#map-locate").click(GEOCHAT_MAP.locate);
 		
-		GEOCHAT_MAP.map = new Map({
-			divMap: $("#carte")[0],
-			localMember: function() {
-				return AUTH.getMember();
-			},
-			showMap: function(mapElement) {
-				var el = jQuery(mapElement);
+		map : null,
+		
+		initialize : function() {
+			
+			//
+			// le lien pour tester l'affichage local
+			//
+			$("#map-locate").click(GEOCHAT_MAP.locate);
 
-				el.css({
-					height: "100%"
-				});
+			
+			GEOCHAT_MAP.map = new Map({
+				
+				
+				divMap: $("#carte")[0],
+				
+				
+				localMember: function() {
+					return AUTH.getMember();
+				},
+				
+				
+				showMap: function(mapElement) {
+					var el = jQuery(mapElement);
 
-				this.map.setOptions({
-					disableDefaultUI: true,
-					zoomControl: true
-				});
+					el.css({
+						height: "100%"
+					});
 
-				// TODO
-				// 		panControl: boolean,
-				// 		mapTypeControl: boolean,
-				// 		scaleControl: boolean,
-				// 		streetViewControl: boolean,
-				// 		overviewMapControl: boolean
+					this.map.setOptions({
+						disableDefaultUI: true,
+						zoomControl: true
+					});
 
-				// el.find('#carte img[src*="google_white"]')
-				// 	.parent()
-				// 	.parent()
-				// 	.parent()
-				// 	.css('background-color', 'red');
+					// TODO
+					// 		panControl: boolean,
+					// 		mapTypeControl: boolean,
+					// 		scaleControl: boolean,
+					// 		streetViewControl: boolean,
+					// 		overviewMapControl: boolean
 
-				// el.find('#carte .gmnoprint div:contains(Données)').remove();
-				// el.find('#carte .gmnoprint span:contains(Données)').remove();
-				// el.find('#carte .gmnoprint a:contains(Données)').remove();
-				// el.find('#carte .gmnoprint a:contains(Conditions)').remove();
+					// el.find('#carte img[src*="google_white"]')
+					// 	.parent()
+					// 	.parent()
+					// 	.parent()
+					// 	.css('background-color', 'red');
 
-				// a = el.find('#carte').children('.gmstyle').children('div:first-child').clone();
-				// a = el.find('#carte').children('.gmstyle').children('div:last-child').clone();
+					// el.find('#carte .gmnoprint div:contains(Données)').remove();
+					// el.find('#carte .gmnoprint span:contains(Données)').remove();
+					// el.find('#carte .gmnoprint a:contains(Données)').remove();
+					// el.find('#carte .gmnoprint a:contains(Conditions)').remove();
 
-				// el.find('#carte .gmstyle div').remove();
-				// el.find('#carte .gmstyle').append(a);
-				// el.find('#carte .gmstyle').append(b);
+					// a = el.find('#carte').children('.gmstyle').children('div:first-child').clone();
+					// a = el.find('#carte').children('.gmstyle').children('div:last-child').clone();
+
+					// el.find('#carte .gmstyle div').remove();
+					// el.find('#carte .gmstyle').append(a);
+					// el.find('#carte .gmstyle').append(b);
+				}
+			});
+		},
+		
+		
+		connect : function(){
+			$("#carte").show();
+			$("#map-locate").show();
+		},
+		
+		
+		disconnect : function(){
+			$("#carte").hide();
+			$("#map-locate").hide();
+			if (GEOCHAT_MAP.map != null) {
+				GEOCHAT_MAP.map.closeLocation();
 			}
-		});
-	},
-	connect : function(){
-		$("#carte").show();
-		$("#map-locate").show();
-	},
-	disconnect : function(){
-		$("#carte").hide();
-		$("#map-locate").hide();
-		GEOCHAT_MAP.map.closeLocation();
-	},
-	locate : function(e){
-		e.preventDefault();
-		GEOCHAT_MAP.map.showGeolocationOnGoogleMap(navigator.geolocation);
-	}
+		},
+		
+		
+		locate : function(e){
+			e.preventDefault();
+			if (GEOCHAT_MAP.map != null) {
+				GEOCHAT_MAP.map.showGeolocationOnGoogleMap(navigator.geolocation);
+			}
+		}
 };
