@@ -275,6 +275,7 @@ window.CLASSES = {
 
 			CLASSES.clean(e, params); 
 			CLASSES.list(e, params);
+			CLASSES.refreshCreation(); 
 
 			$("#classes-list").show();
 
