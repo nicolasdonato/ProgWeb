@@ -5,6 +5,7 @@ window.CLASSES = {
 		endCommandInProgress: false, 
 		joinCommandInProgress: false, 
 		leaveCommandInProgress: false, 
+		modifyCommandInProgress: false,
 
 
 		selectedClasse : null, 
@@ -19,6 +20,8 @@ window.CLASSES = {
 			// On ne peut pas écrire ou coller dans ces boutons
 			$("#classes-creation-startDate, #classes-creation-startHour, #classes-creation-duration").keypress(function(e) { e.preventDefault(); return false;});
 			$("#classes-creation-startDate, #classes-creation-startHour, #classes-creation-duration").bind('paste', function(e) { e.preventDefault(); return false;});
+			$("#classes-edition-startDate, #classes-edition-startHour, #classes-edition-duration").keypress(function(e) { e.preventDefault(); return false;});
+			$("#classes-edition-startDate, #classes-edition-startHour, #classes-edition-duration").bind('paste', function(e) { e.preventDefault(); return false;});
 
 			// voir http://jqueryui.com/datepicker/#date-range
 			$("#classes-creation-startDate").datepicker({
@@ -31,6 +34,20 @@ window.CLASSES = {
 				//useSelect: true ,
 				scrollDefault: 'now' });
 			$('#classes-creation-duration').timepicker({ 
+				timeFormat: 'H:i',
+				showDuration: true,
+				//useSelect: true ,
+				scrollDefault: '1:00' });
+
+			$("#classes-edition-startDate").datepicker({
+				format : 'dd/mm/yyyy'
+			});
+			$('#classes-edition-startHour').timepicker({ 
+				timeFormat: 'H:i',
+				//showDuration: true,
+				//useSelect: true ,
+				scrollDefault: 'now' });
+			$('#classes-edition-duration').timepicker({ 
 				timeFormat: 'H:i',
 				showDuration: true,
 				//useSelect: true ,
@@ -73,7 +90,7 @@ window.CLASSES = {
 		setSelected: function(classe) {
 
 			CLASSES.selectedClasse = classe; 
-			
+
 			$("#classes-list a").removeClass("selected-classe");
 			if (classe != null) {
 				$("#classes-list a[id="+ classe.id +"]").addClass("selected-classe");
@@ -81,6 +98,7 @@ window.CLASSES = {
 			} else {
 				$("#classes-details-form").hide();
 			}
+		    $("#classes-edition-form").hide();
 
 			if (classe != null) {
 
@@ -124,6 +142,7 @@ window.CLASSES = {
 			$("#classes-details-submit-end").click(CLASSES.engageEndCommand);
 			$("#classes-details-submit-join").click(CLASSES.engageJoinCommand);
 			$("#classes-details-submit-leave").click(CLASSES.engageLeaveCommand);
+			$("#classes-details-submit-modify").click(CLASSES.engageModifyCommand);
 			$("#classes-details-form").submit(CLASSES.processDetailsCommand);
 
 			CLASSES.list(); 
@@ -145,6 +164,7 @@ window.CLASSES = {
 			$("#classes-details-submit-end").unbind("click", CLASSES.engageEndCommand);
 			$("#classes-details-submit-join").unbind("click", CLASSES.engageJoinCommand);
 			$("#classes-details-submit-leave").unbind("click", CLASSES.engageLeaveCommand);
+			$("#classes-details-submit-modify").unbind("click", CLASSES.engageModifyCommand);
 			$("#classes-details-form").unbind("submit", CLASSES.processDetailsCommand);
 			$("#classes-list a").unbind("click", CLASSES.processHashLink);
 
@@ -183,6 +203,7 @@ window.CLASSES = {
 				$("#classes-details-submit-end").hide();
 				$("#classes-details-submit-join").hide();
 				$("#classes-details-submit-leave").hide();
+				$("#classes-details-submit-modify").hide();
 
 			} else {
 
@@ -191,7 +212,7 @@ window.CLASSES = {
 				$("#classes-details-subject").text(CLASSES.selectedClasse.subject);
 
 				$("#classes-details-start").text(CLASSES.selectedClasse.begin);
-				if( CLASSES.selectedClasse.end != null) {
+				if (CLASSES.selectedClasse.end != null) {
 					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
 					$("#classes-details-durationHours").text(duration.getHours() - 1);
 					$("#classes-details-durationMinutes").text(duration.getMinutes());
@@ -204,17 +225,20 @@ window.CLASSES = {
 					if (CLASSES.selectedClasse.active) {
 						$("#classes-details-submit-start").hide();
 						$("#classes-details-submit-end").show();
+						$("#classes-details-submit-modify").hide();
 					} else {
 						$("#classes-details-submit-start").show();
 						$("#classes-details-submit-end").hide();
+						$("#classes-details-submit-modify").show();
 					}
 				} else {
 					$("#classes-details-submit-start").hide();
 					$("#classes-details-submit-end").hide();
+					$("#classes-details-submit-modify").hide();
 				}
 
 				if (CLASSES.selectedClasse.active) {
-					
+
 					$("#classes-details-active").text('OUI');
 
 					if (CLASSES.hasJoined(AUTH.getMember())) {
@@ -235,12 +259,12 @@ window.CLASSES = {
 						} else {
 							$("#classes-details-submit-join").hide();
 						}
-						
+
 						$("#classes-details-submit-leave").hide();
 					}
-					
+
 				} else {
-					
+
 					$("#classes-details-active").text('NON');
 
 					$("#classes-details-submit-join").hide();
@@ -248,6 +272,35 @@ window.CLASSES = {
 				}
 			}
 		},
+
+
+		refreshEdition: function() {
+
+			if (CLASSES.selectedClasse == null) {
+
+				alert('A classroom must be selected for edition'); 
+
+			} else {
+
+				$('#classes-edition-course').text(CLASSES.selectedClasse.course.id); 
+				$('#classes-edition-classes-edition-subject').text(CLASSES.selectedClasse.subject);
+				$('#classes-edition-startDate').datepicker('setDate', CLASSES.selectedClasse.begin);
+				$('#classes-edition-startHour').timepicker('setTime', CLASSES.selectedClasse.begin.getTime()); 
+
+				if (CLASSES.selectedClasse.end != null) {
+					var duration = new Date(CLASSES.selectedClasse.end.getTime() - CLASSES.selectedClasse.begin.getTime()); 
+					$('#classes-edition-duration').timepicker('setTime', duration.getTime());
+				} else {
+					$('#classes-edition-duration').text(''); 
+				}
+
+				if (CLASSES.selectedClasse.active) {
+					$('#classes-edition-active').text('OUI');
+				} else {
+					$('#classes-edition-active').text('NON');
+				}
+			}
+		}, 
 
 
 		clean: function(e, params) {
@@ -301,6 +354,11 @@ window.CLASSES = {
 		engageLeaveCommand: function(e, params) {
 
 			CLASSES.leaveCommandInProgress = true;
+		},
+
+		engageModifyCommand: function(e, params) {
+
+			CLASSES.modifyCommandInProgress = true; 
 		},
 
 
@@ -380,7 +438,7 @@ window.CLASSES = {
 				}
 				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
 			}
-			
+
 			data.begin = beginDate; 
 			data.end = endDate; 
 
@@ -454,10 +512,19 @@ window.CLASSES = {
 				}).done(CLASSES.leaveComplete);
 			}
 
+			if (CLASSES.modifyCommandInProgress) {
+
+				$('#classes-details-form').hide(); 
+				CLASSES.refreshDetails(); 
+				$('#classes-edition-form').show(); 
+				CLASSES.refreshEdition(); 
+			}
+
 			CLASSES.startCommandInProgress = false;
 			CLASSES.endCommandInProgress = false;
 			CLASSES.joinCommandInProgress = false;
 			CLASSES.leaveCommandInProgress = false;
+			CLASSES.modifyCommandInProgress = false;
 
 			return false;
 		},

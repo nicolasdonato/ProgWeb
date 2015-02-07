@@ -24,6 +24,7 @@
     <script src="js/lib/jquery.timepicker.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/test.js"></script>
+    <script src="js/classes.js"></script>
     
   </head>
   
@@ -72,7 +73,7 @@
       
       <section id="courses-div" style="display:none">
   
-        <a id="courses-refresh" href="#refresh"><span>Rafraîchir la liste des cours disponibles</span></a>
+        <a id="courses-refresh" href="#refresh"><span>Rafraîchir</span></a>
         <div id="courses-list"></div>
 
         <form id="courses-creation-form" style="display:none;">
@@ -102,7 +103,7 @@
     
         <form id="courses-edition-form" style="display:none;">
           <input type="hidden" id="courses-edition-id" />
-          <span class="titre">Modifier un cours :  :&nbsp;</span>
+          <span class="titre">Modifier un cours :&nbsp;</span>
           <p>
             <span class="libelle">Nom :&nbsp;</span> <input id="courses-edition-name" type="text" class="data text-simple" /> <br />
             <span class="libelle">Description :&nbsp;</span> <input id="courses-edition-description" type="text" class="data text-area" /> 
@@ -115,11 +116,11 @@
           
       <section id="classes-div" style="display:none">
 
-        <span>Classes en cours ou à venir: </span>
+        <span>Classrooms en cours ou à venir: </span>
         <div id="classes-list"></div>
 
         <form id="classes-creation-form" style="display:none;">
-          <label for="classes-creation-form" class="titre">Créer une classe :  :&nbsp;</label>
+          <label for="classes-creation-form" class="titre">Créer une classroom :  :&nbsp;</label>
           <p>
             <label for="classes-creation-subject" class="libelle">Sujet :&nbsp;</label> <input id="classes-creation-subject" type="text" class="data text-area" /> <br />
             <input id="classes-creation-startNow" name="classes-creation-start-when" type="radio" class="data" value="NOW" />&nbsp;<label for="classes-creation-startNow" class="libelle">Démarrage immédiat</label>  <br />
@@ -134,22 +135,35 @@
         <form id="classes-details-form" style="display:none;">
           <p>
             <label id="classes-details-id" class="data label-simple"  style="display:none;"></label>
-            <label class="libelle">Cours :&nbsp;</label> <label id="classes-details-course" class="data label-simple" ></label> <br />
-            <label class="libelle">Subject :&nbsp;</label> <label id="classes-details-subject" class="data label-simple" ></label> <br />
-            <label id="classes-details-start" class="data label-simple" ></label> <br />
-            <label id="classes-details-durationHours" class="data label-simple" ></label> H 
-            <label id="classes-details-durationMinutes" class="data label-simple" ></label> min <br />
-            <label class="libelle">Actuellement active :&nbsp;</label> <label id="classes-details-active" class="data label-simple" ></label> <br />
+            <label class="libelle">Cours :&nbsp;</label> <span id="classes-details-course" class="data text-simple" ></span> <br />
+            <label class="libelle">Sujet :&nbsp;</label> <span id="classes-details-subject" class="data text-simple" ></span> <br />
+            <label class="libelle">le :&nbsp;</label> <span id="classes-details-start" class="data text-simple" ></span> <br />
+            <label class="libelle">à :&nbsp;</label> <span id="classes-details-durationHours" class="data text-simple" ></span> H 
+            <span id="classes-details-durationMinutes" class="data text-simple" ></span> min <br />
+            <label class="libelle">Actuellement active :&nbsp;</label> <span id="classes-details-active" class="data text-simple" ></span> <br />
           </p>
           <p>
-            <input id="classes-details-submit-start" type="submit" value="Démarrer une classe" />
-            <input id="classes-details-submit-end" type="submit" value="Terminer cette classe" />
-            <input id="classes-details-submit-join" type="submit" value="Rejoindre la classe" />
-            <input id="classes-details-submit-leave" type="submit" value="Quitter la classe" />
+            <input id="classes-details-submit-start" type="submit" value="Démarrer une classroom" />
+            <input id="classes-details-submit-end" type="submit" value="Terminer cette classroom" />
+            <input id="classes-details-submit-join" type="submit" value="Rejoindre la classroom" />
+            <input id="classes-details-submit-leave" type="submit" value="Quitter la classroom" />
+            <input id="classes-details-submit-modify" type="submit" value="Modifier la classroom" />
           </p>
         </form>
 
         <form id="classes-edition-form" style="display:none;">
+          <input type="hidden" id="classes-edition-id" />
+          <span class="titre">Modifier une classroom : &nbsp;</span>
+          <p>
+            <label for="classes-edition-course" class="libelle">Cours :&nbsp;</label> <span id="classes-edition-course" class="data text-simple" ></span> <br />
+            <label for="classes-edition-subject" class="libelle">Sujet :&nbsp;</label> <input id="classes-edition-subject" type="text" class="data text-simple" /> <br />
+            <label for="classes-edition-startDate" class="libelle">le :&nbsp;</label> <input id="classes-edition-startDate" type="text" class="data text-simple" /> <br />
+            <label for="classes-edition-startHour" class="libelle">à :&nbsp;</label> <input id="classes-edition-startHour" type="text" class="time data text-simple" /> <br />
+            <label for="classes-edition-duration" class="libelle">Durée :&nbsp;</label> <input id="classes-edition-duration" type="text" class="time data text-simple" /> <br />
+            <label for="classes-edition-active" class="libelle">Actuellement active :&nbsp;</label> <span id="classes-edition-active" type="text" class="data text-area" ></span> 
+          </p>
+          <input id="classes-edition-submit-update" type="submit" value="Mettre à jour" />
+          <input id="classes-edition-submit-delete" type="submit" value="Supprimer" />
         </form>
       
       </section>
