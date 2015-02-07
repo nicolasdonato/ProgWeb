@@ -30,30 +30,11 @@ var Repository = Class.create({
 	
 	transmittedFiles : [],
 
-	initialize : function(options){
-
-		$("#repository").bind('dragover', function(){return false;});
-		$("#repository").bind('drop', function(e){
-
-			e.preventDefault();  
-
-			if("addFileToRepositoryStack" in this){
-				this.addFileToRepositoryStack(e);
-			}
-			else{
-				REPOSITORY.component.addFileToRepositoryStack.call( REPOSITORY.component, e);
-			}
-		});
-
-		$("#repository").hide();
-		$("#private-file-details").hide();
-		
+	initialize : function(options){	
 		
 		$("#private-repository").jstree({
 			core: {
-				data : [
-				        { id : "private-repository-root", text : "Fichiers privés", type : "racine"  }
-				],
+				data : [ { id : "private-repository-root", text : "Fichiers privés", type : "racine"  } ],
 				//
 				// $.jstree.defaults.core.check_callback
 				//
@@ -80,12 +61,6 @@ var Repository = Class.create({
 			plugins : ["types"] //, "dnd", "search", "state", "types", "wholerow"
 		});
 
-		//
-		// Associer le handler showNodeDetails à la treeview privée sur l'ev select_node
-		//
-		$("#private-repository").bind("select_node.jstree", this.showNodeDetails);
-
-
 		$("#shared-repository").jstree({
 			core: {
 				data : [ { id : "shared-repository-root", text : "Fichiers partagés" } ],
@@ -111,8 +86,33 @@ var Repository = Class.create({
 			},
 			plugins : ["types"] 
 		});
+
+		$("#repository").hide();
+		$("#private-file-details").hide();	
 	},
 
+	
+	initializeEvents : function(){
+
+		$("#repository").bind('dragover', function(){return false;});
+		$("#repository").bind('drop', function(e){
+
+			e.preventDefault();  
+
+			if("addFileToRepositoryStack" in this){
+				this.addFileToRepositoryStack(e);
+			}
+			else{
+				REPOSITORY.component.addFileToRepositoryStack.call( REPOSITORY.component, e);
+			}
+			return false;
+		});
+		
+		//
+		// Associer le handler showNodeDetails à la treeview privée sur l'ev select_node
+		//
+		$("#private-repository").bind("select_node.jstree", this.showNodeDetails);
+	},
 
 	addFileToRepositoryStack : function(e){
 
@@ -120,7 +120,7 @@ var Repository = Class.create({
 
 		var files = e.dataTransfer.files;
 
-		for(var i = 0, t = files.length ; i < t ; i++){
+		for(var i = 0 , t = files.length ; i < t ; i++){
 			var file = files[i];
 			var id = this.addFileToRepository(file);
 			
@@ -135,14 +135,14 @@ var Repository = Class.create({
 			};
 
 			tree.create_node(root, data );
-			
-			//$("<li></li>").attr("id", id).append(file.name).appendTo(this.uploadedFiles);
 			/*var reader = new FileReader();  
             reader.onload = function (evt) {                
                console.log(evt.target.result);  
             }  
             reader.readAsText(file);  */
-		}
+		}		
+		tree.open_node($("#uploaded-files-root")[0]);
+		tree.refresh_node( $("#uploaded-files-root")[0] );
 	},
 
 
@@ -197,22 +197,29 @@ var Repository = Class.create({
 	},
 	
 	
+	cleanTree : function(treeId, refresh ){
+
+		var tree = $.jstree.reference(treeId);
+		
+		tree.close_all();
+		
+		tree.select_all(true);
+		
+		tree.deselect_node( $("#" + treeId + "-root")[0]);
+
+		tree.delete_node( tree.get_selected() );
+		
+		if( refresh ){
+			tree.refresh();
+		}
+	},
+	
+	
 	cleanTrees : function(){
 
-		var tree = $.jstree.reference("private-repository");
-		tree.select_all(true);
-		tree.deselect_node( $("#private-repository-root")[0] );
-		tree.delete_node( tree.get_selected() );
-
-		tree = $.jstree.reference("shared-repository");
-		tree.select_all(true);
-		tree.deselect_node( $("#shared-repository-root")[0] );
-		tree.delete_node( tree.get_selected() );
-
-		tree = $.jstree.reference("uploaded-files");
-		tree.select_all(true);
-		tree.deselect_node( $("#uploaded-files-root")[0] );
-		tree.delete_node( tree.get_selected() );
+		this.cleanTree("private-repository", true);
+		this.cleanTree("shared-repository", true);
+		this.cleanTree("uploaded-files", true);
 		
 	},
 
@@ -226,8 +233,9 @@ var Repository = Class.create({
 			}
 			var node = $("#upload_" + localId )[0];
 			var fileName = tree.get_text(node);
-			tree.rename_node( node , fileName + " (en cours)" );
-			tree.open_all();
+			tree.rename_node( node , fileName + " (en cours)" );			
+			tree.open_node($("#uploaded-files-root")[0]);
+			tree.refresh_node( node );
 		}
 	},
 
@@ -240,10 +248,18 @@ var Repository = Class.create({
 			if( "responseJSON" in e){
 				localId = e.responseJSON.localId;
 			}
+			//
+			// supprimer le fichier du buffer d'attente
+			//
+			this.transmittedFiles.splice(localId, 1);
+			
 			var node = $("#upload_" + localId )[0];
-			tree.delete_node( node );
+			tree.delete_node( node );			
+			tree.refresh();
+
+			
+			this.loadRepositoryWithDelay(300);
 		}
-		this.loadRepository();
 	},
 
 
@@ -254,6 +270,18 @@ var Repository = Class.create({
 
 	repositoryUploadCanceled : function(e) {
 		alert("The upload has been canceled by the user or the browser dropped the connection.");
+	},
+	
+	
+	loadRepositoryWithDelay : function( delay ){
+		var that = this;
+		//
+		// on attend 100 ms pour être sur que les jstree sont créés
+		//
+		window.setTimeout(function(){
+			that.loadRepository();
+			$("#repository").show();
+		}, delay);
 	},
 
 
@@ -284,16 +312,12 @@ var Repository = Class.create({
 
 
 	loadRepositoryComplete : function(info) {
-		
-		var tree = $.jstree.reference("private-repository");
-		
-		tree.select_all(true);
-		
-		tree.deselect_node( $("#private-repository-root")[0] );
-		
-		tree.delete_node( tree.get_selected() );
+
+		this.cleanTree("private-repository");
 
 		if( "responseJSON" in info){
+			
+			var tree = $.jstree.reference("private-repository");
 
 			var root = $("#private-repository-root" )[0];
 			
@@ -308,6 +332,7 @@ var Repository = Class.create({
 				tree.create_node(root, data );
 
 			});
+			
 			tree.open_all();
 		}
 	},
@@ -331,21 +356,16 @@ var Repository = Class.create({
 
 
 	connect 	: function(){
-		var that = this;
-		//
-		// on attend une seconde pour être sur que les jstree sont créés
-		//
-		window.setTimeout(function(){
-			that.loadRepository();
-			$("#repository").show();
-		}, 1000);
+		
+		this.loadRepositoryWithDelay(500);
+		
 	},
 
 
 	disconnect 	: function(){
-		$("#repository").hide();
-		 $("#private-file-details").hide();
 		 this.cleanTrees();
+		 $("#repository").hide();
+		 $("#private-file-details").hide();
 	}
 
 	/*
@@ -383,14 +403,24 @@ var Repository = Class.create({
 window.REPOSITORY = {
 		component : null,
 
+		
 		initialize : function(){
 			REPOSITORY.component = new Repository({
 				/*options*/
 			});
 		},
+		
+
+		initializeEvents : function(){
+			REPOSITORY.component.initializeEvents();
+		},
+		
+		
 		connect : function(){
 			REPOSITORY.component.connect();
 		},
+		
+		
 		disconnect : function(){
 			REPOSITORY.component.disconnect();
 		}

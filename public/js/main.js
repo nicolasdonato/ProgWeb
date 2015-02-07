@@ -80,6 +80,7 @@ window.GEOCHAT_COMPONENTS = {
 		//Window events
 		//
 		initializeEvents : function(){
+			REPOSITORY.initializeEvents();
 			/*
 			* Used when the user close the chat window
 			*/

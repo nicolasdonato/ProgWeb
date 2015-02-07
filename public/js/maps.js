@@ -4,7 +4,7 @@
 //see http://wrightshq.com/playground/placing-multiple-markers-on-a-google-map-using-api-3/
 
 //jQuery(function($) {
-//// Asynchronously Load the map API 
+////Asynchronously Load the map API 
 //var script = document.createElement('script');
 //script.src = "http://maps.googleapis.com/maps/api/js?sensor=false&callback=initialize";
 //document.head.appendChild(script);
@@ -39,7 +39,7 @@
  */
 var Map = Class.create({
 
-	
+
 	map: null,
 	isCarteEnable: false,
 	divMap: null,
@@ -48,7 +48,7 @@ var Map = Class.create({
 	localMember: null,
 	markers: [],
 
-	
+
 	/**
 	 * Initialization of the class
 	 */
@@ -61,7 +61,7 @@ var Map = Class.create({
 		this.createEventTask();
 	},
 
-	
+
 	/**
 	 * Create the different event tasks to interact with the NodeJS server by socket.io
 	 */
@@ -97,7 +97,7 @@ var Map = Class.create({
 		}).bind(this));
 	},
 
-	
+
 	/**
 	 * send a message to the server with the component message of this class
 	 */
@@ -105,7 +105,7 @@ var Map = Class.create({
 		this.socketMap.sendMessage(messageType, data);
 	},
 
-	
+
 	/**
 	 * Show the location of the local member
 	 */
@@ -118,7 +118,7 @@ var Map = Class.create({
 		}
 	},
 
-	
+
 	/**
 	 * create the location on the map with the data of the remote person
 	 */
@@ -191,7 +191,7 @@ var Map = Class.create({
 		}
 	},
 
-	
+
 	/**
 	 * Send the position by socket message
 	 */
@@ -220,7 +220,7 @@ var Map = Class.create({
 		});
 	},
 
-	
+
 	/**
 	 * Delete marker of local member on the remote map
 	 */
@@ -234,28 +234,28 @@ var Map = Class.create({
 
 
 window.GEOCHAT_MAP = {
-		
+
 		map : null,
-		
+
 		initialize : function() {
-			
+
 			//
 			// le lien pour tester l'affichage local
 			//
 			$("#map-locate").click(GEOCHAT_MAP.locate);
 
-			
+
 			GEOCHAT_MAP.map = new Map({
-				
-				
+
+
 				divMap: $("#carte")[0],
-				
-				
+
+
 				localMember: function() {
 					return AUTH.getMember();
 				},
-				
-				
+
+
 				showMap: function(mapElement) {
 					var el = jQuery(mapElement);
 
@@ -295,27 +295,25 @@ window.GEOCHAT_MAP = {
 				}
 			});
 		},
-		
-		
-		connect : function(){
+
+
+		connect: function() {
 			$("#carte").show();
 			$("#map-locate").show();
 		},
-		
-		
-		disconnect : function(){
+
+
+		disconnect: function() {
 			$("#carte").hide();
 			$("#map-locate").hide();
-			if (GEOCHAT_MAP.map != null) {
+			if( GEOCHAT_MAP.map != null) {
 				GEOCHAT_MAP.map.closeLocation();
 			}
 		},
-		
-		
-		locate : function(e){
+
+
+		locate: function(e) {
 			e.preventDefault();
-			if (GEOCHAT_MAP.map != null) {
-				GEOCHAT_MAP.map.showGeolocationOnGoogleMap(navigator.geolocation);
-			}
+			GEOCHAT_MAP.map.showGeolocationOnGoogleMap(navigator.geolocation);
 		}
 };
