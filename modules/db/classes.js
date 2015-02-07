@@ -99,6 +99,9 @@ Classe = function(course, subject, begin, end, students) {
 	this.active = this.isActive(); 
 
 	this.doesOverlap = function(beginRange, endRange) {
+		if (beginRange == null) {
+			beginRange = new Date(); 
+		}
 		if (this.end == null) {
 			if (this.endRange == null) {
 				return true; 

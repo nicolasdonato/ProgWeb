@@ -368,15 +368,8 @@ window.CLASSES = {
 				endDate = new Date(); 
 				var duration = $('#classes-creation-duration').timepicker('getTime'); 
 				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
-
-			} else {
-
-				beginDate = new Date(); 
-
-				endDate = new Date(); 
-				endDate.setTime(beginDate.getTime() + 8*3600000); 
 			}
-
+			
 			data.begin = beginDate; 
 			data.end = endDate; 
 
