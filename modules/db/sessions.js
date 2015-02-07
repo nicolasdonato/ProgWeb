@@ -100,6 +100,29 @@ module.exports.requestLogout = function(req, res) {
 }
 
 
+module.exports.requestTokenValidation = function (req, res, next, token) {
+	console.log('CALLED ONLY ONCE');
+
+	module.exports.authenticate(token, function(sessionInfo) {
+
+		if (! sessionInfo.success) {
+			next(new SessionInfo(false, 'Unknown session'));
+		}
+		else{
+			//
+			// on passe result dans la variable sessionInfo (ne pas affecter req.session car c'est un autre magasin de stockage)
+			// enfin on pourrait plutot stocker ça comme ça aussi req.session.sessionInfo = result
+			// mais req.session.sessionInfo survit entre les requetes car il est identifié par un cookie
+			// c'est pas ce qu'on veut ici : c'est juste pour la chaine des traitements request -> ... -> response
+			//
+			req.sessionInfo = sessionInfo.result;
+			next();
+		}
+
+	}); 
+
+};
+
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
 

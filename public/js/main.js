@@ -58,6 +58,8 @@ window.GEOCHAT_COMPONENTS = {
 			
 			FILE_TRANSFER.initialize();
 			
+			REPOSITORY.initialize();
+			
 			//
 			// NE SURTOUT PAS initialiser GEOCHAT_MAP ici !!! ce doit être fait automatiquement par le callback du script google maps, voir AUTH.googleMapsApiLoaded dans AUTH.loginAccepted
 			//GEOCHAT_MAP.initialize();

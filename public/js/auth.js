@@ -92,6 +92,7 @@ window.AUTH = {
 		    scripts.push("js/webrtc.js");
 		    scripts.push("js/lib/File.js");
 		    scripts.push("js/fileSharing.js");
+		    scripts.push("js/repository.js");
 		    scripts.push("js/courses.js");
 		    scripts.push("js/classes.js");
 		    

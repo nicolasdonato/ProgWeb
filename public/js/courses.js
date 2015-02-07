@@ -292,12 +292,12 @@ window.COURSES = {
 				}).done(COURSES.updateComplete);
 			}
 
-			//	app.delete('/manage/courses/teacher/:id', mod_db_courses.requestRemove);
+			//	app.delete('/manage/courses/:id', mod_db_courses.requestRemove);
 			if (COURSES.deleteCommandInProgress) {
 
 				$.ajax({
 					type: "DELETE",
-					url: "/manage/courses/teacher/" + $("#courses-details-id").text(),
+					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -316,11 +316,11 @@ window.COURSES = {
 				e.preventDefault();
 			}
 
-			// app.post('/manage/courses/:id', mod_db_courses.requestEnrol); 
+			// app.subsribe('/manage/courses/:id', mod_db_courses.requestEnrol); 
 			if (COURSES.enrolCommandInProgress) {
 
 				$.ajax({
-					type: "POST",
+					type: "SUBSCRIBE",
 					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
@@ -328,11 +328,11 @@ window.COURSES = {
 				}).done(COURSES.enrolComplete);
 			}
 
-			// app.delete('/manage/courses/student/:id', mod_db_courses.requestQuit); 
+			// app.unsubscribe('/manage/courses/student/:id', mod_db_courses.requestQuit); 
 			if(COURSES.quitCommandInProgress){
 				$.ajax({
-					type: "DELETE",
-					url: "/manage/courses/student/" + $("#courses-details-id").text(),
+					type: "UNSUBSCRIBE",
+					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
