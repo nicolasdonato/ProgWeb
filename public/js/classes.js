@@ -230,7 +230,7 @@ window.CLASSES = {
 						if (isStudent) {
 							$("#classes-details-submit-join").show();
 						} else {
-							$("#classes-details-submit-join").show();
+							$("#classes-details-submit-join").hide();
 						}
 						
 						$("#classes-details-submit-leave").hide();
