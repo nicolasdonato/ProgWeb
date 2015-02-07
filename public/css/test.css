@@ -80,8 +80,8 @@ html body main #files {
 }
 html body main #repository {
 	background : none repeat scroll 0 0 #0f0;
-  flex: 1;
   max-height: 200px;
+  min-width: 200px
 }
 html body footer {
   flex: 1 0 100px;

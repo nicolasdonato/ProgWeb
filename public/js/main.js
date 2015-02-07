@@ -59,7 +59,7 @@ window.GEOCHAT_COMPONENTS = {
 			FILE_TRANSFER.initialize();
 			
 			REPOSITORY.initialize();
-			
+			 
 			//
 			// NE SURTOUT PAS initialiser GEOCHAT_MAP ici !!! ce doit être fait automatiquement par le callback du script google maps, voir AUTH.googleMapsApiLoaded dans AUTH.loginAccepted
 			//GEOCHAT_MAP.initialize();
@@ -102,6 +102,7 @@ window.GEOCHAT_COMPONENTS = {
 			COURSES.connect();
 			GEOCHAT_MAP.connect();
 			CLASSES.connect();
+			REPOSITORY.connect();
 			// TO IMPLEMENT : connect  for 
 			//		- WEB_RTC_NODE
 			//		- CHAT
@@ -113,6 +114,7 @@ window.GEOCHAT_COMPONENTS = {
 			COURSES.disconnect(); 	
 			GEOCHAT_MAP.disconnect();
 			CLASSES.disconnect();
+			REPOSITORY.disconnect();
 			// TO IMPLEMENT : disconnect for 
 			//		- WEB_RTC_NODE
 			//		- CHAT

@@ -2,6 +2,26 @@
 //Imports and constants
 /////////////////////////////////////////////////////////////////////////////////////
 
+var fs = require('fs'); 
+var path = require('path');
+
+/*
+ * This entity manage files, provided by express module : multer
+ * 
+ * A multer file object is a JSON object with the following properties :
+ * 
+		fieldname - Field name specified in the form
+		originalname - Name of the file on the user's computer
+		name - Renamed file name
+		encoding - Encoding type of the file
+		mimetype - Mime type of the file
+		path - Location of the uploaded file
+		extension - Extension of the file
+		size - Size of the file in bytes
+		truncated - If the file was truncated due to size limitation
+		buffer - Raw data (is null unless the inMemory option is true)
+ * 
+ * */
 
 var mod_db = require('./manager');
 var mod_db_sessions = require('./sessions'); 
@@ -11,14 +31,14 @@ var logger = require('../logger');
 
 var DbName = 'repository'; 
 
-
+var UploadDirectory = './uploads/';
 //Template of document 'Course' in database
 RepositoryFile = function(user, filename, originalFilename) {
 
 	this.id = mod_utils.idGen.get(); 
 
 	// Mandatory information
-	this.user = user;
+	this.owner = user;
 	this.filename = filename; 
 	this.originalFilename = originalFilename; 
 	
@@ -35,7 +55,52 @@ function RepositoryFileInfo(success, message, data) {
 			callback(this); 
 		} else if (this.result instanceof Array) {
 			// TODO
-			callback(this); 
+			var resultCollection = this.result;
+			this.result = [];
+			
+			var loader = function(it, element, innerCallback){
+
+				dbToRepositoryFile(it, element, function(that, repositoryFile) {
+					
+					that.result.push(repositoryFile); 
+
+					if(innerCallback != null){
+						innerCallback(that); 
+					}
+				}); 
+				
+			};
+			
+			var loaderList = [];
+
+			var that = this;
+			
+			loaderList.push(function(){
+				callback(that);
+			});
+			
+			resultCollection.forEach(function(element , index, array){
+
+				var lastLoader = loaderList[ loaderList.length - 1 ];
+				
+				loaderList.push(function(){
+					loader(that, element, lastLoader);
+				});
+				
+			});
+			
+
+	    	if(loaderList.length == 0){
+		    	throw new Error('Callback sequence malfunction');
+	    	}
+	    	else if(loaderList.length == 1){
+	    		callback(this);
+	    	}
+	    	else{
+		    	loaderList[loaderList.length - 1]();
+	    	}
+			
+			//callback(this); 
 		} else {
 			dbToRepositoryFile(this, this.result, function(that, repositoryFile) {
 				that.result = repositoryFile; 
@@ -53,45 +118,63 @@ var makeRepositoryFileInfo = function(success, message, data, callback) {
 	repositoryFile.update(callback); 
 };
 
-module.exports.requestUpload = function(req, res){
-	
+var CheckSessionInfo = function(req, res, next){
 	if(!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined){
 		res.send(new RepositoryFileInfo(false, 'Unknown session'));
 	}
-
-	var files = req.files;
-
-	if(files.file == undefined){
-		res.send(new RepositoryFileInfo(false, 'Failed to read file from stream'));
+	else{
+		next(req, res);
 	}
-	else {
-		var file = files.file;
-		/*
-		 * A multer file object is a JSON object with the following properties.
-		
-		fieldname - Field name specified in the form
-		originalname - Name of the file on the user's computer
-		name - Renamed file name
-		encoding - Encoding type of the file
-		mimetype - Mime type of the file
-		path - Location of the uploaded file
-		extension - Extension of the file
-		size - Size of the file in bytes
-		truncated - If the file was truncated due to size limitation
-		buffer - Raw data (is null unless the inMemory option is true)*/
-		module.exports.create(req, file, function(info) {
-			res.send(info); 
-		}); 
-	}
+};
+
+
+module.exports.requestUpload = function(req, res){
+	
+	CheckSessionInfo(req, res, function(req, res){
+		var files = req.files;
+
+		if(files.file == undefined){
+			res.send(new RepositoryFileInfo(false, 'Failed to read file from stream'));
+		}
+		else {
+			var file = files.file;
+			module.exports.create(req, req.sessionInfo.user , file, function(info) {
+				//
+				// Le client envoie dans le form la valeur localId qui doit lui être renvoyée pour savoir quel fichier est traité si il en a envoyé plusieurs
+				//
+				info.localId = req.body.localId;
+				res.send(info); 
+			}); 
+		}
+	})
 	//
 	// on peut ajouter des élements à la session ( != session db) c'est un objet rattaché à la request qui permet de faire circuler des variables
 	//
 	//req.session.token = req.param('token');
 };
 
+
+module.exports.UploadDirectory = UploadDirectory; 
+
+module.exports.requestSearch = function(req, res){
+
+	CheckSessionInfo(req, res, function(req, res){
+// 
+//
+//		module.exports.list(function(infos) {
+//		res.send(infos); 
+//	}); 
+		module.exports.search( req.sessionInfo.user.login , function(infos) {
+			res.send(infos); 
+		}); 
+	})
+};
+
+
 module.exports.FileUploadStart = function(file){
 
 };
+
 
 module.exports.FileUploadComplete = function(file){
 
@@ -108,7 +191,70 @@ module.exports.getCollectionName = function() {
 
 
 module.exports.initialize = function(db) {
+	
+	/*var searchAdmin = function(callback){
+		db.collection(mod_db_users.getCollectionName()).
+		find({ login : "admin"}).
+		toArray(function(err, results){
+			assert.equal(err, null, ' Admin user could not be found...');
+			assert.equal(results.length, 1 , ' There could be only one !');
+			callback(results[0]);
+		});
+	};
+	
+	var collection = db.collection(DbName);
+	fs.readdir(module.exports.UploadDirectory, function(err, files){
+		
+		assert.equal(err, null, 'Initial directory listing failed : ' + err.message);
 
+		var fileInserts = [];
+		
+		var adminUser = null;
+		
+		var loader = function(user, fileName , callback){
+			module.exports.search(  'filename' , searchedFile , function(infos) {
+				
+				if(! infos.sucess)
+				{
+					module.exports.create(null, user , searchedFile, function(){
+						if(callback != null) {
+							callback( user );
+						}
+					});
+				}
+				
+			}); 
+	    };
+		
+		files.forEach(function( element, index , array ){
+			
+			var filePath = path.combine( module.exports.UploadDirectory , element );
+
+		    	if (fileInserts.length == 0) {
+		    		fileInserts.push(function() {
+		    			loader();
+			    	});
+		    	}
+	    		var lastInsert = fileInserts[ fileInserts.length - 1 ];
+	    		fileInserts.push(function( user ) {
+	    			loader(user, filePath, lastInsert);
+		    	});		    
+		});
+
+		
+		fileInserts.push(searchAdmin);
+
+    	if(fileInserts.length == 0){
+	    	console.log('No matching file between DB and file system');
+    	}
+    	else{
+        	fileInserts[ fileInserts.length - 1 ]();
+    	}
+	});*/
+	
+	
+	
+	
 	/*var web_srv = new Course('web_srv', 'peter', 'Programmation Web côté Serveur'); 
 	var web_cli = new Course('web_cli', 'michel', 'Programmation Web côté Client'); 
 	var web_sem = new Course('web_sem', 'peter', 'Web Sémantique'); 
@@ -166,16 +312,22 @@ module.exports.findById = function(id, callback) {
 
 module.exports.list = function(callback) {
 
-	var user = req.sessionInfo.user;
-	
 	mod_db.find(DbName, { }, function(result) {
 
 		makeRepositoryFileInfo(true, '', result, callback); 
 	});
 };
 
+module.exports.search = function( user, callback) {
 
-module.exports.create = function(req, file, callback) {
+	mod_db.find(DbName, { owner : user }, function(result) {
+
+		makeRepositoryFileInfo(true, '', result, callback); 
+	});
+};
+
+
+module.exports.create = function(req, user , file, callback) {
 	/*if (user.role < mod_db_users.Roles.TEACHER) {
 		callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to create a course')); 
 		return; 
@@ -188,7 +340,6 @@ module.exports.create = function(req, file, callback) {
 
 	module.exports.find(file, function(repositoryFileInfo) {
 		
-		var user = req.sessionInfo.user;
 		var filename = file.name;
 		var originalFilename = file.originalname;
 		
@@ -218,9 +369,9 @@ module.exports.create = function(req, file, callback) {
 
 function dbToRepositoryFile(that, rf, callback) {
 
-	if (typeof rf.user == 'string') {
+	if (typeof rf.owner == 'string') {
 
-		mod_db_users.get(rf.user , function(userInfo) {
+		mod_db_users.get(rf.owner , function(userInfo) {
 
 			if (userInfo == null) {
 				throw new Error('User info is null'); 
@@ -234,7 +385,7 @@ function dbToRepositoryFile(that, rf, callback) {
 		}); 
 
 	} else {
-		var repositoryFile = new RepositoryFile(rf.user, rf.filename, rf.originalFilename); 
+		var repositoryFile = new RepositoryFile(rf.owner, rf.filename, rf.originalFilename); 
 		repositoryFile.id = rf.id; 
 		callback(that, repositoryFile); 
 	}

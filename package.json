@@ -36,6 +36,8 @@
 	"async": "",
 	"q": "",
 	"cors":"",
-	"multer":""
+	"multer":"",
+	"path":"",
+	"assert":""
   }
 }

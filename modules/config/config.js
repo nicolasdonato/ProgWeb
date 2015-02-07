@@ -84,7 +84,7 @@ exports.config = function(app, express){
 	IMPORTANT: Multer will not process any form which is not multipart/form-data
 	 * */
 	app.use(multer({ 
-		dest					: './uploads/',
+		dest					: mod_db_repo.UploadDirectory,
 		onFileUploadComplete 	: mod_db_repo.FileUploadComplete,
 		onFileUploadStart 		: mod_db_repo.FileUploadStart
 	}));
@@ -123,9 +123,8 @@ Please research into this setting and choose what is appropriate to your use-cas
 	//
 	app.use(express.static(path.resolve(__dirname, '../..') + "/public"));
 
-	var env = process.env.NODE_ENV || 'development';
+	var env = 'development';//process.env.NODE_ENV || 'development';
 	if ('development' == env) {
-		// configure stuff here
 		// configuration pour l’environnement de developpement
 		app.use(errorHandler({ dumpExceptions: false, showStack: false }));
 	}

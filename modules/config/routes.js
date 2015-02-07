@@ -72,6 +72,7 @@ exports.setup = function(app) {
 	// Repository management
 
 	app.route('/:token/repository').
-	post(mod_db_repo.requestUpload);
+	post(mod_db_repo.requestUpload).
+	search(mod_db_repo.requestSearch);
 };
 
