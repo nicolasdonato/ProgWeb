@@ -64,6 +64,14 @@ var makeSessionInfo = function(success, message, data, callback) {
 //External API
 /////////////////////////////////////////////////////////////////////////////////////
 
+module.exports.CheckSessionInfo = function(req, res, next){
+	if(!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined){
+		res.send(new RepositoryFileInfo(false, 'Unknown session'));
+	}
+	else{
+		next(req, res);
+	}
+};
 
 module.exports.requestLogin = function(req, res) {
 

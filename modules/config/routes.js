@@ -8,8 +8,9 @@ var mod_db_repo = require('../db/repository');
 
 exports.setup = function(app) {
 
-	
+
 	app.param('token', mod_db_sessions.requestTokenValidation);
+	app.param('fileId', mod_db_repo.requestFileIdValidation);
 	
 	// User management
 
@@ -71,6 +72,9 @@ exports.setup = function(app) {
 
 	// Repository management
 
+	app.route('/:token/repository/:fileId').
+	get(mod_db_repo.requestDownload);
+	
 	app.route('/:token/repository').
 	post(mod_db_repo.requestUpload).
 	search(mod_db_repo.requestSearch);

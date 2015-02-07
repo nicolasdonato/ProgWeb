@@ -4,6 +4,8 @@
 
 var fs = require('fs'); 
 var path = require('path');
+var mime = require('mime');
+var assert = require('assert');
 
 /*
  * This entity manage files, provided by express module : multer
@@ -32,6 +34,9 @@ var logger = require('../logger');
 var DbName = 'repository'; 
 
 var UploadDirectory = './uploads/';
+
+module.exports.UploadDirectory = UploadDirectory; 
+
 //Template of document 'Course' in database
 RepositoryFile = function(user, filename, originalFilename) {
 
@@ -112,15 +117,17 @@ function RepositoryFileInfo(success, message, data) {
 
 RepositoryFileInfo.prototype = mod_db.ServerInfo; 
 
+
 var makeRepositoryFileInfo = function(success, message, data, callback) {
 
 	var repositoryFile = new RepositoryFileInfo(success, message, data); 
 	repositoryFile.update(callback); 
 };
 
-var CheckSessionInfo = function(req, res, next){
-	if(!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined){
-		res.send(new RepositoryFileInfo(false, 'Unknown session'));
+
+module.exports.CheckFileInfo  = function(req, res, next){
+	if(req.fileInfo == undefined ){
+		res.send(new RepositoryFileInfo(false, 'Unknown file'));
 	}
 	else{
 		next(req, res);
@@ -130,7 +137,7 @@ var CheckSessionInfo = function(req, res, next){
 
 module.exports.requestUpload = function(req, res){
 	
-	CheckSessionInfo(req, res, function(req, res){
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){
 		var files = req.files;
 
 		if(files.file == undefined){
@@ -154,11 +161,51 @@ module.exports.requestUpload = function(req, res){
 };
 
 
-module.exports.UploadDirectory = UploadDirectory; 
+module.exports.requestDownload = function(req, res){
+		
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){	
+		
+		module.exports.CheckFileInfo( req, res, function(req, res){
+			
+			var fileInfo = req.fileInfo;
+
+			var filePath = path.join( module.exports.UploadDirectory , fileInfo.filename );
+			fs.readFile( filePath , function(err, data) {
+			    if (err) {
+			        throw new Error('File <#'+ fileInfo.id+ '> could not be read from file system : ' + err.message);
+			    }
+			    else{
+
+			    	var mimeType = mime.lookup(filePath);
+			    	
+			    	res.header('Content-Type', mimeType);
+			    	res.header('Content-Disposition', 'attachment; filename="' + fileInfo.originalFilename + '"');
+			    	res.header('Content-Transfer-Encoding','binary');
+			    	res.header('Accept-Ranges', 'bytes');
+
+			        // Send Headers: Prevent Caching of File
+			    	res.header('Cache-Control','private');
+			    	res.header('Pragma','private');
+
+//			    	header("Content-length:".(string)(filesize($str)));
+//			    	header("Content-Type: application/force-download");
+//			    	header("Content-Type: application/download");
+//			    	header('Content-Type: application/octet-stream');
+			    	res.send(data);
+			    }
+			});
+		});
+	});
+	//
+	// on peut ajouter des élements à la session ( != session db) c'est un objet rattaché à la request qui permet de faire circuler des variables
+	//
+	//req.session.token = req.param('token');
+};
+
 
 module.exports.requestSearch = function(req, res){
 
-	CheckSessionInfo(req, res, function(req, res){
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){
 // 
 //
 //		module.exports.list(function(infos) {
@@ -180,6 +227,25 @@ module.exports.FileUploadComplete = function(file){
 
 };
 
+//
+// Méthode utilisée exclusivement par le handler de paramètre nommé :token défini dans config/routes
+//
+module.exports.requestFileIdValidation = function (req, res, next, fileId) {
+	if(fileId.length == 0 || fileId == "undefined"){
+		next(new RepositoryFileInfo(false, 'No file'));
+	}
+	else{
+		module.exports.findByIdSafe(fileId, function(repositoryFileInfo) {
+			if (! repositoryFileInfo.success) {
+				next(new RepositoryFileInfo(false, 'Unknown file'));
+			}
+			else{
+				req.fileInfo = repositoryFileInfo.result;
+				next();
+			}
+		}); 
+	}
+};
 
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +294,7 @@ module.exports.initialize = function(db) {
 		
 		files.forEach(function( element, index , array ){
 			
-			var filePath = path.combine( module.exports.UploadDirectory , element );
+			var filePath = path.join( module.exports.UploadDirectory , element );
 
 		    	if (fileInserts.length == 0) {
 		    		fileInserts.push(function() {
@@ -298,6 +364,34 @@ module.exports.findById = function(id, callback) {
 		}
 
 		makeRepositoryFileInfo(true, '', result[0], callback); 
+	});
+};
+
+
+//
+// Same as findById but if there is more than one file with the same id, it wipes n-1 of them
+//
+module.exports.findByIdSafe = function(id, callback) {
+
+	mod_db.find(DbName, { id: +id }, function(result) {
+
+		if (result.length == 0) {
+			logger.out('No file #' + id + ' found')
+			callback(new RepositoryFileInfo(false, 'File #' + id + ' unknown')); 
+			return;
+		} else if (result.length > 1) {
+			var firstResult = result[0];
+			var expectedRemovals = result.length - 1;
+			mod_db.remove(DbName, { id: +id, _id : { $ne : firstResult._id } }, function(result) {
+
+				assert.equal(expectedRemovals, result.length, 'Invalid removal operation');
+
+				makeRepositoryFileInfo(true, '', firstResult, callback); 
+			});
+		}
+		else{
+			makeRepositoryFileInfo(true, '', result[0], callback); 
+		}
 	});
 };
 

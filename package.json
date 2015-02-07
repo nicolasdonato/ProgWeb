@@ -38,6 +38,7 @@
 	"cors":"",
 	"multer":"",
 	"path":"",
-	"assert":""
+	"assert":"",
+	"mime":""
   }
 }
