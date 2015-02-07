@@ -10,20 +10,6 @@
 //		-->	look at the url used in auth.js - loginAccepted()
 //
 
-
-
-/////////////////////////////////////////
-// Visual interactions & DOM events
-//
-
-//add member name to the local video
-$('#localMember').text(AUTH.getMember());
-
-
-/////////////////////////////////////////
-// Start the chat room and the other components
-//
-
 // Can fill a room in the URL Path
 var room = location.pathname.substring(1);
 if (room === '') {
@@ -100,6 +86,10 @@ window.GEOCHAT_COMPONENTS = {
 		//these 2 functions are called resp. after successfull login and logout
 		//
 		connect 	: function(){
+
+			//add member name to the local video
+			$('#localMember').text(AUTH.getMember());
+
 			COURSES.connect();
 			GEOCHAT_MAP.connect();
 			CLASSES.connect();
@@ -112,6 +102,9 @@ window.GEOCHAT_COMPONENTS = {
 		
 		
 		disconnect 	: function(){
+			
+			$('#localMember').text("");
+		
 			COURSES.disconnect(); 	
 			GEOCHAT_MAP.disconnect();
 			CLASSES.disconnect();

@@ -58,7 +58,8 @@ var Repository = Class.create({
 					"valid_children" : []
 				}
 			},
-			plugins : ["types"] //, "dnd", "search", "state", "types", "wholerow"
+			contextmenu : { items : this.privateRepositoryContextMenu },
+			plugins : ["types", "contextmenu"] //, "dnd", "search", "state", "types", "wholerow"
 		});
 
 		$("#shared-repository").jstree({
@@ -113,7 +114,92 @@ var Repository = Class.create({
 		//
 		$("#private-repository").bind("select_node.jstree", this.showNodeDetails);
 	},
+	
+	
+	privateRepositoryContextMenu : function(node) {
 
+		//Each action consists of a key (a unique name) and a value which is an object with the following properties 
+		//				
+		// 	only label and action are required:
+		//
+		//	separator_before - a boolean indicating if there should be a separator before this item
+		//	separator_after - a boolean indicating if there should be a separator after this item
+		//	_disabled - a boolean indicating if this action should be disabled
+		//	label - a string - the name of the action (could be a function returning a string)
+		//	action - a function to be executed if this item is chosen
+		//	icon - a string, can be a path to an icon or a className, if using an image that is in the current directory use a ./ prefix, otherwise it will be detected as a class
+		//	shortcut - keyCode which will trigger the action if the menu is open (for example 113 for rename, which equals F2)
+		//	shortcut_label - shortcut label (like for example F2 for rename)
+		
+		
+	    // The default set of all items
+	    var items = {
+			downloadItem : { 
+				label : "Download", 
+				action : REPOSITORY.component.privateRepositoryContextMenuDownload 
+			},
+	        deleteItem: { // The "delete" menu item
+	            label: "Delete",
+	            action: function () { alert("To implement"); }
+	        }
+	    };
+
+//	    if ($(node).hasClass("folder")) {
+//	        // Delete the "delete" menu item
+//	        delete items.deleteItem;
+//	    }
+
+	    return items;
+	},
+
+	
+	privateRepositoryContextMenuDownload : function(e) {
+
+		var tree = $.jstree.reference("private-repository");
+		
+		var node = tree.get_node($(e.reference)[0]);
+		console.log('Downloading file  <'+ node.data.id +'>'); 
+
+        var ifr = $("#ifDownload");
+        if(ifr.length == 0){
+        	ifr = $('<iframe id="ifDownload" src="" style="display:none; visibility:hidden;"></iframe>');
+	        $('body').append(ifr);
+        }
+        ifr.attr('src', "/"+AUTH.session.token+"/repository/" + node.data.id);
+        //
+        // Je n'ai réussi à faire des download à la "html5" que pour des fichiers text, les autres perdaient l'intégrité
+        // mais avec l'iframe ça marche alors...
+        //
+//        var fileDownload = $.get("/"+AUTH.session.token+"/repository/" + node.data.id, null, function(data){
+//    		REPOSITORY.component.downloadFile(data, fileDownload.getResponseHeader('Content-Type'), fileDownload.getResponseHeader('Content-Disposition'));
+//        });
+        
+      
+	},
+	
+	
+//	downloadFile : function(data, mime, disposition ){
+//				
+//		var fileName = disposition.substring( disposition.indexOf('"') + 1, disposition.lastIndexOf('"'));
+//		
+//		var blob = new Blob([data], {type: mime});
+//		
+//		$("#hidden-file-download").remove();
+//
+//		var a = $("<a></a>");
+//		a.attr('id','hidden-file-download');
+//		a.prop({ 
+//			download : fileName, 
+//			innerHTML : 'Download', 
+//			href : window.URL.createObjectURL(blob)
+//		}).hide();
+//		
+//		$("body").append(a);
+//
+//		a[0].click();
+//
+//	},
+	
 	addFileToRepositoryStack : function(e){
 
 		e = e.originalEvent || e;
@@ -323,7 +409,7 @@ var Repository = Class.create({
 			
 			$(info.responseJSON.result).each(function(index, file ) {
 				var data = {
-					id : file.id,
+					id :  'private-repository-'+file.id,
 					text : file.originalFilename,
 					type : "file",
 					data : file
