@@ -374,6 +374,10 @@ window.CLASSES = {
 
 				endDate = new Date(); 
 				var duration = $('#classes-creation-duration').timepicker('getTime'); 
+				if (duration == null || duration == 0 || duration = '') {
+					alert('You must specify a duration for delayed classroom creation'); 
+					return false; 
+				}
 				endDate.setTime(beginDate.getTime() + duration.getHours()*3600000 + duration.getMinutes()*60000); 
 			}
 			
