@@ -10,27 +10,27 @@ var FileHelper = Class.create({
 	outputPanel : document.body,
 	
     onBegin: function (file) {
-        var div = document.createElement('div');
+       /* var div = document.createElement('div');
         div.title = file.name;
         div.innerHTML = '<label>0%</label> <progress></progress>';
         this.outputPanel.insertBefore(div, this.outputPanel.firstChild);
-        progressHelper[file.uuid] = {
+        this.progressHelper[file.uuid] = {
             div: div,
             progress: div.querySelector('progress'),
             label: div.querySelector('label')
         };
-        this.progressHelper[file.uuid].progress.max = file.maxChunks;
+        this.progressHelper[file.uuid].progress.max = file.maxChunks;*/
     },
     onEnd: function (file) {
-    	this.progressHelper[file.uuid].div.innerHTML = '<a href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
+    	//this.progressHelper[file.uuid].div.innerHTML = '<a href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
     },
     onProgress: function (chunk) {
-        var helper = this.progressHelper[chunk.uuid];
+       /* var helper = this.progressHelper[chunk.uuid];
         helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
         
         if (helper.progress.position == -1) return;
         var position = +helper.progress.position.toFixed(2).split('.')[1] || 100;
-        helper.label.innerHTML = position + '%';
+        helper.label.innerHTML = position + '%';*/ad
     }
 });
 
@@ -78,7 +78,7 @@ window.FILE_TRANSFER = {
 	receiveFile: function (data) {
 		this.fileReceiver.receive(data);
 	},
-
+	
 	
 	connect 	: function(){
 		$("#files").show();

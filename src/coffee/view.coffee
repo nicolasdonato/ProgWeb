@@ -5,16 +5,17 @@ window.GEOCHAT_VIEW =
 								$('#pass').val()
 
 	loginSuccess: ->
-		$("#loginForm")			.hide()
-	    $("#pass")				.val('')
-		$("#rooms, #logout")	.show()
+		$("#loginForm")				.hide()
+		$("#pass")					.val ''
+		$("#rooms, #logout")		.show()
+		$("#localVideo").parent() 	.show()
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
 
 	logout: ->
 		AUTH.requestLogout()
-		$("#loginForm")			.hide()
+		$("#loginForm")			.show()
 		$("#rooms, #logout")	.hide()
 
 
@@ -48,18 +49,17 @@ window.GEOCHAT_VIEW =
 								message: msg
 
 	dragCancel: (event) ->
-		if event.preventDefault
-			event.preventDefault()
+		event.preventDefault()
+		event.stopPropagation()
 		return off
 
 	dropFile: (event) ->
-		if event.preventDefault
-			event.preventDefault()
+		view.dragCancel event
 
-		event = event.originalEvent
-		# console.log 'drop event, target: ' + event.target
-		console.log event.dataTransfer.files[0]
-		# console.log event.target.file
+		member 	= this.id
+		files 	= event.originalEvent.dataTransfer.files
+
+		FileTransfer.sendFile member, files	
 
 $ ->
 	#########################################
@@ -92,7 +92,6 @@ $ ->
 	else
 		console.log 'NO FILELIST !'
 	
-
 	data = data: [
 		text: 'Projet 1'
 		children: [
@@ -105,5 +104,4 @@ $ ->
 		'Projet 2'
 	]
 
-	$('#files').jstree core: data
-
+	# $('#files').jstree core: data

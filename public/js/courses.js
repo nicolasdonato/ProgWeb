@@ -1,13 +1,4 @@
 window.COURSES = {
-		
-		initialize : function(){
-			
-		},
-
-		
-		
-		//Module management
-		/////////////////////////////////////////////////////////////////////////////////////
 
 
 		updateCommandInProgress: false,
@@ -15,6 +6,36 @@ window.COURSES = {
 		enrolCommandInProgress: false,
 		editCommandInProgress: false,
 		quitCommandInProgress: false,
+
+
+		selectedCourse: null, 
+
+
+		//Module management
+		/////////////////////////////////////////////////////////////////////////////////////
+
+
+		initialize: function() {
+		},
+
+
+		getSelected: function() {
+			return COURSES.selectedCourse; 
+		}, 
+
+
+		setSelected: function(course) {
+
+			COURSES.selectedCourse = course; 
+
+			$("#courses-list a").removeClass("selected-course");
+			if (course != null) {
+				$("#courses-list a[id="+ course.id +"]").addClass("selected-course");
+			}
+
+			COURSES.refreshDetails(); 
+			CLASSES.refresh(); 
+		}, 
 
 
 		// Appelée à chaque AUTH.loginAccepted()
@@ -54,8 +75,7 @@ window.COURSES = {
 		// Appelée à chaque AUTH.logout()
 		disconnect: function() {
 
-			// Cette fonction fait l'inverse de la configuration de initialize() lors d'un logOut() pour que le initialize() 
-			// qui se fera ensuite parte sur des bases propres
+			COURSES.clean(); 
 
 			$("#courses-creation-form").unbind("submit", COURSES.create);
 
@@ -76,42 +96,54 @@ window.COURSES = {
 		},
 
 
-		refreshDetails: function(course) {
+		refreshDetails: function() {
 
-			$("#courses-details-id").text(course.id);
-			$("#courses-details-name").text(course.name);
-			$("#courses-details-teacher").text(course.teacher.login);
-			$("#courses-details-description").text(course.description);
+			if (COURSES.selectedCourse == null) {
 
-			var user = AUTH.getMember(); 
-			var isStudent = false; 
-			var i = 0; 
-			while (! isStudent && i < course.students.length) {
-				isStudent = (course.students[i] == user);
-				i++;
-			}
-			
-			if (isStudent) {
+				$("#courses-details-id").text('');
+				$("#courses-details-name").text('');
+				$("#courses-details-teacher").text('');
+				$("#courses-details-description").text('');
 				
 				$("#courses-details-submit-enrol").hide();
-				$("#courses-details-submit-quit").show();
-				
-			} else {
-
 				$("#courses-details-submit-quit").hide();
-				if (user != course.teacher.login) {
-					$("#courses-details-submit-enrol").show();
-					$("#courses-details-message").hide(); 
-				} else {
-					$("#courses-details-submit-enrol").hide();
-					$("#courses-details-message").hide(); 
-				}
-			}
-
-			if (AUTH.getRole() < 3 && course.teacher.login != user) {
 				$("#courses-details-submit-modify").hide();
+
 			} else {
-				$("#courses-details-submit-modify").show();
+
+				$("#courses-details-id").text(COURSES.selectedCourse.id);
+				$("#courses-details-name").text(COURSES.selectedCourse.name);
+				$("#courses-details-teacher").text(COURSES.selectedCourse.teacher.login);
+				$("#courses-details-description").text(COURSES.selectedCourse.description);
+
+				var user = AUTH.getMember(); 
+				var isStudent = false; 
+				var i = 0; 
+				while (! isStudent && i < COURSES.selectedCourse.students.length) {
+					isStudent = (COURSES.selectedCourse.students[i] == user);
+					i++;
+				}
+
+				if (isStudent) {
+
+					$("#courses-details-submit-enrol").hide();
+					$("#courses-details-submit-quit").show();
+
+				} else {
+
+					$("#courses-details-submit-quit").hide();
+					if (user != COURSES.selectedCourse.teacher.login) {
+						$("#courses-details-submit-enrol").show();
+					} else {
+						$("#courses-details-submit-enrol").hide();
+					}
+				}
+
+				if (AUTH.getRole() < 3 && COURSES.selectedCourse.teacher.login != user) {
+					$("#courses-details-submit-modify").hide();
+				} else {
+					$("#courses-details-submit-modify").show();
+				}
 			}
 		},
 
@@ -121,6 +153,11 @@ window.COURSES = {
 				e.preventDefault();
 			}
 
+			COURSES.setSelected(null); 
+			$("#courses-details-form").hide();
+			$("#courses-edition-form").hide();
+			$("#courses-edition-name").val('');
+			$("#courses-edition-description").val('');
 			$("#courses-list").empty();
 
 			return false;
@@ -132,7 +169,14 @@ window.COURSES = {
 				e.preventDefault();
 			}
 
+			$("#courses-details-form").hide();
+			$("#courses-edition-form").hide();
+			$("#courses-list").hide();
+
+			COURSES.clean(e, params); 
 			COURSES.list(e, params);
+
+			$("#courses-list").show();
 
 			return false;
 		},
@@ -182,78 +226,8 @@ window.COURSES = {
 				e.preventDefault();
 			}
 
-			try {
-
-				var questionIndex = this.hash.indexOf('?'); 
-
-				var action = '';
-				var params = {};
-				if (questionIndex > -1) {
-
-					action = this.hash.substr(1, questionIndex - 1);
-					if (action == '') {
-						throw new Error('Bad format #0 of hash link <' + this.hash + '>');
-					}
-
-					var parameters = this.hash.substr(questionIndex + 1);
-					if (parameters == '') {
-						throw new Error('Bad format #1 of hash link <' + this.hash + '>');
-					}
-
-					var ampersand = -1; 
-					do {
-
-						ampersand = parameters.indexOf('&'); 
-						if (ampersand > -1) {
-
-							var parameter = parameters.substr(0, ampersand); 
-							var equalIndex = parameter.indexOf('=');
-							if (equalIndex < 0) {
-								throw new Error('Bad format #2 of hash link <' + this.hash + '>'); 
-							}
-							var param = parameter.substr(0, equalIndex); 
-							var value = parameter.substr(equalIndex + 1); 
-							if (param == '' || value == '') {
-								throw new Error('Bad format #3 of hash link <' + this.hash + '>'); 
-							}
-							params[param] = value; 
-
-							parameters = parameters.substr(ampersand + 1); 
-
-						} else {
-
-							var parameter = parameters; 
-							var equalIndex = parameter.indexOf('=');
-							if (equalIndex < 0) {
-								throw new Error('Bad format #4 of hash link <' + this.hash + '>'); 
-							}
-							var param = parameter.substr(0, equalIndex); 
-							var value = parameter.substr(equalIndex + 1); 
-							if (param == '' || value == '') {
-								throw new Error('Bad format #5 of hash link <' + this.hash + '>'); 
-							}
-							params[param] = value; 
-						}
-
-					} while(ampersand > -1); 
-
-				} else {
-					action = this.hash.substr(1); 
-				}
-
-				if (COURSES[action] == undefined || COURSES[action] == null) {
-					alert('The action <' + action + '> is unknown'); 
-					return false; 
-				}
-
-				COURSES[action](e, params); 
-				return false;
-
-			} catch (err) {
-
-				alert(err.message); 
-				return false;
-			}
+			GEOCHAT_COMPONENTS.processHashLink(e, this.hash, COURSES); 
+			return false; 
 		},
 
 
@@ -261,7 +235,7 @@ window.COURSES = {
 		/////////////////////////////////////////////////////////////////////////////////////
 
 
-		//	app.get('/manage/courses', mod_db_courses.listRequest);
+		//	app.get('/manage/courses', mod_db_courses.requestList);
 		list: function(e, params) {
 			if (e != null) {
 				e.preventDefault();
@@ -274,7 +248,7 @@ window.COURSES = {
 		},
 
 
-		//	app.post('/manage/courses', mod_db_courses.createRequest);
+		//	app.post('/manage/courses', mod_db_courses.requestCreate);
 		create: function(e, params) {
 			if (e != null) {
 				e.preventDefault();
@@ -291,7 +265,7 @@ window.COURSES = {
 		},
 
 
-		//	app.get('/manage/courses/:id', mod_db_courses.getRequest);
+		//	app.get('/manage/courses/:id', mod_db_courses.requestGet);
 		get: function(e, params) {
 			if (e != null) {
 				e.preventDefault();
@@ -315,13 +289,13 @@ window.COURSES = {
 
 			var data = { token: AUTH.session.token };
 
+			// app.put('/manage/courses/:id', mod_db_courses.requestUpdate); 
 			if (COURSES.updateCommandInProgress) {
 
 				data.name = $("#courses-edition-name").val();
 				data.teacher = $("#courses-details-teacher").text();
 				data.description = $("#courses-edition-description").val();
 
-				// app.put('/manage/courses/:id', mod_db_courses.updateRequest); 
 				$.ajax({
 					type: "PUT",
 					url: "/manage/courses/" + $("#courses-details-id").text(),
@@ -331,12 +305,12 @@ window.COURSES = {
 				}).done(COURSES.updateComplete);
 			}
 
+			//	app.delete('/manage/courses/:id', mod_db_courses.requestRemove);
 			if (COURSES.deleteCommandInProgress) {
 
-				//	app.delete('/manage/courses/:id', mod_db_courses.removeRequest);
 				$.ajax({
 					type: "DELETE",
-					url: "/manage/courses/teacher/" + $("#courses-details-id").text(),
+					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify(data),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
@@ -354,27 +328,28 @@ window.COURSES = {
 			if (e != null) {
 				e.preventDefault();
 			}
-			
-			if(COURSES.quitCommandInProgress){
-				$.ajax({
-					type: "DELETE",
-					url: "/manage/courses/student/" + $("#courses-details-id").text(),
-					data: JSON.stringify({ token: AUTH.session.token }),
-					contentType: "application/json; charset=utf-8",
-					dataType: "json"
-				}).done(COURSES.quitComplete);
-			}
 
+			// app.subsribe('/manage/courses/:id', mod_db_courses.requestEnrol); 
 			if (COURSES.enrolCommandInProgress) {
 
-				// app.post('/manage/courses/:id', mod_db_courses.enrolRequest); 
 				$.ajax({
-					type: "POST",
+					type: "SUBSCRIBE",
 					url: "/manage/courses/" + $("#courses-details-id").text(),
 					data: JSON.stringify({ token: AUTH.session.token }),
 					contentType: "application/json; charset=utf-8",
 					dataType: "json"
 				}).done(COURSES.enrolComplete);
+			}
+
+			// app.unsubscribe('/manage/courses/student/:id', mod_db_courses.requestQuit); 
+			if(COURSES.quitCommandInProgress){
+				$.ajax({
+					type: "UNSUBSCRIBE",
+					url: "/manage/courses/" + $("#courses-details-id").text(),
+					data: JSON.stringify({ token: AUTH.session.token }),
+					contentType: "application/json; charset=utf-8",
+					dataType: "json"
+				}).done(COURSES.quitComplete);
 			}
 
 			if (COURSES.editCommandInProgress) {
@@ -401,9 +376,9 @@ window.COURSES = {
 		creationComplete: function(info) {
 
 			if (info.success) {
-				COURSES.list();
+				COURSES.list(); 
+				COURSES.setSelected(info.result); 
 			} else {
-				$("#courses-info").text('');
 				alert(info.message); 
 			}
 		},
@@ -412,14 +387,10 @@ window.COURSES = {
 		deleteComplete: function(info) {
 
 			if (info.success) {
-				COURSES.list();
+				COURSES.refresh();
 			} else {
-				$("#courses-info").text('');
 				alert(info.message); 
 			}
-
-			$("#courses-details-form").hide();
-			$("#courses-edition-form").hide();
 		},
 
 
@@ -427,13 +398,12 @@ window.COURSES = {
 
 			if (info.success) {
 
-				COURSES.refreshDetails(info.result); 
+				COURSES.setSelected(info.result); 
+
 				$("#courses-details-form").show();
 
 			} else {
-				$("#courses-info").text('');
-				$("#courses-details-form").hide();
-				$("#courses-edition-form").hide();
+				COURSES.refresh(); 
 				alert(info.message); 
 			}
 		},
@@ -446,7 +416,8 @@ window.COURSES = {
 			$(info.result).each(function(index, course) {
 
 				var item = $("<li><a></a></li>");
-				$("a", item).attr("href", "#get?id=" + course.id).click(COURSES.processHashLink).text(course.name);
+				//	app.get('/manage/courses/:id', mod_db_courses.requestGet);
+				$("a", item).attr("id", course.id).attr("href", "#get?id=" + course.id).click(COURSES.processHashLink).text(course.name);
 				list.append(item);
 			});
 
@@ -457,9 +428,7 @@ window.COURSES = {
 		enrolComplete: function(info) {
 
 			if (info.success) {
-
-				COURSES.refreshDetails(info.result); 
-				
+				COURSES.setSelected(info.result);
 			} else {
 				alert(info.message); 
 			}
@@ -469,9 +438,7 @@ window.COURSES = {
 		quitComplete: function(info) {
 
 			if (info.success) {
-				
-				COURSES.refreshDetails(info.result); 
-
+				COURSES.setSelected(info.result);
 			} else {
 				alert(info.message); 
 			}
@@ -482,14 +449,10 @@ window.COURSES = {
 
 			if (info.success) {
 
-				COURSES.list();
-
-				$("#courses-details-name").val(info.result.name);
-				$("#courses-details-teacher").val(info.result.teacher.login);
-				$("#courses-details-description").val(info.result.description);
+				COURSES.setSelected(info.result); 
 
 				$("#courses-edition-form").hide();		
-				$("#courses-details-form").hide();
+				$("#courses-details-form").show();
 
 			} else {
 				alert(info.message); 

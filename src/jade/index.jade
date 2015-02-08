@@ -42,7 +42,7 @@ html
 				section#out
 				input#in(type='text')
 			section#cams
-				.cam
+				.cam(style='display:none')
 					p#localMember
 					video#localVideo(
 						autoplay='true'
@@ -50,38 +50,58 @@ html
 			section#courses-div(style='display:none')
 				a#courses-refresh(href='#refresh')
 					span Refresh
+				#courses-info
+				#courses-list
 				form#courses-creation-form(style='display:none')
-					span.titre Créer
+					span.titre Créer&nbsp;:
 					p
-						span.libelle Nom
+						span.libelle Nom&nbsp;:
 						input#courses-creation-name.data.text-simple(type='text')
 						br
-						span.libelle Desc
+						span.libelle Description&nbsp;:
 						input#courses-creation-description.data.text-area(type='text')
-					input#courses-creation-submit(type='submit')
+					input#courses-creation-submit(
+						type='submit'
+						value='Créer !')
 				form#courses-details-form(style='display:none')
-					span.titre
+					span.titre Détails&nbsp;:
 					p
 						span#courses-details-id.data.label-simple(style='display:none')
-						span.libelle Nom :&nbsp;
+						span.libelle Nom&nbsp;:
 						span#courses-details-name.data.label-simple
 						br
-						span.libelle Enseignant :&nbsp;
+						span.libelle Enseignant&nbsp;:
 						span#courses-details-teacher.data.label-simple
 						br
-						span.libelle Description :&nbsp;
+						span.libelle Description&nbsp;:
 						span#courses-details-description.data.label-area
+					p
+						input#courses-details-submit-modify(
+						type='submit'
+						value='Modifier !')
+						input#courses-details-submit-enrol(
+						type='submit'
+						value="S'inscrire !")
+						input#courses-details-submit-quit(
+							type='submit'
+							value='Se désinscrire !'
+							style='display:none')
+						span#courses-details-message.data.label-area(type="text")
 				form#courses-edition-form(style='display:none')
 					input#courses-edition-id(type="hidden")
-					span.titre Modifier un cours :&nbsp;
+					span.titre Modifier un cours&nbsp;:
 					p
-						span.libelle Nom :&nbsp;
+						span.libelle Nom&nbsp;:
 						input#courses-edition-name.data.text-simple(type="text")
 						br
-						span.libelle Description :&nbsp;
+						span.libelle Description&nbsp;:
 						input#courses-edition-description.data.text-area(type="text")
 						// Manque liste des teachers
-					input#courses-edition-submit-update(type="submit", value="Mettre à jour")
-					input#courses-edition-submit-delete(type="submit", value="Supprimer")
+					input#courses-edition-submit-update(
+						type="submit"
+						value='Mettre à jour !')
+					input#courses-edition-submit-delete(
+						type="submit"
+						value='Supprimer !')
 			aside#files
 		footer footer

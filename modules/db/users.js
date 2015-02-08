@@ -140,7 +140,7 @@ module.exports.initialize = function(db) {
 	for (var index in initializationData) {
 		var hash = mod_utils.getHash(initializationData[index].password); 
 		initializationData[index].password = hash; 
-		collection.insert(initializationData[index]); 
+		collection.insert(initializationData[index], function(){}); 
 	}
 }
 
