@@ -1,6 +1,6 @@
 //https://opentokrtc.com
-
-//ou plutot ce lien il y a tout dessus --> https://github.com/muaz-khan/WebRTC-Experiment/ 
+// ou plutot ce lien il y a tout dessus --> https://github.com/muaz-khan/WebRTC-Experiment/
+// erreur concernant l'interconnexion des navigateurs --> http://stackoverflow.com/questions/25052340/what-webrtc-constraints-and-options-should-i-pass-to-get-interoperability-betwee
 
 /**
  * Class using to display remote cams of people connected in the chat room.
@@ -859,7 +859,8 @@ window.WEB_RTC_NODE = {
 					GEOCHAT_VIEW.addVideo(event.member, event.remoteVideo);
 				},
 				deleteVideo: function(event) {
-					jQuery(event.remoteVideo).parent().remove();
+					//jQuery(event.remoteVideo).parent().remove();
+					GEOCHAT_VIEW.deleteVideo(event.member, event.remoteVideo);
 				},
 				enableDataChannel: function (event) {
 					console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");
@@ -886,6 +887,9 @@ window.WEB_RTC_NODE = {
 		
 		
 		disconnect 	: function(){
+			if(WEB_RTC_NODE.component && WEB_RTC_NODE.component.webrtc) {
+				WEB_RTC_NODE.component.webrtc.hangup();
+			}
 			$("#cams").hide();
 		}
 };

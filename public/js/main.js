@@ -72,12 +72,7 @@ window.GEOCHAT_COMPONENTS = {
 			*/
 			window.onbeforeunload = function(e){
 				//sendMessage('bye');
-				//
-				// ça irait bien dans le disconnect de WEB_RTC_NODE,  non ?
-				//
-				WEB_RTC_NODE.component.webrtc.hangup();
-				//map.closeLocation();
-				//GEOCHAT_MAP.map.closeLocation();
+				GEOCHAT_COMPONENTS.disconnect();
 			}
 		},
 
@@ -92,6 +87,7 @@ window.GEOCHAT_COMPONENTS = {
 
 			COURSES.connect();
 			GEOCHAT_MAP.connect();
+			WEB_RTC_NODE.connect();
 			CLASSES.connect();
 			REPOSITORY.connect();
 			// TO IMPLEMENT : connect  for 
@@ -107,6 +103,7 @@ window.GEOCHAT_COMPONENTS = {
 		
 			COURSES.disconnect(); 	
 			GEOCHAT_MAP.disconnect();
+			WEB_RTC_NODE.disconnect();
 			CLASSES.disconnect();
 			REPOSITORY.disconnect();
 			// TO IMPLEMENT : disconnect for 

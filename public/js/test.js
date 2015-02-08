@@ -27,6 +27,9 @@
     addVideo: function(member, video) {
       return $("<div id=\"" + member + "\" class=\"cam\">\n	<p>" + member + "</p>\n	" + ($(video).prop('outerHTML')) + "\n</div>").appendTo('#cams').on('dragover dragenter', GEOCHAT_VIEW.dragCancel).on('drop', GEOCHAT_VIEW.dropFile);
     },
+    deleteVideo: function(member, video) {
+      return $("#"+member).remove();
+    },
     writeChat: function(user, msg) {
       $('#out').append(user + ' : ' + msg + '<br>');
       return $('#out').scrollTop($('#out')[0].scrollHeight);
