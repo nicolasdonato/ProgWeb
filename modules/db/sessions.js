@@ -66,6 +66,7 @@ var makeSessionInfo = function(success, message, data, callback) {
 
 module.exports.CheckSessionInfo = function(req, res, next){
 	if(!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined){
+		logger.err('The user is undefined [' + req.sessionInfo.user + '] or the token is undefined ['+req.sessionInfo.token+']');
 		res.send(new RepositoryFileInfo(false, 'Unknown session'));
 	}
 	else{
@@ -86,6 +87,7 @@ module.exports.requestLogin = function(req, res) {
 	else if (req.body.login != undefined) {
 		if (mod_db.checkParams(req, res, ['login', 'password'])) {
 			module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
+				logger.out('The user [' + sessionInfo.result.user.login + '] is autheticated by the login/password');
 				res.send(sessionInfo);
 			}); 
 		}
@@ -101,7 +103,9 @@ module.exports.requestLogout = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token'])) {
 		module.exports.logout(req.body.token, function(result) {
-
+			if (result.success) {
+				logger.out('The user ['+ result.result.user.login + '] is logged out');
+			}
 			res.send(result); 
 		});
 	}

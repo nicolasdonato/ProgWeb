@@ -173,10 +173,11 @@ module.exports.requestCreate = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to start a classroom: ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to start a classroom: ' + sessionInfo.message)); 
 				return;
 			}
-
+			
 			var begin = req.param('begin'); 
 			var beginDate = null; 
 			if (begin != 0 && begin != '') {
@@ -189,6 +190,7 @@ module.exports.requestCreate = function(req, res) {
 			}
 
 			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
+				logger.out("The user [" + sessionInfo.result.user.login + "] starts the classroom ["+req.param('course')+" with the subject " + req.param('subject'));
 				res.send(info); 
 			}); 
 		}); 
@@ -203,11 +205,13 @@ module.exports.requestList = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to list the classrooms: ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to list the classrooms: ' + sessionInfo.message)); 
 				return;
 			}
-
+			
 			module.exports.list(function(infos) {
+				logger.out("The user ["+sessionInfo.result.user.login +"] want to list the classrooms");
 				res.send(infos); 
 			}); 
 		}); 
@@ -222,11 +226,13 @@ module.exports.requestGet = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to get classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to get classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.get(req.param('id'), function(info) {
+				logger.out("The user ["+sessionInfo.result.user.login +"] gets the informations of the classrooms ["+req.param('id')+"]");
 				res.send(info); 
 			}); 
 		}); 
@@ -241,6 +247,7 @@ module.exports.requestUpdate = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
@@ -248,12 +255,14 @@ module.exports.requestUpdate = function(req, res) {
 
 			module.exports.get(req.param('id'), function(classeInfo) {
 
-				if (! classeInfo.success) { 
+				if (! classeInfo.success) {
+					logger.err('Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 					res.send(new ClasseInfo(false, 'Failed to update classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
 				}	
 				
 				if (classeInfo.result.isActive()) {
+					logger.err('Failed to update classroom #' + classe.id + ' : can\'t update an active classroom');
 					res.send(new ClasseInfo(false, 'Failed to update classroom #' + classe.id + ' : can\'t update an active classroom')); 
 					return;
 				}
@@ -280,6 +289,7 @@ module.exports.requestUpdate = function(req, res) {
 				classe.end = endDate; 
 
 				module.exports.updateClasse(user, classe, function(info) {
+					logger.out("The user ["+sessionInfo.result.user.login +"] updates the classroom ["+classe.id+"]");
 					res.send(info); 
 				}); 
 			});
@@ -295,6 +305,7 @@ module.exports.requestStart = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
@@ -303,12 +314,14 @@ module.exports.requestStart = function(req, res) {
 			module.exports.get(req.param('id'), function(classeInfo) {
 
 				if (! classeInfo.success) { 
+					logger.err('Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
 				}	
 				var classe = classeInfo.result; 
 
 				if (classe.isActive()) {
+					logger.err('Failed to start classroom #' + classe.id + ' : classroom already active');
 					res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : classroom already active')); 
 					return;
 				}
@@ -318,6 +331,7 @@ module.exports.requestStart = function(req, res) {
 				module.exports.findByTeacher(user.login, function(classeInfoBis) {
 
 					if (! classeInfoBis.success) {
+						logger.err('Failed to start classroom #' + classe.id + ' : ' + classeInfoBis.message);
 						res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : ' + classeInfoBis.message)); 
 						return;
 					}
@@ -325,12 +339,14 @@ module.exports.requestStart = function(req, res) {
 					for (var i = 0; i < classeInfoBis.result.length; i++) {
 						var classeBis = classeInfoBis.result[i]; 
 						if (classe.id != classeBis.id && classe.doesOverlap(classeBis.begin, classeBis.end)) {
+							logger.err('Failed to start classroom #' + classe.id + ' : your other class #' + classeBis.id + ' is already active');
 							res.send(new ClasseInfo(false, 'Failed to start classroom #' + classe.id + ' : your other class #' + classeBis.id + ' is already active')); 
 							return;
 						}
 					}
 
 					module.exports.updateClasse(user, classe, function(info) {
+						logger.out('The user ['+sessionInfo.result.user.login +'] starts classroom #' + classe.id);
 						res.send(info); 
 					}); 
 				});
@@ -347,6 +363,7 @@ module.exports.requestEnd = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to end a classroom #' + id + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to end a classroom #' + id + ' : ' + sessionInfo.message)); 
 				return;
 			}
@@ -354,24 +371,28 @@ module.exports.requestEnd = function(req, res) {
 
 			module.exports.get(req.param('id'), function(classeInfo) {
 
-				if (! classeInfo.success) { 
+				if (! classeInfo.success) {
+					logger.err('Failed to end classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 					res.send(new ClasseInfo(false, 'Failed to end classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
 				}
 				var classe = classeInfo.result; 
 
 				if (user.role < mod_db_users.Roles.ADMIN && user.login != classe.course.teacher.login) {
+					logger.err('Only the teacher of a course can end a classroom related to it');
 					callback(new ClasseInfo(false, 'Only the teacher of a course can end a classroom related to it'));
 					return; 
 				}
 
 				if (! classe.isActive()) {
+					logger.err('Failed to end classroom #' + classe.id + ' : classroom already inactive');
 					res.send(new ClasseInfo(false, 'Failed to end classroom #' + classe.id + ' : classroom already inactive')); 
 					return;
 				}
 
 				var end = new Date(); 
 				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, null, function(info) {
+					logger.out('The teacher ['+sessionInfo.result.user.login+'] of a course make the end of the classroom ['+classe.course+']');
 					res.send(info); 
 				}); 
 
@@ -388,11 +409,13 @@ module.exports.requestJoin = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to join classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to join classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.join(sessionInfo.result.user, req.param('id'), function(info) {
+				logger.out('The user ['+sessionInfo.result.user.login+'] joined classroom #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -407,11 +430,13 @@ module.exports.requestLeave = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to leave classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to leave classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.leave(sessionInfo.result.user, req.param('id'), function(info) {
+				logger.out('The user ['+sessionInfo.result.user.login+'] leaved classroom #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -426,6 +451,7 @@ module.exports.requestRemove = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 				res.send(new ClasseInfo(false, 'Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
@@ -434,17 +460,20 @@ module.exports.requestRemove = function(req, res) {
 			module.exports.get(req.param('id'), function(classeInfo) {
 
 				if (! classeInfo.success) { 
+					logger.err('Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message);
 					res.send(new ClasseInfo(false, 'Failed to remove classroom #' + req.param('id') + ' : ' + sessionInfo.message)); 
 					return;
 				}	
 				var classe = classeInfo.result; 
 
 				if (classe.isActive()) {
+					logger.err('Failed to remove classroom #' + classe.id + ' : classroom in activity');
 					res.send(new ClasseInfo(false, 'Failed to remove classroom #' + classe.id + ' : classroom in activity')); 
 					return;
 				}
 
 				module.exports.remove(user, classe.id, function(info) {
+					logger.out('The user ['+sessionInfo.result.user.login+'] removed classroom #' + classe.id);
 					res.send(info); 
 				}); 
 			}); 

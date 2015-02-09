@@ -82,11 +82,13 @@ module.exports.requestList = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to list the users: ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to list the users: ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.list(function(err, userInfos){
+				logger.out('The user [' + sessionInfo.result.user.login + '] to list the users');
 				res.send(userInfos); 
 			});
 		});
