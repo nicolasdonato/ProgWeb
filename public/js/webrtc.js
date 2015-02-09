@@ -148,10 +148,6 @@ var WebRTC = Class.create({
 
 		this.createEventTask();
 
-		// fill the local stream in the HTML DOM
-		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
-		console.log('Getting user media with constraints', this.constraints);
-
 		// It is checked whether there is a need of a TURN server if it is not in localhost
 //		if (location.hostname != "localhost") 
 //		{
@@ -163,6 +159,16 @@ var WebRTC = Class.create({
 //		}
 
 		return this;
+	},
+	
+	/**
+	 * Start the webrtc for the classroom
+	 */
+	startWebRTC: function() {
+		
+		// fill the local stream in the HTML DOM
+		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
+		console.log('Getting user media with constraints', this.constraints);
 	},
 
 	/**
@@ -682,6 +688,13 @@ var WebRTC = Class.create({
 		this.sendMessageWebRtc('bye', {
 			member: jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember
 		});
+		if (this.localVideo) {
+			try {
+				this.localVideo.pause();
+			} catch (e) {
+				// no log for the video pause
+			}
+		}
 	},
 
 	/**
@@ -899,8 +912,10 @@ window.WEB_RTC_NODE = {
 
 		
 		connect 	: function(){
+			if(WEB_RTC_NODE.component && WEB_RTC_NODE.component.webrtc) {
+				WEB_RTC_NODE.component.webrtc.startWebRTC();
+			}
 			$("#cams").show();
-			
 		},
 		
 		
@@ -909,7 +924,6 @@ window.WEB_RTC_NODE = {
 				WEB_RTC_NODE.component.webrtc.hangup();
 			}
 			$("#cams").hide();
-			this.component.webrtc.hangup();
 		}
 };
 
