@@ -1,26 +1,65 @@
+@-webkit-keyframes pulse
+	0%
+		background #000
+	5%
+		background #F00
+	10%
+		background #000
+	100%
+		background #000
+
+@keyframes pulse
+	0%
+		background #000
+	5%
+		background #F00
+	10%
+		background #000
+	100%
+		background #000
+		
+cool-frame(n)
+	flex						n			0		10px
+	transition					flex		1s		cubic-bezier(0.2,0.7,0.2,0.7) // ease = cubic-bezier(0.25,0.1,0.25,1)
+	-webkit-animation			pulse		5s		infinite
+	animation					pulse		5s		infinite
+	*
+		opacity 				0
+		transition 				opacity 	1s		cubic-bezier(0.2,0.7,0.2,0.7)
+	&:hover
+		flex 					1 			0		100px
+		-webkit-animation 		paused
+		animation 				paused
+		*
+			opacity 			1
+
 html
 	width 100%
 	height 100%
 
 	body
-		display flex
-		flex-direction column
-		background-color #333
-		width 100%
-		height 100%
-		margin 0
-		padding 0
+		display 		flex
+		flex-direction 	column
+		background 		#333
+		width 			100%
+		height 			100%
+		margin 			0
+		padding 		0
 		
 		header
-			flex 1 0 100px
-			display flex
-			flex-wrap wrap
-			flex-direction column
-			align-items center
-			justify-content center
-			overflow hidden
-			background-color #F00
+			// flex 				1		0	10px
+			display 			flex
+			flex-wrap 			wrap
+			flex-direction 		column
+			align-items 		center
+			justify-content 	center
+			overflow 			hidden
+			cool-frame 			1
 			
+			#logout
+				background 	red
+				cursor 		pointer
+
 			form
 				input
 					margin 2px
@@ -28,24 +67,25 @@ html
 					border-radius 5px
 				&.fail input
 					border-color red
-					
+
 		main
 			flex 100 0 100px
 			display flex
 			flex-wrap wrap
 			flex-direction row
-			background-color #0F0
+			background #0F0
 			
 			#geochat
-				flex 1 0 100px
+				// flex 1 0 100px
+				cool-frame 1
 				display flex
 				flex-direction column
-				// background-color #9F0
+				// background #9F0
 
 				#geo
 					flex 1
 					max-height 200px
-					// background-color #00F
+					// background #00F
 					
 					#carte
 						height 100%
@@ -55,7 +95,7 @@ html
 					overflow auto
 					height 100px
 					word-wrap break-word
-					// background-color #0F0
+					// background #0F0
 
 				#in
 					flex 1
@@ -68,27 +108,52 @@ html
 				align-items center
 				justify-content center
 				overflow hidden
-				background-color #9F9
+				background #9F9
 				
 				.cam
 					video
 						flex 1 0 50px
 						width 256px
 						height 150px
-			
-			#courses-div
-				flex 1 0 50px
-				transition all 1s
-				background-color #9A9
-
-				&:hover
-					flex 10 0 50px
 
 			#files
 				flex 1 0 100px
 				overflow hidden
-				background-color #0F9
+				background #0F9
 
 		footer
-			flex 1 0 100px
-			background-color #00F
+			flex 1 0 150px
+			background #00F
+
+			#courses-div
+				flex 1 0 50px
+				display flex
+				flex-wrap wrap
+				align-items center
+				justify-content center
+				transition all 1s
+				height 100%
+				background #9A9
+
+				// &:hover
+				// 	flex 10 0 50px
+				
+				#c-list
+					height 100%
+					flex 1 0 50px
+					background #9A0
+				
+				#courses-creation-form
+					height 100%
+					flex 1 0 50px
+					background #9A9
+				
+				#courses-details-form
+					height 100%
+					flex 1 0 50px
+					background #9AD
+				
+				#courses-edition-form
+					height 100%
+					flex 1 0 50px
+					background #9AF

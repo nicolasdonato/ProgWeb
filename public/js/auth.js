@@ -64,9 +64,7 @@ window.AUTH = {
 					if(! GEOCHAT_COMPONENTS.initialized){
 						GEOCHAT_COMPONENTS.initialize();
 					}
-					
 					loginSuccess();
-
 				}).fail(function() {
 					console.error('Failed to find <'+ script +'>'); 
 				});

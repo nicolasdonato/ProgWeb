@@ -9,6 +9,8 @@ window.GEOCHAT_VIEW =
 		$("#pass")					.val ''
 		$("#rooms, #logout")		.show()
 		$("#localVideo").parent() 	.show()
+		GEOCHAT_COMPONENTS.connect()
+		
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
@@ -18,7 +20,6 @@ window.GEOCHAT_VIEW =
 		$("#loginForm")			.show()
 		$("#rooms, #logout")	.hide()
 
-
 	addVideo: (member, video) ->
 		$(
 			"""
@@ -27,9 +28,18 @@ window.GEOCHAT_VIEW =
 				#{$(video).prop('outerHTML')}
 			</div>
 			"""
-		)	.appendTo					('#cams')
-			.on 'dragover dragenter', 	GEOCHAT_VIEW.dragCancel
-			.on 'drop', 				GEOCHAT_VIEW.dropFile
+		)	.appendTo			('#cams')
+			.on 'dragenter
+				dragstart
+				dragend
+				dragleave
+				dragover
+				drag
+				drop', 			GEOCHAT_VIEW.dragCancel
+			.on 'drop', 		GEOCHAT_VIEW.dropFile
+
+	deleteVideo: (video) ->
+		$(video).parent().remove();
 
 	writeChat: (user, msg) ->
 		$('#out').append 		user + ' : ' + msg + '<br>'
@@ -49,17 +59,16 @@ window.GEOCHAT_VIEW =
 								message: msg
 
 	dragCancel: (event) ->
+		console.log 'dragover'
 		event.preventDefault()
 		event.stopPropagation()
-		return off
+		off
 
 	dropFile: (event) ->
-		view.dragCancel event
-
 		member 	= this.id
 		files 	= event.originalEvent.dataTransfer.files
 
-		FileTransfer.sendFile member, files	
+		FILE_TRANSFER.sendFile member, files
 
 $ ->
 	#########################################
@@ -67,7 +76,7 @@ $ ->
 	#########################################
 
 	# login / logout
-    window.AUTH.initialize()
+	window.AUTH.initialize()
 
 	# Drop on local video
 	$('#localMember')
@@ -104,4 +113,4 @@ $ ->
 		'Projet 2'
 	]
 
-	# $('#files').jstree core: data
+	$('#files').jstree core: data

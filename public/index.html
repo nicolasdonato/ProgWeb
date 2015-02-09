@@ -10,8 +10,6 @@
     -->
     <base target="_blank">
     <link rel="stylesheet" href="css/test.css">
-    <link rel="stylesheet" href="css/jquery-ui.min.css">
-    <link rel="stylesheet" href="css/jquery.timepicker.css">
     <link rel="stylesheet" href="js/lib/jsTree/themes/default/style.min.css">
     <script src="js/lib/jquery-2.1.3.js"></script>
     <script src="js/lib/jsTree/jstree.min.js"></script>
@@ -19,7 +17,7 @@
     <script src="js/lib/jquery.class.js"></script>
     <script src="js/lib/jquery-ui.min.js"></script>
     <script src="js/lib/jquery.timepicker.min.js"></script>
-    <script src="js/test.js"></script>
+    <script src="js/view.js"></script>
     <script src="js/auth.js"></script>
   </head>
   <body>
@@ -28,14 +26,11 @@
         <input id="login" type="text" placeholder="Login"><br>
         <input id="pass" type="password" placeholder="Password">
       </form>
-      <nav id="rooms" style="display:none"><span>Mon Projet</span></nav>
-      <button id="logout" type="text" style="display:none">Deco</button>
+      <nav id="rooms" style="display:none"><span>Mon Projet</span></nav><br>
+      <div id="logout" style="display:none">Déconnexion !</div>
     </header>
     <main>
       <aside id="geochat">
-        <a id="map-locate" href="#locate" style="display:none">
-          <span>Me localiser</span>
-        </a>
         <section id="geo">
           <div id="carte"></div>
         </section>
@@ -48,54 +43,56 @@
           <video id="localVideo" autoplay="true" muted="true"></video>
         </div>
       </section>
-      <section id="courses-div" style="display:none"><a id="courses-refresh" href="#refresh"><span>Refresh</span></a>
-        <div id="courses-info"></div>
-        <div id="courses-list"></div>
-        <form id="courses-creation-form" style="display:none"><span class="titre">Créer&nbsp;:</span>
-          <p><span class="libelle">Nom&nbsp;:</span>
-            <input id="courses-creation-name" type="text" class="data text-simple"><br><span class="libelle">Description&nbsp;:</span>
-            <input id="courses-creation-description" type="text" class="data text-area">
+      <aside id="files">
+        <section id="repository">
+          <section id="private-repository-section">
+            <div id="private-repository"></div>
+            <div id="private-file-details" style="display:none">
+              <label for="private-file-details-filename">Fichier :</label>
+              <label id="private-file-details-filename"></label><br>
+              <label for="private-file-details-owner">Propriétaire :</label>
+              <label id="private-file-details-owner"></label>
+            </div>
+          </section>
+          <section id="public-repository-section">
+            <div id="shared-repository"></div>
+            <div id="uploaded-files"></div><a id="download-link" style="display:none"></a>
+          </section>
+        </section>
+        <aside id="files"></aside>
+      </aside>
+    </main>
+    <footer>
+      <section id="courses-div" style="display:none">
+        <div id="c-list"><a id="courses-refresh" href="#refresh"><span>Rafraîchir</span></a>
+          <div id="courses-list"></div>
+        </div>
+        <form id="courses-creation-form" style="display:none"><span class="titre">Créer :</span>
+          <p>
+            <input id="courses-creation-name" type="text" placeholder="Nom" class="data text-simple"><br>
+            <input id="courses-creation-description" type="text" placeholder="Description" class="data text-area">
           </p>
           <input id="courses-creation-submit" type="submit" value="Créer !">
         </form>
-        <form id="courses-details-form" style="display:none"><span class="titre">Détails&nbsp;:</span>
-          <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom&nbsp;:</span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant&nbsp;:</span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description&nbsp;:</span><span id="courses-details-description" class="data label-area"></span></p>
+        <form id="courses-details-form" style="display:none"><span class="titre">Détails :</span>
+          <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom : </span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant : </span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description : </span><span id="courses-details-description" class="data label-area"></span></p>
           <p>
             <input id="courses-details-submit-modify" type="submit" value="Modifier !">
             <input id="courses-details-submit-enrol" type="submit" value="S'inscrire !">
-            <input id="courses-details-submit-quit" type="submit" value="Se désinscrire !" style="display:none"><span id="courses-details-message" type="text" class="data label-area"></span>
+            <input id="courses-details-submit-quit" type="submit" value="Se désinscrire !" style="display:none"><span id="courses-details-message" class="data label-area"></span>
           </p>
         </form>
         <form id="courses-edition-form" style="display:none">
           <input id="courses-edition-id" type="hidden"><span class="titre">Modifier un cours&nbsp;:</span>
-          <p><span class="libelle">Nom&nbsp;:</span>
-            <input id="courses-edition-name" type="text" class="data text-simple"><br><span class="libelle">Description&nbsp;:</span>
-            <input id="courses-edition-description" type="text" class="data text-area">
+          <p>
+            <input id="courses-edition-name" type="text" placeholder="Nom" class="data text-simple"><br>
+            <input id="courses-edition-description" type="text" placeholder="Description" class="data text-area">
             <!-- Manque liste des teachers-->
           </p>
           <input id="courses-edition-submit-update" type="submit" value="Mettre à jour !">
           <input id="courses-edition-submit-delete" type="submit" value="Supprimer !">
         </form>
       </section>
-      
-	  <section id="repository">
-		<section id="private-repository-section">
-		  <div id="private-repository"></div>
-		  <div id="private-file-details" style="display:none;">
-		    <label for="private-file-details-filename">Fichier :</label><label id="private-file-details-filename"></label><br />
-		    <label for="private-file-details-owner">Propriétaire :</label><label id="private-file-details-owner"></label>
-		  </div>
-		</section>
-		<section id="public-repository-section">
-		  <div id="shared-repository"></div>
-		  <div id="uploaded-files"></div>
-		  <a id="download-link" style="display:none;"></a>
-		</section>
-	  </section>
-	  
-      <aside id="files">
-      </aside>
-    </main>
-    <footer>footer</footer>
+    </footer>
   </body>
 </html>
