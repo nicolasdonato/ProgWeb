@@ -859,7 +859,7 @@ window.WEB_RTC_NODE = {
 					GEOCHAT_VIEW.addVideo(event.member, event.remoteVideo);
 				},
 				deleteVideo: function(event) {
-					jQuery(event.remoteVideo).parent().remove();
+					GEOCHAT_VIEW.deleteVideo(event.remoteVideo);
 				},
 				enableDataChannel: function (event) {
 					console.log("The DataChannel for the remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] is ready ["+event.readyState+"]");

@@ -60,6 +60,8 @@ window.AUTH = {
 					}
 					
 					GEOCHAT_VIEW.loginSuccess();
+					GEOCHAT_COMPONENTS.connect()
+
 
 				}).fail(function() {
 					console.error('Failed to find <'+ script +'>'); 
