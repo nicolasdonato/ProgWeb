@@ -9,6 +9,8 @@ window.GEOCHAT_VIEW =
 		$("#pass")					.val ''
 		$("#rooms, #logout")		.show()
 		$("#localVideo").parent() 	.show()
+		GEOCHAT_COMPONENTS.connect()
+		
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
@@ -17,7 +19,6 @@ window.GEOCHAT_VIEW =
 		AUTH.requestLogout()
 		$("#loginForm")			.show()
 		$("#rooms, #logout")	.hide()
-
 
 	addVideo: (member, video) ->
 		$(

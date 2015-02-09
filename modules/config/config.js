@@ -5,11 +5,13 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var methodOverride = require('method-override');
+var multer = require('multer');
 var session = require('express-session');
 var errorHandler = require('errorhandler');
 var morgan = require('morgan');
 
 var mod_routes = require('./routes'); 
+var mod_db_repo = require('../db/repository'); 
 
 
 //CORS middleware
@@ -71,13 +73,22 @@ exports.config = function(app, express){
 
 	// parse application/x-www-form-urlencoded
 	//
-	app.use(bodyParser.urlencoded({ extended: false }))   
+	app.use(bodyParser.urlencoded({ extended: false })); 
 
 	// parse application/json
 	//
 	app.use(bodyParser.json())    
 	app.use(cookieParser());
 
+	/*
+	IMPORTANT: Multer will not process any form which is not multipart/form-data
+	 * */
+	app.use(multer({ 
+		dest					: mod_db_repo.UploadDirectory,
+		onFileUploadComplete 	: mod_db_repo.FileUploadComplete,
+		onFileUploadStart 		: mod_db_repo.FileUploadStart
+	}));
+	
 	// simulate DELETE and PUT
 	//
 	app.use(methodOverride());     
@@ -112,9 +123,8 @@ Please research into this setting and choose what is appropriate to your use-cas
 	//
 	app.use(express.static(path.resolve(__dirname, '../..') + "/public"));
 
-	var env = process.env.NODE_ENV || 'development';
+	var env = 'development';//process.env.NODE_ENV || 'development';
 	if ('development' == env) {
-		// configure stuff here
 		// configuration pour l’environnement de developpement
 		app.use(errorHandler({ dumpExceptions: false, showStack: false }));
 	}

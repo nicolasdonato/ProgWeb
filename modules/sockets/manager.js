@@ -74,32 +74,32 @@ module.exports.connect = function(io) {
 		socket.on('webrtc_component', function(message) {
 			if (message.type === 'got user media') {
 				
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about webrtc_component: ', message);
 				// ajout de la session de la socket
 				message.data.socketId = socket.id;
 				socket.broadcast.emit('webrtc_component', message);
 				
 			} else if (message.type === 'offer') {
 				
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about webrtc_component: ', message);
 				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
 				message.data.socketIdSender = socket.id;
 				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 			
 			} else if (message.type === 'answer') {
 			
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about webrtc_component: ', message);
 				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
 				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 				
 			} else if (message.type === 'candidate') {
 			
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about webrtc_component: ', message);
 				socket.broadcast.emit('webrtc_component', message);
 				
 			} else if (message.type === 'bye') {
 				
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about webrtc_component: ', message);
 				socket.broadcast.emit('webrtc_component', message);
 				
 			} else {
@@ -110,12 +110,12 @@ module.exports.connect = function(io) {
 		socket.on('geolocalisation_component', function(message) {
 			if (message.type === 'geolocation') {
 				
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about geolocalisation_component: ', message);
 				socket.broadcast.emit('geolocalisation_component', message);
 				
 			} else if (message.type === 'bye') {
 				
-				log('Got ' + message.type + ': ', message);
+				log('Got ' + message.type + ' about geolocalisation_component: ', message);
 				socket.broadcast.emit('geolocalisation_component', message);
 				
 			} else {

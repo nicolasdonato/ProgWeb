@@ -10,7 +10,8 @@
       $("#loginForm").hide();
       $("#pass").val('');
       $("#rooms, #logout").show();
-      return $("#localVideo").parent().show();
+      $("#localVideo").parent().show();
+      return GEOCHAT_COMPONENTS.connect();
     },
     loginFail: function() {
       return $('#loginForm').addClass('fail');

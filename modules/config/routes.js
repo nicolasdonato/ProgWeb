@@ -3,10 +3,15 @@ var mod_db_users = require('../db/users');
 var mod_db_sessions = require('../db/sessions'); 
 var mod_db_courses = require('../db/courses'); 
 var mod_db_classes = require('../db/classes'); 
+var mod_db_repo = require('../db/repository'); 
 
 
 exports.setup = function(app) {
 
+
+	app.param('token', mod_db_sessions.requestTokenValidation);
+	app.param('fileId', mod_db_repo.requestFileIdValidation);
+	
 	
 	// User management
 
@@ -28,26 +33,31 @@ exports.setup = function(app) {
 
 	app.route('/manage/courses/:id').
 	get(mod_db_courses.requestGet).
-	post(mod_db_courses.requestEnrol).
-	put(mod_db_courses.requestUpdate);
+	subscribe(mod_db_courses.requestEnrol).
+	unsubscribe(mod_db_courses.requestQuit).
+	put(mod_db_courses.requestUpdate).
+	delete(mod_db_courses.requestRemove);
 
-	app.route('/manage/courses/teacher/:id').
-			delete(mod_db_courses.requestRemove);
-			
-	app.route('/manage/courses/student/:id').
-			delete(mod_db_courses.requestQuit);
 
-	
-	// Class management
+	// Classroom management
 
 	app.route('/manage/classes').
-	post(mod_db_classes.requestStart).
 	get(mod_db_classes.requestList);
 
 	app.route('/manage/classes/:id').
 	get(mod_db_classes.requestGet).
+	delete(mod_db_classes.requestRemove);
+
+	app.route('/manage/classes/teacher').
+	post(mod_db_classes.requestCreate);
+	app.route('/manage/classes/teacher/:id').
+	post(mod_db_classes.requestStart).
 	put(mod_db_classes.requestUpdate).
 	delete(mod_db_classes.requestEnd);
+
+	app.route('/manage/classes/student/:id').
+	post(mod_db_classes.requestJoin).
+	delete(mod_db_classes.requestLeave);
 
 
 	// Session management
@@ -56,10 +66,15 @@ exports.setup = function(app) {
 	post(mod_db_sessions.requestLogin);
 	app.route('/session/logout').
 	post(mod_db_sessions.requestLogout);
-	app.route('/session/join/:id').
-	post(mod_db_sessions.requestJoin);
-	app.route('/session/leave').
-	post(mod_db_sessions.requestLeave);
 
+
+	// Repository management
+
+	app.route('/:token/repository/:fileId').
+	get(mod_db_repo.requestDownload);
+	
+	app.route('/:token/repository').
+	post(mod_db_repo.requestUpload).
+	search(mod_db_repo.requestSearch);
 };
 

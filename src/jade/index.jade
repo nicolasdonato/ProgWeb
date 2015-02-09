@@ -19,9 +19,10 @@ html
 		script(src='js/lib/jsTree/jstree.min.js')
 		script(src='js/lib/adapter.js')
 		script(src='js/lib/jquery.class.js')
+		script(src='js/lib/jquery-ui.min.js')
+		script(src="js/lib/jquery.timepicker.min.js")
 		script(src='js/view.js')
 		script(src='js/auth.js')
-
 	body
 		header
 			form#loginForm
@@ -49,6 +50,20 @@ html
 						autoplay='true'
 						muted='true')
 			aside#files
+				section#repository
+					section#private-repository-section
+						#private-repository
+						#private-file-details(style='display:none')
+							label(for='private-file-details-filename') Fichier :
+							label#private-file-details-filename
+							br
+							label(for='private-file-details-owner') Propriétaire :
+							label#private-file-details-owner
+					section#public-repository-section
+						#shared-repository
+						#uploaded-files
+						a#download-link(style='display:none')
+				aside#files
 		footer
 			section#courses-div(style='display:none')
 				#c-list

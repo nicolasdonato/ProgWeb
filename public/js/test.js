@@ -9,6 +9,7 @@
       }
     },
     loginSuccess: function() {
+      GEOCHAT_COMPONENTS.connect(); 
       $("#loginForm").hide();
       $("#pass").val('');
       $("#rooms, #logout").show();
@@ -19,11 +20,15 @@
     },
     logout: function() {
       AUTH.requestLogout();
+      GEOCHAT_COMPONENTS.disconnect();
       $("#loginForm").show();
       return $("#rooms, #logout").hide();
     },
     addVideo: function(member, video) {
       return $("<div id=\"" + member + "\" class=\"cam\">\n	<p>" + member + "</p>\n	" + ($(video).prop('outerHTML')) + "\n</div>").appendTo('#cams').on('dragover dragenter', GEOCHAT_VIEW.dragCancel).on('drop', GEOCHAT_VIEW.dropFile);
+    },
+    deleteVideo: function(member, video) {
+      return $("#"+member).remove();
     },
     writeChat: function(user, msg) {
       $('#out').append(user + ' : ' + msg + '<br>');
@@ -52,7 +57,7 @@
     },
     dropFile: function(event) {
       var files, member;
-      view.dragCancel(event);
+      GEOCHAT_VIEW.dragCancel(event);
       member = this.id;
       files = event.originalEvent.dataTransfer.files;
       return FileTransfer.sendFile(member, files);
