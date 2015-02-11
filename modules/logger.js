@@ -23,6 +23,7 @@ module.exports.out = function (message) {
 
 	for (var i = 0; i < lines.length; i++) {
 		out.write(stamp + ' ' + lines[i] + '\n');
+		console.log("OUT --> " + stamp + ' ' + lines[i]);
 	}
 }; 
 
@@ -34,6 +35,7 @@ module.exports.err = function (message) {
 
 	for (var i = 0; i < lines.length; i++) {
 		err.write(stamp + ' ' + lines[i] + '\n');
+		console.log("ERR --> " + stamp + ' ' + lines[i]);
 	}
 }; 
 

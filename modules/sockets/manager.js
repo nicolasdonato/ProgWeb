@@ -46,7 +46,7 @@ module.exports.connect = function(io) {
 					socket.join(room);
 					socket.emit('message', { type: 'created', data: room });
 
-				} else if (numClients <= 5) { // TODO trouver un autre moyen pour produire la limite des rooms
+				} else if (numClients <= 10) { // TODO trouver un autre moyen pour produire la limite des rooms
 
 					io.sockets.in(room).emit('message', { type: 'join', data: room });
 					socket.join(room);

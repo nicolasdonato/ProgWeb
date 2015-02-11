@@ -101,11 +101,13 @@ module.exports.requestCreate = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to create a course: ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to create a course: ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.create(sessionInfo.result.user, req.param('name'), req.param('description'), function(info) {
+				logger.out('User <'+sessionInfo.result.user.login+'> creates course <' + req.param('name') + '>');
 				res.send(info); 
 			}); 
 		}); 
@@ -120,11 +122,13 @@ module.exports.requestList = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to list the courses: ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to list the courses: ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.list(function(infos) {
+//				logger.out('User <' + sessionInfo.result.user.login + '> lists all courses');
 				res.send(infos); 
 			}); 
 		}); 
@@ -139,11 +143,13 @@ module.exports.requestGet = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to get course #' + req.param('id') + ' : ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to get course #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.get(req.param('id'), function(info) {
+//				logger.out('User <' + sessionInfo.result.user.login + '> gets course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -158,11 +164,13 @@ module.exports.requestUpdate = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
-				callback(new CourseInfo(false, 'Failed to get course #' + req.param('id') + ' : ' + sessionInfo.message)); 
+				logger.err('Failed to update course #' + req.param('id') + ' : ' + sessionInfo.message);
+				callback(new CourseInfo(false, 'Failed to update course #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.update(sessionInfo.result.user, req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), [], function(info) {
+				logger.out('User <' + sessionInfo.result.user.login + '> updates course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -177,11 +185,13 @@ module.exports.requestRemove = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to remove course #' + req.param('id') + ' : ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to remove course #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.remove(sessionInfo.result.user, req.param('id'), function(info) {
+				logger.out('User <'+sessionInfo.result.user.login+'> removes course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -196,11 +206,13 @@ module.exports.requestEnrol = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to enrole course #' + req.param('id') + ' : ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to remove course #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.enrol(sessionInfo.result.user, req.param('id'), function(info) {
+				logger.out('User <' + sessionInfo.result.user.login + '> enroles course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -215,11 +227,13 @@ module.exports.requestQuit = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to quit course #' + req.param('id') + ' : ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to remove course #' + req.param('id') + ' : ' + sessionInfo.message)); 
 				return;
 			}
 
 			module.exports.quit(sessionInfo.result.user, req.param('id'), function(info) {
+				logger.out('User <' + sessionInfo.result.user.login + '> quites course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 

@@ -7,29 +7,13 @@ var path = require('path');
 var mime = require('mime');
 var assert = require('assert');
 
-/*
- * This entity manage files, provided by express module : multer
- * 
- * A multer file object is a JSON object with the following properties :
- * 
-		fieldname - Field name specified in the form
-		originalname - Name of the file on the user's computer
-		name - Renamed file name
-		encoding - Encoding type of the file
-		mimetype - Mime type of the file
-		path - Location of the uploaded file
-		extension - Extension of the file
-		size - Size of the file in bytes
-		truncated - If the file was truncated due to size limitation
-		buffer - Raw data (is null unless the inMemory option is true)
- * 
- * */
-
 var mod_db = require('./manager');
 var mod_db_sessions = require('./sessions'); 
 var mod_db_users = require('./users'); 
 var mod_utils = require('../utils'); 
+
 var logger = require('../logger'); 
+
 
 var DbName = 'repository'; 
 
@@ -37,7 +21,11 @@ var UploadDirectory = './uploads/';
 
 module.exports.UploadDirectory = UploadDirectory; 
 
-//Template of document 'Course' in database
+
+//Objects
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 RepositoryFile = function(user, filename, originalFilename) {
 
 	this.id = mod_utils.idGen.get(); 
@@ -46,7 +34,6 @@ RepositoryFile = function(user, filename, originalFilename) {
 	this.owner = user;
 	this.filename = filename; 
 	this.originalFilename = originalFilename; 
-	
 }
 
 
@@ -59,53 +46,42 @@ function RepositoryFileInfo(success, message, data) {
 		if (this.result == undefined || this.result == null) {
 			callback(this); 
 		} else if (this.result instanceof Array) {
-			// TODO
+
 			var resultCollection = this.result;
 			this.result = [];
-			
-			var loader = function(it, element, innerCallback){
+
+			var loader = function(it, element, innerCallback) {
 
 				dbToRepositoryFile(it, element, function(that, repositoryFile) {
-					
 					that.result.push(repositoryFile); 
-
 					if(innerCallback != null){
 						innerCallback(that); 
 					}
-				}); 
-				
+				}); 	
 			};
-			
-			var loaderList = [];
 
+			var loaderList = [];
 			var that = this;
-			
-			loaderList.push(function(){
+
+			loaderList.push(function() {
 				callback(that);
 			});
-			
-			resultCollection.forEach(function(element , index, array){
 
+			resultCollection.forEach(function(element , index, array) {
 				var lastLoader = loaderList[ loaderList.length - 1 ];
-				
-				loaderList.push(function(){
+				loaderList.push(function() {
 					loader(that, element, lastLoader);
 				});
-				
 			});
-			
 
-	    	if(loaderList.length == 0){
-		    	throw new Error('Callback sequence malfunction');
-	    	}
-	    	else if(loaderList.length == 1){
-	    		callback(this);
-	    	}
-	    	else{
-		    	loaderList[loaderList.length - 1]();
-	    	}
-			
-			//callback(this); 
+			if (loaderList.length == 0) {
+				throw new Error('Callback sequence malfunction');
+			} else if (loaderList.length == 1) {
+				callback(this);
+			} else {
+				loaderList[loaderList.length - 1]();
+			}
+
 		} else {
 			dbToRepositoryFile(this, this.result, function(that, repositoryFile) {
 				that.result = repositoryFile; 
@@ -117,7 +93,6 @@ function RepositoryFileInfo(success, message, data) {
 
 RepositoryFileInfo.prototype = mod_db.ServerInfo; 
 
-
 var makeRepositoryFileInfo = function(success, message, data, callback) {
 
 	var repositoryFile = new RepositoryFileInfo(success, message, data); 
@@ -125,127 +100,120 @@ var makeRepositoryFileInfo = function(success, message, data, callback) {
 };
 
 
-module.exports.CheckFileInfo  = function(req, res, next){
-	if(req.fileInfo == undefined ){
+module.exports.CheckFileInfo  = function(req, res, next) {
+	
+	if (req.fileInfo == undefined ) {
 		res.send(new RepositoryFileInfo(false, 'Unknown file'));
-	}
-	else{
+	} else {
 		next(req, res);
 	}
 };
 
 
-module.exports.requestUpload = function(req, res){
-	
-	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){
-		var files = req.files;
+//External API
+/////////////////////////////////////////////////////////////////////////////////////
 
-		if(files.file == undefined){
+
+module.exports.requestUpload = function(req, res) {
+
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res) {
+		
+		var files = req.files;
+		if (files.file == undefined) {
 			res.send(new RepositoryFileInfo(false, 'Failed to read file from stream'));
-		}
-		else {
+		} else {
 			var file = files.file;
 			module.exports.create(req, req.sessionInfo.user , file, function(info) {
-				//
+
 				// Le client envoie dans le form la valeur localId qui doit lui être renvoyée pour savoir quel fichier est traité si il en a envoyé plusieurs
-				//
 				info.localId = req.body.localId;
 				res.send(info); 
 			}); 
 		}
 	})
-	//
+
 	// on peut ajouter des élements à la session ( != session db) c'est un objet rattaché à la request qui permet de faire circuler des variables
-	//
 	//req.session.token = req.param('token');
 };
 
 
-module.exports.requestDownload = function(req, res){
-		
-	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){	
-		
-		module.exports.CheckFileInfo( req, res, function(req, res){
-			
+module.exports.requestDownload = function(req, res) {
+
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res) {	
+
+		module.exports.CheckFileInfo( req, res, function(req, res) {
+
 			var fileInfo = req.fileInfo;
 
-			var filePath = path.join( module.exports.UploadDirectory , fileInfo.filename );
-			fs.readFile( filePath , function(err, data) {
-			    if (err) {
-			        throw new Error('File <#'+ fileInfo.id+ '> could not be read from file system : ' + err.message);
-			    }
-			    else{
+			var filePath = path.join(module.exports.UploadDirectory , fileInfo.filename);
+			fs.readFile(filePath , function(err, data) {
 
-			    	var mimeType = mime.lookup(filePath);
-			    	
-			    	res.header('Content-Type', mimeType);
-			    	res.header('Content-Disposition', 'attachment; filename="' + fileInfo.originalFilename + '"');
-			    	res.header('Content-Transfer-Encoding','binary');
-			    	res.header('Accept-Ranges', 'bytes');
+				if (err) {
+					throw new Error('File <#'+ fileInfo.id+ '> could not be read from file system : ' + err.message);
+				} else {
 
-			        // Send Headers: Prevent Caching of File
-			    	res.header('Cache-Control','private');
-			    	res.header('Pragma','private');
+					var mimeType = mime.lookup(filePath);
 
-//			    	header("Content-length:".(string)(filesize($str)));
-//			    	header("Content-Type: application/force-download");
-//			    	header("Content-Type: application/download");
-//			    	header('Content-Type: application/octet-stream');
-			    	res.send(data);
-			    }
+					res.header('Content-Type', mimeType);
+					res.header('Content-Disposition', 'attachment; filename="' + fileInfo.originalFilename + '"');
+					res.header('Content-Transfer-Encoding','binary');
+					res.header('Accept-Ranges', 'bytes');
+
+					// Send Headers: Prevent Caching of File
+					res.header('Cache-Control','private');
+					res.header('Pragma','private');
+
+					res.send(data);
+				}
 			});
 		});
 	});
-	//
+
 	// on peut ajouter des élements à la session ( != session db) c'est un objet rattaché à la request qui permet de faire circuler des variables
-	//
 	//req.session.token = req.param('token');
 };
 
 
-module.exports.requestSearch = function(req, res){
+module.exports.requestSearch = function(req, res) {
 
-	mod_db_sessions.CheckSessionInfo(req, res, function(req, res){
-// 
-//
-//		module.exports.list(function(infos) {
-//		res.send(infos); 
-//	}); 
-		module.exports.search( req.sessionInfo.user.login , function(infos) {
+	mod_db_sessions.CheckSessionInfo(req, res, function(req, res) {
+
+		module.exports.search(req.sessionInfo.user.login, function(infos) {
 			res.send(infos); 
 		}); 
-	})
+	});
 };
 
 
-module.exports.FileUploadStart = function(file){
+module.exports.FileUploadStart = function(file) {
 
 };
 
 
-module.exports.FileUploadComplete = function(file){
+module.exports.FileUploadComplete = function(file) { 
 
 };
 
-//
-// Méthode utilisée exclusivement par le handler de paramètre nommé :token défini dans config/routes
-//
+
+//Méthode utilisée exclusivement par le handler de paramètre nommé :token défini dans config/routes
 module.exports.requestFileIdValidation = function (req, res, next, fileId) {
-	if(fileId.length == 0 || fileId == "undefined"){
+
+	if (fileId.length == 0 || fileId == "undefined") {
 		next(new RepositoryFileInfo(false, 'No file'));
-	}
-	else{
+	} else {
+
 		module.exports.findByIdSafe(fileId, function(repositoryFileInfo) {
+
 			if (! repositoryFileInfo.success) {
 				next(new RepositoryFileInfo(false, 'Unknown file'));
-			}
-			else{
+			} else {
 				req.fileInfo = repositoryFileInfo.result;
 				next();
 			}
 		}); 
 	}
 };
+
 
 //Local API
 /////////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +225,7 @@ module.exports.getCollectionName = function() {
 
 
 module.exports.initialize = function(db) {
-	
+
 	/*var searchAdmin = function(callback){
 		db.collection(mod_db_users.getCollectionName()).
 		find({ login : "admin"}).
@@ -267,19 +235,19 @@ module.exports.initialize = function(db) {
 			callback(results[0]);
 		});
 	};
-	
+
 	var collection = db.collection(DbName);
 	fs.readdir(module.exports.UploadDirectory, function(err, files){
-		
+
 		assert.equal(err, null, 'Initial directory listing failed : ' + err.message);
 
 		var fileInserts = [];
-		
+
 		var adminUser = null;
-		
+
 		var loader = function(user, fileName , callback){
 			module.exports.search(  'filename' , searchedFile , function(infos) {
-				
+
 				if(! infos.sucess)
 				{
 					module.exports.create(null, user , searchedFile, function(){
@@ -288,12 +256,12 @@ module.exports.initialize = function(db) {
 						}
 					});
 				}
-				
+
 			}); 
 	    };
-		
+
 		files.forEach(function( element, index , array ){
-			
+
 			var filePath = path.join( module.exports.UploadDirectory , element );
 
 		    	if (fileInserts.length == 0) {
@@ -307,7 +275,7 @@ module.exports.initialize = function(db) {
 		    	});		    
 		});
 
-		
+
 		fileInserts.push(searchAdmin);
 
     	if(fileInserts.length == 0){
@@ -317,10 +285,10 @@ module.exports.initialize = function(db) {
         	fileInserts[ fileInserts.length - 1 ]();
     	}
 	});*/
-	
-	
-	
-	
+
+
+
+
 	/*var web_srv = new Course('web_srv', 'peter', 'Programmation Web côté Serveur'); 
 	var web_cli = new Course('web_cli', 'michel', 'Programmation Web côté Client'); 
 	var web_sem = new Course('web_sem', 'peter', 'Web Sémantique'); 
@@ -339,7 +307,7 @@ module.exports.find = function(file, callback) {
 	mod_db.find(DbName, { filename: file.name }, function(result) {
 
 		if (result.length == 0) {
-			logger.out('No file named <' + file.name + '> found')
+			logger.err('No file named <' + file.name + '> found')
 			callback(new RepositoryFileInfo(false, 'File <' + file.name + '> unknown')); 
 			return;
 		} else if (result.length > 1) {
@@ -368,41 +336,33 @@ module.exports.findById = function(id, callback) {
 };
 
 
-//
-// Same as findById but if there is more than one file with the same id, it wipes n-1 of them
-//
+//Same as findById but if there is more than one file with the same id, it wipes n-1 of them
 module.exports.findByIdSafe = function(id, callback) {
 
 	mod_db.find(DbName, { id: +id }, function(result) {
 
 		if (result.length == 0) {
+
 			logger.out('No file #' + id + ' found')
 			callback(new RepositoryFileInfo(false, 'File #' + id + ' unknown')); 
 			return;
+
 		} else if (result.length > 1) {
+
 			var firstResult = result[0];
 			var expectedRemovals = result.length - 1;
 			mod_db.remove(DbName, { id: +id, _id : { $ne : firstResult._id } }, function(result) {
 
 				assert.equal(expectedRemovals, result.length, 'Invalid removal operation');
-
 				makeRepositoryFileInfo(true, '', firstResult, callback); 
 			});
-		}
-		else{
+
+		} else {
 			makeRepositoryFileInfo(true, '', result[0], callback); 
 		}
 	});
 };
 
-
-//module.exports.get = function(id, callback) {
-//
-//	module.exports.findById(id, function(courseInfo) {
-//		callback(courseInfo); 
-//	}); 
-//};
-//
 
 module.exports.list = function(callback) {
 
@@ -411,6 +371,7 @@ module.exports.list = function(callback) {
 		makeRepositoryFileInfo(true, '', result, callback); 
 	});
 };
+
 
 module.exports.search = function( user, callback) {
 
@@ -422,39 +383,22 @@ module.exports.search = function( user, callback) {
 
 
 module.exports.create = function(req, user , file, callback) {
-	/*if (user.role < mod_db_users.Roles.TEACHER) {
-		callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to create a course')); 
-		return; 
-	} 
-
-	if (name == '') {
-		callback(new CourseInfo(false, 'Failed to create course : empty name')); 
-		return;
-	}*/
 
 	module.exports.find(file, function(repositoryFileInfo) {
-		
+
 		var filename = file.name;
 		var originalFilename = file.originalname;
-		
+
 		if (repositoryFileInfo.success) {
 			callback(new RepositoryFileInfo(false, 'Failed to create a file: A file with the same name <' + filename + '> already exists'));
 		} else {
+
 			var repositoryFile = new RepositoryFile(user.login, filename, originalFilename); 
 			mod_db.insert(DbName, repositoryFile); 
 			makeRepositoryFileInfo(true, '', repositoryFile, callback); 
 		}
 	}); 
 };
-
-
-//module.exports.remove = function(user, id, callback) {
-//
-//	if (user.role < mod_db_users.Roles.TEACHER) {
-//		callback(new CourseInfo(false, 'The user <' + user.login + '> doesn\'t have permission to delete a course')); 
-//		return; 
-//	} 
-//
 
 
 //Useful functions

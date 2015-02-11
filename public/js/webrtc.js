@@ -148,10 +148,6 @@ var WebRTC = Class.create({
 
 		this.createEventTask();
 
-		// fill the local stream in the HTML DOM
-		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
-		console.log('Getting user media with constraints', this.constraints);
-
 		// It is checked whether there is a need of a TURN server if it is not in localhost
 //		if (location.hostname != "localhost") 
 //		{
@@ -163,6 +159,16 @@ var WebRTC = Class.create({
 //		}
 
 		return this;
+	},
+	
+	/**
+	 * Start the webrtc for the classroom
+	 */
+	startWebRTC: function() {
+		
+		// fill the local stream in the HTML DOM
+		getUserMedia(this.constraints, this.handleUserMedia.bind(this), this.handleUserMediaError.bind(this));
+		console.log('Getting user media with constraints', this.constraints);
 	},
 
 	/**
@@ -188,6 +194,14 @@ var WebRTC = Class.create({
 	 */
 	handleUserMediaError: function (error){
 		console.log('getUserMedia error: ', error);
+		
+		console.log('Adding local stream.');
+
+		// It sends a message to everyone saying that the video has overt connection to the web cam.
+		this.sendMessageWebRtc('got user media', {
+			memberSender: (this.localMember && jQuery.isFunction(this.localMember)) ? this.localMember() : this.localMember,
+					isInitiatorOfTheConnection: true
+		});
 	},
 
 	/**
@@ -293,7 +307,10 @@ var WebRTC = Class.create({
 				// This application is added to the p2p connection.
 				var candidate = new RTCIceCandidate({sdpMLineIndex:data.label,
 					candidate:data.candidate});
-				this.getPC(data.memberSender).pc.addIceCandidate(candidate);
+				var node = this.getPC(data.memberSender);
+				if (node && node.pc) {
+					node.pc.addIceCandidate(candidate);
+				}
 			}
 		}).bind(this)).on('bye', (function(data) {
 			if (this.isStarted) {
@@ -671,6 +688,13 @@ var WebRTC = Class.create({
 		this.sendMessageWebRtc('bye', {
 			member: jQuery.isFunction(this.localMember) ? this.localMember() : this.localMember
 		});
+		if (this.localVideo) {
+			try {
+				this.localVideo.pause();
+			} catch (e) {
+				// no log for the video pause
+			}
+		}
 	},
 
 	/**
@@ -829,14 +853,21 @@ var WebRTCNode = Class.create({
 window.WEB_RTC_NODE = {
 		component 	: null,
 		initialize 	: function(){
+			var iceServers = [];
+			if (webrtcDetectedBrowser === 'firefox') {
+				iceServers.push({'url':'stun:23.21.150.121'});
+			} else {
+				iceServers.push({'url': 'stun:stun.l.google.com:19302'});
+			}
+			iceServers.push({url: 'turn:turn.bistri.com:80', credential: 'homeo', username: 'homeo'});
+			iceServers.push({url: 'turn:turn.anyfirewall.com:443?transport=tcp', credential: 'webrtc', username: 'webrtc'});
+			
 			// WebRTC Initialization
 			var webrtc = new WebRTC({
 				// constraint definitions
 				constraints: {video: true},
 				// Stun servers configuration...
-				pc_config: webrtcDetectedBrowser === 'firefox' ?
-					{'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP number
-					{'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]},
+				pc_config: {iceServers: iceServers},
 				//Peer connection constraints
 				pc_constraints: {
 					'optional': [
@@ -880,8 +911,10 @@ window.WEB_RTC_NODE = {
 
 		
 		connect 	: function(){
+			if(WEB_RTC_NODE.component && WEB_RTC_NODE.component.webrtc) {
+				WEB_RTC_NODE.component.webrtc.startWebRTC();
+			}
 			$("#cams").show();
-			
 		},
 		
 		

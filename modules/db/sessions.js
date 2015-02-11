@@ -64,11 +64,13 @@ var makeSessionInfo = function(success, message, data, callback) {
 //External API
 /////////////////////////////////////////////////////////////////////////////////////
 
-module.exports.CheckSessionInfo = function(req, res, next){
-	if(!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined){
+
+module.exports.CheckSessionInfo = function(req, res, next) {
+
+	if (!req.sessionInfo.user == undefined || req.sessionInfo.token == undefined) {
+		logger.err('User <' + req.sessionInfo.user + '> is undefined or token <' + req.sessionInfo.token + '> is undefined');
 		res.send(new RepositoryFileInfo(false, 'Unknown session'));
-	}
-	else{
+	} else{
 		next(req, res);
 	}
 };
@@ -86,6 +88,7 @@ module.exports.requestLogin = function(req, res) {
 	else if (req.body.login != undefined) {
 		if (mod_db.checkParams(req, res, ['login', 'password'])) {
 			module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
+				logger.out('User <' + sessionInfo.result.user.login + '> is authenticated by the login/password');
 				res.send(sessionInfo);
 			}); 
 		}
@@ -101,32 +104,32 @@ module.exports.requestLogout = function(req, res) {
 
 	if (mod_db.checkParams(req, res, ['token'])) {
 		module.exports.logout(req.body.token, function(result) {
-
+			if (result.success) {
+				logger.out('User <'+ result.result.user.login + '> has logged out');
+			}
 			res.send(result); 
 		});
 	}
 }
 
 
-//
 // Méthode utilisée exclusivement par le handler de paramètre nommé :token défini dans config/routes
-//
 module.exports.requestTokenValidation = function (req, res, next, token) {
-	if(token.length == 0 || token == "undefined"){
+
+	if (token.length == 0 || token == "undefined") {
 		next(new SessionInfo(false, 'No session'));
-	}
-	else{
+	} else {
+
 		module.exports.authenticate(token, function(sessionInfo) {
+
 			if (! sessionInfo.success) {
 				next(new SessionInfo(false, 'Unknown session'));
-			}
-			else{
-				//
+			} else{
+
 				// on passe result dans la variable sessionInfo (ne pas affecter req.session car c'est un autre magasin de stockage)
 				// enfin on pourrait plutot stocker ça comme ça aussi req.session.sessionInfo = result
 				// mais req.session.sessionInfo survit entre les requetes car il est identifié par un cookie
 				// c'est pas ce qu'on veut ici : c'est juste pour la chaine des traitements request -> ... -> response
-				//
 				req.sessionInfo = sessionInfo.result;
 				next();
 			}

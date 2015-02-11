@@ -82,11 +82,13 @@ module.exports.requestList = function(req, res) {
 		mod_db_sessions.authenticate(req.param('token'), function(sessionInfo) {
 
 			if (! sessionInfo.success) {
+				logger.err('Failed to list the users: ' + sessionInfo.message);
 				callback(new CourseInfo(false, 'Failed to list the users: ' + sessionInfo.message)); 
 				return;
 			}
 
-			module.exports.list(function(err, userInfos){
+			module.exports.list(function(err, userInfos) {
+				logger.out('User <' + sessionInfo.result.user.login + '> lists all users');
 				res.send(userInfos); 
 			});
 		});
@@ -151,7 +153,7 @@ module.exports.authenticate = function(login, password, callback) {
 	mod_db.find(DbName, { login: login,  password: hash }, function(result) {
 
 		if (result.length == 0) {
-			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			callback(new UserInfo(false, 'User <' + login + '> is unknown')); 
 			return;
 		} else if (result.length > 1) {
 			throw new Error("More than one user with the same login/password were found");
@@ -176,7 +178,7 @@ module.exports.get = function(login, callback) {
 	mod_db.find(DbName, { login: login }, function(result) {
 
 		if (result.length == 0) {
-			callback(new UserInfo(false, 'The user <' + login + '> is unknown')); 
+			callback(new UserInfo(false, 'User <' + login + '> is unknown')); 
 			return;
 		} else if (result.length > 1) {
 			throw new Error("More than one user with the same login were found");

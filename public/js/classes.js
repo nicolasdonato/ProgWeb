@@ -674,6 +674,11 @@ window.CLASSES = {
 
 			if (info.success) {
 				CLASSES.setSelected(info.result); 
+				if(GEOCHAT_COMPONENTS.initialized){
+					GEOCHAT_COMPONENTS.openSessionChat({
+						room: info.result.id
+					});
+				}
 			} else {
 				alert(info.message); 
 			}
@@ -684,6 +689,11 @@ window.CLASSES = {
 
 			if (info.success) {
 				CLASSES.setSelected(info.result); 
+				if(GEOCHAT_COMPONENTS.initialized){
+					GEOCHAT_COMPONENTS.finishSessionChat({
+						room: info.result.id
+					});
+				}
 			} else {
 				alert(info.message); 
 			}
@@ -692,7 +702,13 @@ window.CLASSES = {
 
 		joinComplete: function(info) {
 			if (info.success) {
-				CLASSES.setSelected(info.result); 
+				CLASSES.setSelected(info.result);
+				
+				if(GEOCHAT_COMPONENTS.initialized){
+					GEOCHAT_COMPONENTS.openSessionChat({
+						room: info.result.id
+					});
+				}
 			} else {
 				alert(info.message); 
 			}
@@ -702,7 +718,12 @@ window.CLASSES = {
 		leaveComplete: function(info) {
 
 			if (info.success) {
-				CLASSES.setSelected(info.result); 
+				CLASSES.setSelected(info.result);
+				if(GEOCHAT_COMPONENTS.initialized){
+					GEOCHAT_COMPONENTS.finishSessionChat({
+						room: info.result.id
+					});
+				}
 			} else {
 				alert(info.message); 
 			}

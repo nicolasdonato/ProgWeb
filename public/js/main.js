@@ -52,11 +52,11 @@ window.GEOCHAT_COMPONENTS = {
 			
 			GEOCHAT_COMPONENTS.initializeEvents();
 
-			// initialization of the room or join the room
-			if (room !== '') {
-			  console.log('Create or join room', room);
-			  CHAT.sendMessage('create or join', room);
-			}
+//			// initialization of the room or join the room
+//			if (options && options.room && options.room !== '') {
+//			  console.log('Create or join room', options.room);
+//			  CHAT.sendMessage('create or join', options.room);
+//			}
 			
 			GEOCHAT_COMPONENTS.initialized = true;
 		},
@@ -80,16 +80,10 @@ window.GEOCHAT_COMPONENTS = {
 		////////////////////////////////////////////////
 		//these 2 functions are called resp. after successfull login and logout
 		//
-		connect 	: function(){
-
-			//add member name to the local video
-			$('#localMember').text(AUTH.getMember());
-
+		connect 	: function(options){
+			
 			COURSES.connect();
-			GEOCHAT_MAP.connect();
-			WEB_RTC_NODE.connect();
 			CLASSES.connect();
-			REPOSITORY.connect();
 			// TO IMPLEMENT : connect  for 
 			//		- WEB_RTC_NODE
 			//		- CHAT
@@ -98,18 +92,37 @@ window.GEOCHAT_COMPONENTS = {
 		
 		
 		disconnect 	: function(){
-			
-			$('#localMember').text("");
 		
 			COURSES.disconnect(); 	
-			GEOCHAT_MAP.disconnect();
-			WEB_RTC_NODE.disconnect();
 			CLASSES.disconnect();
-			REPOSITORY.disconnect();
 			// TO IMPLEMENT : disconnect for 
 			//		- WEB_RTC_NODE
 			//		- CHAT
 			//		- FILE_TRANSFER
+		},
+		
+		
+		openSessionChat: function(options) {
+			//add member name to the local video
+			$('#localMember').text(AUTH.getMember());
+
+			// initialization of the room or join the room
+			if (options && options.room && options.room !== '') {
+			  console.log('Create or join room', options.room);
+			  CHAT.sendMessage('create or join', options.room);
+			}
+			
+			GEOCHAT_MAP.connect();
+			WEB_RTC_NODE.connect();
+			REPOSITORY.connect();
+		},
+		
+		finishSessionChat: function(room) {
+			$('#localMember').text("");
+			
+			GEOCHAT_MAP.disconnect();
+			WEB_RTC_NODE.disconnect();
+			REPOSITORY.disconnect();
 		},
 		
 		
