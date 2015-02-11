@@ -62,7 +62,6 @@
   };
 
   $(function() {
-    var data;
     window.AUTH.initialize();
     $('#localMember').parent().on('dragover dragenter', GEOCHAT_VIEW.dragCancel).on('drop', GEOCHAT_VIEW.dropFile);
     $('#in').on('keyup', GEOCHAT_VIEW.readChat);
@@ -72,30 +71,10 @@
       console.log('NO FILEREADER !');
     }
     if (window.FileList) {
-      console.log('FILELIST');
+      return console.log('FILELIST');
     } else {
-      console.log('NO FILELIST !');
+      return console.log('NO FILELIST !');
     }
-    data = {
-      data: [
-        {
-          text: 'Projet 1',
-          children: [
-            {
-              text: 'ch 1 1',
-              children: [
-                {
-                  text: 'ch 1 1 1'
-                }
-              ]
-            }, 'leaf'
-          ]
-        }, 'Projet 2'
-      ]
-    };
-    return $('#files').jstree({
-      core: data
-    });
   });
 
 }).call(this);

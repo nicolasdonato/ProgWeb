@@ -10,7 +10,6 @@ window.GEOCHAT_VIEW =
 		$("#rooms, #logout")		.show()
 		$("#localVideo").parent() 	.show()
 		GEOCHAT_COMPONENTS.connect()
-		
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
@@ -101,16 +100,16 @@ $ ->
 	else
 		console.log 'NO FILELIST !'
 	
-	data = data: [
-		text: 'Projet 1'
-		children: [
-			text: 'ch 1 1'
-			children: [
-				text: 'ch 1 1 1'
-			]
-			'leaf'
-		]
-		'Projet 2'
-	]
+	# data = data: [
+	# 	text: 'Projet 1'
+	# 	children: [
+	# 		text: 'ch 1 1'
+	# 		children: [
+	# 			text: 'ch 1 1 1'
+	# 		]
+	# 		'leaf'
+	# 	]
+	# 	'Projet 2'
+	# ]
 
-	$('#files').jstree core: data
+	# $('#files').jstree core: data

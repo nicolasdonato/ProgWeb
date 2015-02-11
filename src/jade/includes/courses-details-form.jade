@@ -1,0 +1,23 @@
+span.titre Détails :
+p
+	span#courses-details-id.data.label-simple(style='display:none')
+	span.libelle Nom : 
+	span#courses-details-name.data.label-simple
+	br
+	span.libelle Enseignant : 
+	span#courses-details-teacher.data.label-simple
+	br
+	span.libelle Description : 
+	span#courses-details-description.data.label-area
+p
+	input#courses-details-submit-modify(
+		type='submit'
+		value='Modifier !')
+	input#courses-details-submit-enrol(
+		type='submit'
+		value="S'inscrire !")
+	input#courses-details-submit-quit(
+		type='submit'
+		value='Se désinscrire !'
+		style='display:none')
+	span#courses-details-message.data.label-area

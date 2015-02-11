@@ -1,0 +1,21 @@
+input#classes-edition-id(type="hidden")
+span.titre Modifier une classroom :
+p
+	label.libelle(for="classes-edition-course") Cours :
+	span#classes-edition-course.data.text-simple
+	label.libelle(for="classes-edition-subject") Sujet :
+	input#classes-edition-subject.data.text-simple(type="text")
+	label.libelle(for="classes-edition-startDate") le :
+	input#classes-edition-startDate.data.text-simple(type="text")
+	label.libelle(for="classes-edition-startHour") à :
+	input#classes-edition-startHour.time.data.text-simple(type="text")
+	label.libelle(for="classes-edition-duration") Durée :
+	input#classes-edition-duration.time.data.text-simple(type="text")
+	label.libelle(for="classes-edition-active") Actuellement active :
+	span#classes-edition-active.data.text-area(type="text")
+input#classes-edition-submit-update(
+	type="submit"
+	value="Mettre à jour")
+input#classes-edition-submit-delete(
+	type="submit"
+	value="Supprimer")

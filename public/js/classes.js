@@ -154,7 +154,7 @@ window.CLASSES = {
 
 			CLASSES.list(); 
 
-			CLASSES.refreshCreation(); 
+			CLASSES.refreshCreation();
 			$("#classes-details-form").hide();
 			$("#classes-edition-form").hide();
 
@@ -533,7 +533,6 @@ window.CLASSES = {
 
 			//	app.post('/manage/classes/student/:id', mod_db_classes.requestJoin);
 			if (CLASSES.joinCommandInProgress) {
-
 				$.ajax({
 					type: "POST",
 					url: "/manage/classes/student/" + CLASSES.selectedClasse.id,
@@ -692,7 +691,6 @@ window.CLASSES = {
 
 
 		joinComplete: function(info) {
-
 			if (info.success) {
 				CLASSES.setSelected(info.result); 
 			} else {

@@ -138,7 +138,7 @@ html body footer #courses-div {
   height: 100%;
   background: #9a9;
 }
-html body footer #courses-div #c-list {
+html body footer #courses-div #courses-list-div {
   height: 100%;
   flex: 1 0 50px;
   background: #9a0;

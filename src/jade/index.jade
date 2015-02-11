@@ -1,131 +1,40 @@
 ﻿doctype html
 html
 	head
-		title ProgWeb Project
-
-		meta(name='keywords',
-			content='WebRTC, HTML5, JavaScript')
-		meta(name='description',
-			content='WebRTC Reference App')
-		// meta(name='viewport',
-			content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1')
-
-		base(target='_blank')
-
-		link(rel='stylesheet', href='css/test.css')
-		link(rel='stylesheet', href='js/lib/jsTree/themes/default/style.min.css')
-
-		script(src='js/lib/jquery-2.1.3.js')
-		script(src='js/lib/jsTree/jstree.min.js')
-		script(src='js/lib/adapter.js')
-		script(src='js/lib/jquery.class.js')
-		script(src='js/lib/jquery-ui.min.js')
-		script(src="js/lib/jquery.timepicker.min.js")
-		script(src='js/view.js')
-		script(src='js/auth.js')
+		include ./includes/head.jade
 	body
 		header
-			form#loginForm
-				input#login(
-					type='text'
-					placeholder='Login')
-				br
-				input#pass(
-					type='password'
-					placeholder='Password')
+			include ./includes/loginForm.jade
 			nav#rooms(style="display:none")
 				span Mon Projet
 			br
 			div#logout(style='display:none') Déconnexion !
 		main
 			aside#geochat
-				section#geo
-					#carte
-				section#out
-				input#in(type='text')
+				include ./includes/geochat.jade
 			section#cams
-				.cam(style='display:none')
-					p#localMember
-					video#localVideo(
-						autoplay='true'
-						muted='true')
-			aside#files
-				section#repository
-					section#private-repository-section
-						#private-repository
-						#private-file-details(style='display:none')
-							label(for='private-file-details-filename') Fichier :
-							label#private-file-details-filename
-							br
-							label(for='private-file-details-owner') Propriétaire :
-							label#private-file-details-owner
-					section#public-repository-section
-						#shared-repository
-						#uploaded-files
-						a#download-link(style='display:none')
-				aside#files
+				include ./includes/cams.jade
+			section#classes-div(style='display:none')
+				span Classrooms en cours ou à venir
+				#classes-list
+				form#classes-creation-form(style='display:none')
+					include ./includes/classes-creation-form.jade
+				form#classes-details-form(style="display:none;")
+					include ./includes/classes-details-form.jade
+				form#classes-edition-form(style="display:none;")
+					include ./includes/classes-edition-form.jade
+			section#repository
+				include ./includes/repository.jade
 		footer
 			section#courses-div(style='display:none')
-				#c-list
+				#courses-list-div
 					a#courses-refresh(href='#refresh')
 						span Rafraîchir
 					#courses-list
 				form#courses-creation-form(style='display:none')
-					span.titre Créer :
-					p
-						//- span.libelle Nom&nbsp;:
-						input#courses-creation-name.data.text-simple(
-							type='text'
-							placeholder='Nom')
-						br
-						//- span.libelle Description&nbsp;:
-						input#courses-creation-description.data.text-area(
-							type='text'
-							placeholder='Description')
-					input#courses-creation-submit(
-						type='submit'
-						value='Créer !')
+					include ./includes/courses-creation-form.jade
 				form#courses-details-form(style='display:none')
-					span.titre Détails :
-					p
-						span#courses-details-id.data.label-simple(style='display:none')
-						span.libelle Nom : 
-						span#courses-details-name.data.label-simple
-						br
-						span.libelle Enseignant : 
-						span#courses-details-teacher.data.label-simple
-						br
-						span.libelle Description : 
-						span#courses-details-description.data.label-area
-					p
-						input#courses-details-submit-modify(
-							type='submit'
-							value='Modifier !')
-						input#courses-details-submit-enrol(
-							type='submit'
-							value="S'inscrire !")
-						input#courses-details-submit-quit(
-							type='submit'
-							value='Se désinscrire !'
-							style='display:none')
-						span#courses-details-message.data.label-area
+					include ./includes/courses-details-form.jade
 				form#courses-edition-form(style='display:none')
-					input#courses-edition-id(type='hidden')
-					span.titre Modifier un cours&nbsp;:
-					p
-						//- span.libelle Nom&nbsp;:
-						input#courses-edition-name.data.text-simple(
-							type="text"
-							placeholder='Nom')
-						br
-						//- span.libelle Description&nbsp;:
-						input#courses-edition-description.data.text-area(
-							type="text"
-							placeholder='Description')
-						// Manque liste des teachers
-					input#courses-edition-submit-update(
-						type="submit"
-						value='Mettre à jour !')
-					input#courses-edition-submit-delete(
-						type="submit"
-						value='Supprimer !')
+					include ./includes/courses-edition-form.jade
+					
