@@ -190,7 +190,7 @@ module.exports.requestCreate = function(req, res) {
 			}
 
 			module.exports.create(sessionInfo.result.user, req.param('course'), req.param('subject'), beginDate, endDate, function(info) {
-				logger.out("The user [" + sessionInfo.result.user.login + "] starts the classroom ["+req.param('course')+" with the subject " + req.param('subject'));
+				logger.out("User <" + sessionInfo.result.user.login + "> creates classroom #" + req.param('course') + " with subject <" + req.param('subject') + ">");
 				res.send(info); 
 			}); 
 		}); 
@@ -211,7 +211,7 @@ module.exports.requestList = function(req, res) {
 			}
 			
 			module.exports.list(function(infos) {
-				logger.out("The user ["+sessionInfo.result.user.login +"] want to list the classrooms");
+				// logger.out("User <"+sessionInfo.result.user.login +"> wants to list the classrooms");
 				res.send(infos); 
 			}); 
 		}); 
@@ -232,7 +232,7 @@ module.exports.requestGet = function(req, res) {
 			}
 
 			module.exports.get(req.param('id'), function(info) {
-				logger.out("The user ["+sessionInfo.result.user.login +"] gets the informations of the classrooms ["+req.param('id')+"]");
+				// logger.out("User <" + sessionInfo.result.user.login + "> gets the informations of classroom #" + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -289,7 +289,7 @@ module.exports.requestUpdate = function(req, res) {
 				classe.end = endDate; 
 
 				module.exports.updateClasse(user, classe, function(info) {
-					logger.out("The user ["+sessionInfo.result.user.login +"] updates the classroom ["+classe.id+"]");
+					logger.out("User <" + sessionInfo.result.user.login + "> updates classroom #" + classe.id);
 					res.send(info); 
 				}); 
 			});
@@ -346,7 +346,7 @@ module.exports.requestStart = function(req, res) {
 					}
 
 					module.exports.updateClasse(user, classe, function(info) {
-						logger.out('The user ['+sessionInfo.result.user.login +'] starts classroom #' + classe.id);
+						logger.out('User <'+sessionInfo.result.user.login +'> starts classroom #' + classe.id);
 						res.send(info); 
 					}); 
 				});
@@ -392,7 +392,7 @@ module.exports.requestEnd = function(req, res) {
 
 				var end = new Date(); 
 				module.exports.update(sessionInfo.result.user, req.param('id'), classe.course, classe.subject, classe.begin, end, null, function(info) {
-					logger.out('The teacher ['+sessionInfo.result.user.login+'] of a course make the end of the classroom ['+classe.course+']');
+					logger.out('User <' + sessionInfo.result.user.login + '> of a course makes the end of classroom #' + classe.course);
 					res.send(info); 
 				}); 
 
@@ -415,7 +415,7 @@ module.exports.requestJoin = function(req, res) {
 			}
 
 			module.exports.join(sessionInfo.result.user, req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] joined classroom #' + req.param('id'));
+				logger.out('User <' + sessionInfo.result.user.login + '> has joined classroom #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -436,7 +436,7 @@ module.exports.requestLeave = function(req, res) {
 			}
 
 			module.exports.leave(sessionInfo.result.user, req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] leaved classroom #' + req.param('id'));
+				logger.out('User <' + sessionInfo.result.user.login + '> has left classroom #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -473,7 +473,7 @@ module.exports.requestRemove = function(req, res) {
 				}
 
 				module.exports.remove(user, classe.id, function(info) {
-					logger.out('The user ['+sessionInfo.result.user.login+'] removed classroom #' + classe.id);
+					logger.out('User <' + sessionInfo.result.user.login + '> removes classroom #' + classe.id);
 					res.send(info); 
 				}); 
 			}); 

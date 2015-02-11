@@ -107,7 +107,7 @@ module.exports.requestCreate = function(req, res) {
 			}
 
 			module.exports.create(sessionInfo.result.user, req.param('name'), req.param('description'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] create the course ['+req.param('name')+']');
+				logger.out('User <'+sessionInfo.result.user.login+'> creates course <' + req.param('name') + '>');
 				res.send(info); 
 			}); 
 		}); 
@@ -128,7 +128,7 @@ module.exports.requestList = function(req, res) {
 			}
 
 			module.exports.list(function(infos) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] lists all courses');
+//				logger.out('User <' + sessionInfo.result.user.login + '> lists all courses');
 				res.send(infos); 
 			}); 
 		}); 
@@ -149,7 +149,7 @@ module.exports.requestGet = function(req, res) {
 			}
 
 			module.exports.get(req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] gets course #' + req.param('id'));
+//				logger.out('User <' + sessionInfo.result.user.login + '> gets course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -170,7 +170,7 @@ module.exports.requestUpdate = function(req, res) {
 			}
 
 			module.exports.update(sessionInfo.result.user, req.param('id'), req.param('name'), req.param('teacher'), req.param('description'), [], function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] updates course #' + req.param('id'));
+				logger.out('User <' + sessionInfo.result.user.login + '> updates course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -191,7 +191,7 @@ module.exports.requestRemove = function(req, res) {
 			}
 
 			module.exports.remove(sessionInfo.result.user, req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] removes course #' + req.param('id'));
+				logger.out('User <'+sessionInfo.result.user.login+'> removes course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -212,7 +212,7 @@ module.exports.requestEnrol = function(req, res) {
 			}
 
 			module.exports.enrol(sessionInfo.result.user, req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] enroles course #' + req.param('id'));
+				logger.out('User <' + sessionInfo.result.user.login + '> enroles course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
@@ -233,7 +233,7 @@ module.exports.requestQuit = function(req, res) {
 			}
 
 			module.exports.quit(sessionInfo.result.user, req.param('id'), function(info) {
-				logger.out('The user ['+sessionInfo.result.user.login+'] quites course #' + req.param('id'));
+				logger.out('User <' + sessionInfo.result.user.login + '> quites course #' + req.param('id'));
 				res.send(info); 
 			}); 
 		}); 
