@@ -165,10 +165,8 @@ window.CHAT = {
 		on('classroomFinish', function (event){
 			var room = event.room;
 			console.log('This room is finished ' + room);
-//			CLASSES.setSelected(room);
-//			CLASSES.leaveCommandInProgress = true;
-//			CLASSES.processDetailsCommand();
-//			$("#classes-details-submit-leave").click();
+			CLASSES.setSelected(room);
+			$("#classes-details-submit-leave").click();
 		}).
 		// Called by the server to make tracks in the connected clients
 		on('log', function (array){

@@ -689,12 +689,13 @@ window.CLASSES = {
 		endComplete: function(info) {
 
 			if (info.success) {
+				
 				CLASSES.setSelected(info.result);
 				CHAT.sendMessage('classroomFinish', {
 					user: AUTH.getMember(),
-					room: info.result.id
+					room: info.result
 				});
-				if(GEOCHAT_COMPONENTS.initialized){
+				if (GEOCHAT_COMPONENTS.initialized) {
 					GEOCHAT_COMPONENTS.finishSessionChat({
 						room: info.result.id
 					});
@@ -708,6 +709,7 @@ window.CLASSES = {
 		joinComplete: function(info) {
 
 			if (info.success) {
+				
 				CLASSES.setSelected(info.result);
 				
 				if(GEOCHAT_COMPONENTS.initialized){
@@ -724,7 +726,9 @@ window.CLASSES = {
 		leaveComplete: function(info) {
 
 			if (info.success) {
+				
 				CLASSES.setSelected(info.result);
+				
 				if(GEOCHAT_COMPONENTS.initialized){
 					GEOCHAT_COMPONENTS.finishSessionChat({
 						room: info.result.id
