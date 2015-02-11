@@ -86,9 +86,10 @@ var ChatMessage = Class.create({
 	/**
 	 * Send the message to SocketIO
 	 */
-	sendMessage: function(messageType, data) {
+	sendMessage: function(messageType, data, room) {
 		var message = {
 				type: messageType,
+				room: room,
 				data: data
 		};
 		console.log('Sending message: ', message);
@@ -160,6 +161,14 @@ window.CHAT = {
 			WEB_RTC_NODE.component.webrtc.setChannelReady(true);
 			console.log('Send my position');
 			//non testé : GEOCHAT_MAP.map.sendPosition();
+		}).
+		on('classroomFinish', function (event){
+			var room = event.room;
+			console.log('This room is finished ' + room);
+//			CLASSES.setSelected(room);
+//			CLASSES.leaveCommandInProgress = true;
+//			CLASSES.processDetailsCommand();
+//			$("#classes-details-submit-leave").click();
 		}).
 		// Called by the server to make tracks in the connected clients
 		on('log', function (array){

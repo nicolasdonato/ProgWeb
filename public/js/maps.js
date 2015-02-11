@@ -47,6 +47,9 @@ var Map = Class.create({
 	socketMap: null,
 	localMember: null,
 	markers: [],
+	
+	// room connected
+	room: null, setRoom: function(room) { this.room = room; },
 
 
 	/**
@@ -102,7 +105,7 @@ var Map = Class.create({
 	 * send a message to the server with the component message of this class
 	 */
 	sendMessageMap: function(messageType, data) {
-		this.socketMap.sendMessage(messageType, data);
+		this.socketMap.sendMessage(messageType, data, this.room);
 	},
 
 
@@ -297,7 +300,10 @@ window.GEOCHAT_MAP = {
 		},
 
 
-		connect: function() {
+		connect: function(options) {
+			if( GEOCHAT_MAP.map != null && options) {
+				GEOCHAT_MAP.map.setRoom(options.room);
+			}
 			$("#carte").show();
 			$("#map-locate").show();
 		},

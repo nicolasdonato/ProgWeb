@@ -88,7 +88,9 @@ module.exports.requestLogin = function(req, res) {
 	else if (req.body.login != undefined) {
 		if (mod_db.checkParams(req, res, ['login', 'password'])) {
 			module.exports.login(req.body.login, req.body.password, function(sessionInfo) {
-				logger.out('User <' + sessionInfo.result.user.login + '> is authenticated by the login/password');
+				if (sessionInfo.success) {
+					logger.out('User <' + sessionInfo.result.user.login + '> is authenticated by the login/password');
+				}
 				res.send(sessionInfo);
 			}); 
 		}

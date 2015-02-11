@@ -112,8 +112,8 @@ window.GEOCHAT_COMPONENTS = {
 			  CHAT.sendMessage('create or join', options.room);
 			}
 			
-			GEOCHAT_MAP.connect();
-			WEB_RTC_NODE.connect();
+			GEOCHAT_MAP.connect(options);
+			WEB_RTC_NODE.connect(options);
 			REPOSITORY.connect();
 		},
 		
@@ -123,6 +123,11 @@ window.GEOCHAT_COMPONENTS = {
 			GEOCHAT_MAP.disconnect();
 			WEB_RTC_NODE.disconnect();
 			REPOSITORY.disconnect();
+			
+			// initialization of the room or join the room
+			if (room) {
+			  CHAT.sendMessage('bye', room);
+			}
 		},
 		
 		

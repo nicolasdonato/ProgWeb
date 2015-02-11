@@ -26,13 +26,14 @@ module.exports.connect = function(io) {
 			for (var i = 0; i < arguments.length; i++) {
 				array.push(arguments[i]);
 			}
-
+			console.log(array);
 			socket.emit('message', { type: 'log', data: array });
 		}
 
 
 		socket.on('message', function (message) {
 
+			
 			if (message.type === 'create or join') {
 				getServersTurn();
 				var room = message.data;
@@ -56,15 +57,42 @@ module.exports.connect = function(io) {
 					socket.emit('message', { type: 'full', data: room });
 				}
 
+			} else if (message.type === 'bye') {
+				
+				var room = message.data;
+				io.sockets.in(room).emit('message', { type: 'bye', data: room });
+				socket.leave(room);
+				socket.emit('message', { type: 'leaved', data: room });
+				
 			} else if (message.type === 'message') {
 				
 				log('Got message: ', message);
-				socket.broadcast.emit('message', message); 
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('message', message);
+				} else {
+					socket.broadcast.emit('message', message);
+				}
 				
 			} else if (message.type === 'messageChat') {
 				
 				log('Got ' + message.type + ': ', message);
-				socket.broadcast.emit('message', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('message', message);
+				} else {
+					socket.broadcast.emit('message', message);
+				}
+				
+			} else if (message.type === 'classroomFinish') {
+				
+				log('Got ' + message.type + ': ', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('message', message);
+				} else {
+					socket.broadcast.emit('message', message);
+				}
 				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '>'); 
@@ -74,33 +102,48 @@ module.exports.connect = function(io) {
 		socket.on('webrtc_component', function(message) {
 			if (message.type === 'got user media') {
 				
-				log('Got ' + message.type + ' about webrtc_component: ', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about webrtc_component: ', message);
 				// ajout de la session de la socket
 				message.data.socketId = socket.id;
-				socket.broadcast.emit('webrtc_component', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('webrtc_component', message);
+				} else {
+					socket.broadcast.emit('webrtc_component', message);
+				}
 				
 			} else if (message.type === 'offer') {
 				
-				log('Got ' + message.type + ' about webrtc_component: ', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about webrtc_component: ', message);
 				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
 				message.data.socketIdSender = socket.id;
 				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 			
 			} else if (message.type === 'answer') {
 			
-				log('Got ' + message.type + ' about webrtc_component: ', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about webrtc_component: ', message);
 				// socket.broadcast.emit('webrtc_component', message); // ne pas envoyer en broadcast mais au memberReceiver
 				io.sockets.socket(message.data.socketIdReceiver).emit('webrtc_component', message);
 				
 			} else if (message.type === 'candidate') {
 			
-				log('Got ' + message.type + ' about webrtc_component: ', message);
-				socket.broadcast.emit('webrtc_component', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about webrtc_component: ', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('webrtc_component', message);
+				} else {
+					socket.broadcast.emit('webrtc_component', message);
+				}
 				
 			} else if (message.type === 'bye') {
 				
-				log('Got ' + message.type + ' about webrtc_component: ', message);
-				socket.broadcast.emit('webrtc_component', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about webrtc_component: ', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('webrtc_component', message);
+				} else {
+					socket.broadcast.emit('webrtc_component', message);
+				}
 				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '> for the webrtc_component'); 
@@ -110,13 +153,23 @@ module.exports.connect = function(io) {
 		socket.on('geolocalisation_component', function(message) {
 			if (message.type === 'geolocation') {
 				
-				log('Got ' + message.type + ' about geolocalisation_component: ', message);
-				socket.broadcast.emit('geolocalisation_component', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about geolocalisation_component: ', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('geolocalisation_component', message);
+				} else {
+					socket.broadcast.emit('geolocalisation_component', message);
+				}
 				
 			} else if (message.type === 'bye') {
 				
-				log('Got ' + message.type + ' about geolocalisation_component: ', message);
-				socket.broadcast.emit('geolocalisation_component', message);
+				log('Got ' + message.type + ' for the room ' + message.room + ' about geolocalisation_component: ', message);
+				var room = message.room;
+				if (room) {
+					socket.broadcast.to(room).emit('geolocalisation_component', message);
+				} else {
+					socket.broadcast.emit('geolocalisation_component', message);
+				}
 				
 			} else {
 				logger.err('Unknown socket message type <' + message.type + '> for the geolocalisation_component'); 
