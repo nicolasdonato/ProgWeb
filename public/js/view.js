@@ -62,7 +62,7 @@
       var files, member;
       member = this.id;
       files = event.originalEvent.dataTransfer.files;
-      return FILE_TRANSFER.sendFile(member, files);
+      return FILE_TRANSFER.sendFile(member, files[0]);
     },
     join: function() {
       $('#geochat').hide();

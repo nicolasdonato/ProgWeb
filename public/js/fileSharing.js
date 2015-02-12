@@ -17,7 +17,6 @@ var FileHelper = {
             progress: div.querySelector('progress'),
             label: div.querySelector('label')
         };
-        alert(file.maxChunks);
         progressHelper[file.uuid].progress.max = file.maxChunks;
     },
     onEnd: function (file) {
