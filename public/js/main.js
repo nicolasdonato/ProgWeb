@@ -84,10 +84,7 @@ window.GEOCHAT_COMPONENTS = {
 			
 			COURSES.connect();
 			CLASSES.connect();
-			// TO IMPLEMENT : connect  for 
-			//		- WEB_RTC_NODE
-			//		- CHAT
-			//		- FILE_TRANSFER
+			REPOSITORY.connect();
 		},
 		
 		
@@ -95,10 +92,7 @@ window.GEOCHAT_COMPONENTS = {
 		
 			COURSES.disconnect(); 	
 			CLASSES.disconnect();
-			// TO IMPLEMENT : disconnect for 
-			//		- WEB_RTC_NODE
-			//		- CHAT
-			//		- FILE_TRANSFER
+			REPOSITORY.disconnect();
 		},
 		
 		
@@ -112,17 +106,18 @@ window.GEOCHAT_COMPONENTS = {
 			  CHAT.sendMessage('create or join', options.room);
 			}
 			
+			CHAT.connect();
 			GEOCHAT_MAP.connect(options);
 			WEB_RTC_NODE.connect(options);
-			REPOSITORY.connect();
 		},
+		
 		
 		finishSessionChat: function(room) {
 			$('#localMember').text("");
 			
+			CHAT.disconnect();
 			GEOCHAT_MAP.disconnect();
 			WEB_RTC_NODE.disconnect();
-			REPOSITORY.disconnect();
 			
 			// initialization of the room or join the room
 			if (room) {

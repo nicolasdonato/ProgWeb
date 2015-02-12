@@ -151,7 +151,7 @@ window.CHAT = {
 			console.log('Another peer made a request to join room ' + room);
 			console.log('This peer is the initiator of room ' + room + '!');
 			WEB_RTC_NODE.component.webrtc.setChannelReady(true);
-			//non testé : GEOCHAT_MAP.map.sendPosition();
+			GEOCHAT_MAP.map.sendPosition();
 		}).
 		// If you receive the message "joined" then joined an existing room.
 		// We are not the initiator, there is already someone (the appellant),
@@ -160,7 +160,7 @@ window.CHAT = {
 			console.log('This peer has joined room ' + room);
 			WEB_RTC_NODE.component.webrtc.setChannelReady(true);
 			console.log('Send my position');
-			//non testé : GEOCHAT_MAP.map.sendPosition();
+			GEOCHAT_MAP.map.sendPosition();
 		}).
 		on('classroomFinish', function (event){
 			var room = event.room;

@@ -20,6 +20,7 @@
     },
     logout: function() {
       AUTH.requestLogout();
+      GEOCHAT_COMPONENTS.disconnect();
       GEOCHAT_VIEW.swap($("#logout"), $("#loginForm"));
       GEOCHAT_VIEW.swap($('#courses-div'));
       GEOCHAT_VIEW.swap($('#classes-div'));
@@ -45,7 +46,7 @@
       if (msg !== '' && event.keyCode === 13) {
         $(this).val('');
         GEOCHAT_VIEW.writeChat('moi', msg);
-        return sendMessage('messageChat', {
+        return CHAT.sendMessage('messageChat', {
           user: AUTH.getMember(),
           message: msg
         });
@@ -81,8 +82,8 @@
     },
     show: function(elem) {
       var cb;
-      console.log('show');
-      console.log(elem.selector);
+//      console.log('show');
+//      console.log(elem.selector);
       cb = (function(_this) {
         return function() {
           return elem.removeClass('showOpac');
@@ -92,12 +93,12 @@
     },
     swap: function(elem, elem2) {
       var cb;
-      console.log('hide');
-      console.log(elem.selector);
+//      console.log('hide');
+//      console.log(elem.selector);
       cb = (function(_this) {
         return function() {
-          console.log(elem.selector);
-          console.log(elem2.selector);
+//          console.log(elem.selector);
+//          console.log(elem2.selector);
           elem.removeClass('hideOpac').hide();
           if (elem2) {
             return GEOCHAT_VIEW.show(elem2);

@@ -199,7 +199,7 @@ html body main #right {
   display: flex;
 }
 html body main #right #classes-div {
-  flex: 1;
+  flex: 1 0 200px;
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
@@ -216,4 +216,10 @@ html body main #right #classes-div #classes-details-form {
 }
 html body main #right #classes-div #classes-edition-form {
   flex: 1;
+}
+html body main #right #repository {
+  flex: 1 0 200px;
+  flex-wrap: wrap;
+  flex-direction: line;
+  justify-content: space-between;
 }

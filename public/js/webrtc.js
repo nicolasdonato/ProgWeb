@@ -698,6 +698,13 @@ var WebRTC = Class.create({
 				// no log for the video pause
 			}
 		}
+		if (this.localStream) {
+			try {
+				this.localStream.stop();
+			} catch (e) {
+				// no log for the video stop
+			}
+		}
 	},
 
 	/**
