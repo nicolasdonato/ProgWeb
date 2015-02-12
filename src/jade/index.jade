@@ -2,39 +2,37 @@
 html
 	head
 		include ./includes/head.jade
-	body
+	body.body
 		header
-			include ./includes/loginForm.jade
-			nav#rooms(style="display:none")
-				span Mon Projet
-			br
-			div#logout(style='display:none') Déconnexion !
+			input#classes-details-submit-leave(
+				type="submit"
+				form="classes-details-form"
+				style='display:none'
+				value="Quitter la classroom")
+			input#classes-details-submit-end(
+				type="submit"
+				form="classes-details-form"
+				style='display:none'
+				value="Terminer cette classroom")
+			input#logout(
+				type="button"
+				style='display:none'
+				value='Déconnexion')
 		main
-			aside#geochat
+			aside#left.back
 				include ./includes/geochat.jade
-			section#cams
-				include ./includes/cams.jade
-			section#classes-div(style='display:none')
-				span Classrooms en cours ou à venir
-				#classes-list
-				form#classes-creation-form(style='display:none')
-					include ./includes/classes-creation-form.jade
-				form#classes-details-form(style="display:none;")
-					include ./includes/classes-details-form.jade
-				form#classes-edition-form(style="display:none;")
-					include ./includes/classes-edition-form.jade
-			section#repository
-				include ./includes/repository.jade
-		footer
-			section#courses-div(style='display:none')
-				#courses-list-div
-					a#courses-refresh(href='#refresh')
-						span Rafraîchir
-					#courses-list
-				form#courses-creation-form(style='display:none')
+				section#courses-div(style='display:none')
+					include ./includes/courses-list-div.jade
 					include ./includes/courses-creation-form.jade
-				form#courses-details-form(style='display:none')
 					include ./includes/courses-details-form.jade
-				form#courses-edition-form(style='display:none')
 					include ./includes/courses-edition-form.jade
-					
+			main#center
+				include ./includes/loginForm.jade
+				include ./includes/cams.jade
+			aside#right.back
+				include ./includes/repository.jade
+				section#classes-div(style='display:none')
+					#classes-list
+					include ./includes/classes-creation-form.jade
+					include ./includes/classes-details-form.jade
+					include ./includes/classes-edition-form.jade

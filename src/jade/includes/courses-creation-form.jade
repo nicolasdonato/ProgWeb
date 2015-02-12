@@ -1,12 +1,15 @@
-span.titre Créer :
-p
-	input#courses-creation-name.data.text-simple(
-		type='text'
-		placeholder='Nom')
-	br
-	input#courses-creation-description.data.text-area(
-		type='text'
-		placeholder='Description')
-input#courses-creation-submit(
-	type='submit'
-	value='Créer !')
+form#courses-creation-form(style='display:none')
+	//- span.titre Créer :
+	p
+		input#courses-creation-name.data.text-simple(
+			type='text'
+			title="Nom"
+			placeholder='Nom')
+		br
+		input#courses-creation-description.data.text-area(
+			type='text'
+			title="Description"
+			placeholder='Description')
+	input#courses-creation-submit(
+		type='submit'
+		value='Créer')

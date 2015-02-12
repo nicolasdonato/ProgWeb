@@ -5,19 +5,27 @@ window.GEOCHAT_VIEW =
 								$('#pass').val()
 
 	loginSuccess: ->
-		$("#loginForm")				.hide()
-		$("#pass")					.val ''
-		$("#rooms, #logout")		.show()
-		$("#localVideo").parent() 	.show()
 		GEOCHAT_COMPONENTS.connect()
+		$("#courses-div").hide()
+		$("#classes-div").hide()
+		GEOCHAT_VIEW.swap $("#loginForm"), $("#logout")
+		GEOCHAT_VIEW.swap $("#loginForm"), $("#courses-div")
+		GEOCHAT_VIEW.swap $("#loginForm"), $("#classes-div")
+		$("#pass")					.val ''
 
 	loginFail: ->
 		$('#loginForm')			.addClass 'fail'
 
 	logout: ->
 		AUTH.requestLogout()
-		$("#loginForm")			.show()
-		$("#rooms, #logout")	.hide()
+		GEOCHAT_VIEW.swap $("#logout"), $("#loginForm")
+		GEOCHAT_VIEW.swap $('#courses-div')
+		GEOCHAT_VIEW.swap $('#classes-div')
+		GEOCHAT_VIEW.swap $('#geochat')
+		GEOCHAT_VIEW.swap $('#repository')
+		GEOCHAT_VIEW.swap $('#cams')
+		GEOCHAT_VIEW.swap $('#classes-details-submit-leave')
+		GEOCHAT_VIEW.swap $('#classes-details-submit-end')
 
 	addVideo: (member, video) ->
 		$(
@@ -48,14 +56,11 @@ window.GEOCHAT_VIEW =
 		msg = $(this).val()
 		if msg isnt '' and event.keyCode is 13
 			$(this).val ''
-			if typeof sendMessage is 'undefined'
-				GEOCHAT_VIEW.writeChat 	'WARNING', 'You are not connected !'
-			else
-				GEOCHAT_VIEW.writeChat 	'me',
-								msg
-				sendMessage 	'messageChat',
-								user: AUTH.getMember()
-								message: msg
+			GEOCHAT_VIEW.writeChat 	'moi',
+							msg
+			sendMessage 	'messageChat',
+							user: AUTH.getMember()
+							message: msg
 
 	dragCancel: (event) ->
 		console.log 'dragover'
@@ -68,6 +73,49 @@ window.GEOCHAT_VIEW =
 		files 	= event.originalEvent.dataTransfer.files
 
 		FILE_TRANSFER.sendFile member, files
+
+	join: () ->
+		$('#geochat').hide()
+		$('#repository').hide()
+		GEOCHAT_VIEW.swap $('#courses-div'), $('#geochat')
+		GEOCHAT_VIEW.swap $('#classes-div'), $('#repository')
+		GEOCHAT_VIEW.show $('#cams')
+		GEOCHAT_VIEW.show $('classes-details-submit-leave')#.css 'display', 'block'
+		GEOCHAT_VIEW.show $('classes-details-submit-end')#.css 'display', 'block'
+		yes
+
+	leave: () ->
+		GEOCHAT_VIEW.swap $('#geochat'), $('#courses-div')
+		GEOCHAT_VIEW.swap $('#repository'), $('#classes-div')
+		GEOCHAT_VIEW.swap $('#cams')
+		yes
+
+	show: (elem) ->
+		console.log 'show'
+		console.log elem.selector
+		cb = () =>
+				elem.removeClass 'showOpac'
+
+		elem.show()
+			.addClass 'showOpac'
+			.one 'animationend', cb
+			.one 'webkitAnimationEnd', cb
+
+	swap: (elem, elem2) ->
+		console.log 'hide'
+		console.log elem.selector
+		cb = () =>
+				console.log elem.selector
+				console.log elem2.selector
+				elem.removeClass 'hideOpac'
+					.hide()
+				if elem2
+					GEOCHAT_VIEW.show elem2
+
+		elem#.show()
+			.addClass 'hideOpac'
+			.one 'animationend', cb
+			.one 'webkitAnimationEnd', cb
 
 $ ->
 	#########################################
@@ -85,31 +133,10 @@ $ ->
 	# Chat
 	$('#in')			.on 'keyup', 				GEOCHAT_VIEW.readChat
 
-
-
-	#########################################
-	# 				Tests					#
-	#########################################
-	if window.FileReader
-		console.log 'FILEREADER'
-	else
-		console.log 'NO FILEREADER !'
-
-	if window.FileList
-		console.log 'FILELIST'
-	else
-		console.log 'NO FILELIST !'
+	$('#classes-details-submit-join')	.on 'click', 	GEOCHAT_VIEW.join
 	
-	# data = data: [
-	# 	text: 'Projet 1'
-	# 	children: [
-	# 		text: 'ch 1 1'
-	# 		children: [
-	# 			text: 'ch 1 1 1'
-	# 		]
-	# 		'leaf'
-	# 	]
-	# 	'Projet 2'
-	# ]
+	$('#classes-details-submit-leave')	.on 'click', 	GEOCHAT_VIEW.leave
 
-	# $('#files').jstree core: data
+	$('#classes-details-submit-start')	.on 'click', 	GEOCHAT_VIEW.join
+	
+	$('#classes-details-submit-end')	.on 'click', 	GEOCHAT_VIEW.leave

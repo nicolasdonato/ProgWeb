@@ -1,19 +1,22 @@
-input#courses-edition-id(type='hidden')
-span.titre Modifier un cours :
-p
-	//- span.libelle Nom :
-	input#courses-edition-name.data.text-simple(
-		type="text"
-		placeholder='Nom')
-	br
-	//- span.libelle Description :
-	input#courses-edition-description.data.text-area(
-		type="text"
-		placeholder='Description')
-	// Manque liste des teachers
-input#courses-edition-submit-update(
-	type="submit"
-	value='Mettre à jour !')
-input#courses-edition-submit-delete(
-	type="submit"
-	value='Supprimer !')
+form#courses-edition-form(style='display:none')
+	input#courses-edition-id(type='hidden')
+	//- span.titre Modifier un cours :
+	p
+		//- span.libelle Nom :
+		input#courses-edition-name.data.text-simple(
+			type="text"
+			title='Nom'
+			placeholder='Nom')
+		br
+		//- span.libelle Description :
+		input#courses-edition-description.data.text-area(
+			type="text"
+			title='Description'
+			placeholder='Description')
+		// Manque liste des teachers
+	input#courses-edition-submit-update(
+		type="submit"
+		value='Mettre à jour !')
+	input#courses-edition-submit-delete(
+		type="submit"
+		value='Supprimer !')

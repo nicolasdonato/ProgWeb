@@ -9,7 +9,9 @@
     
     -->
     <base target="_blank">
-    <link rel="stylesheet" href="css/test.css">
+    <link rel="stylesheet" href="css/css.css">
+    <link rel="stylesheet" href="css/jquery-ui.min.css">
+    <link rel="stylesheet" href="css/jquery.timepicker.css">
     <link rel="stylesheet" href="js/lib/jsTree/themes/default/style.min.css">
     <script src="js/lib/jquery-2.1.3.js"></script>
     <script src="js/lib/jsTree/jstree.min.js"></script>
@@ -20,132 +22,124 @@
     <script src="js/view.js"></script>
     <script src="js/auth.js"></script>
   </head>
-  <body>
+  <body class="body">
     <header>
-      <form id="loginForm">
-        <input id="login" type="text" placeholder="Login"><br>
-        <input id="pass" type="password" placeholder="Password">
-      </form>
-      <nav id="rooms" style="display:none"><span>Mon Projet</span></nav><br>
-      <div id="logout" style="display:none">Déconnexion !</div>
+      <input id="classes-details-submit-leave" type="submit" form="classes-details-form" style="display:none" value="Quitter la classroom">
+      <input id="classes-details-submit-end" type="submit" form="classes-details-form" style="display:none" value="Terminer cette classroom">
+      <input id="logout" type="button" style="display:none" value="Déconnexion">
     </header>
     <main>
-      <aside id="geochat">
-        <section id="geo">
-          <div id="carte"></div>
+      <aside id="left" class="back">
+        <aside id="geochat" style="display:none">
+          <section id="geo">
+            <div id="carte"></div>
+          </section>
+          <section id="out"></section>
+          <input id="in" type="text">
+        </aside>
+        <section id="courses-div" style="display:none">
+          <div id="courses-list-div"><a id="courses-refresh" href="#refresh">Rafraîchir</a>
+            <div id="courses-list"></div>
+          </div>
+          <form id="courses-creation-form" style="display:none">
+            <p>
+              <input id="courses-creation-name" type="text" title="Nom" placeholder="Nom" class="data text-simple"><br>
+              <input id="courses-creation-description" type="text" title="Description" placeholder="Description" class="data text-area">
+            </p>
+            <input id="courses-creation-submit" type="submit" value="Créer">
+          </form>
+          <form id="courses-details-form" style="display:none">
+            <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom : </span><span id="courses-details-name" title="Nom" class="data label-simple"></span><br><span class="libelle">Enseignant : </span><span id="courses-details-teacher" title="Enseignat" class="data label-simple"></span><br><span class="libelle">Description : </span><span id="courses-details-description" title="Description" class="data label-area"></span></p>
+            <p>
+              <input id="courses-details-submit-modify" type="submit" value="Modifier">
+              <input id="courses-details-submit-enrol" type="submit" value="S'inscrire">
+              <input id="courses-details-submit-quit" type="submit" value="Se désinscrire" style="display:none"><span id="courses-details-message" class="data label-area"></span>
+            </p>
+          </form>
+          <form id="courses-edition-form" style="display:none">
+            <input id="courses-edition-id" type="hidden">
+            <p>
+              <input id="courses-edition-name" type="text" title="Nom" placeholder="Nom" class="data text-simple"><br>
+              <input id="courses-edition-description" type="text" title="Description" placeholder="Description" class="data text-area">
+              <!-- Manque liste des teachers-->
+            </p>
+            <input id="courses-edition-submit-update" type="submit" value="Mettre à jour !">
+            <input id="courses-edition-submit-delete" type="submit" value="Supprimer !">
+          </form>
         </section>
-        <section id="out"></section>
-        <input id="in" type="text">
       </aside>
-      <section id="cams">
-        <div style="display:none" class="cam">
-          <p id="localMember"></p>
-          <video id="localVideo" autoplay="true" muted="true"></video>
-        </div>
-      </section>
-      <section id="classes-div" style="display:none"><span>Classrooms en cours ou à venir</span>
-        <div id="classes-list"></div>
-        <form id="classes-creation-form" style="display:none">
-          <label for="classes-creation-form" class="titre">Créer une classroom :</label>
-          <p>
-            <label for="classes-creation-subject" class="libelle">Sujet</label>
-            <input id="classes-creation-subject" type="text" class="data text-area"><br>
-            <input id="classes-creation-startNow" name="classes-creation-start-when" type="radio" value="NOW" class="data">
-            <label for="classes-creation-startNow" class="libelle">Démarrage immédiat</label><br>
-            <input id="classes-creation-startAt" name="classes-creation-start-when" type="radio" value="DELAY" class="data">
-            <label for="classes-creation-startAt" class="libelle">Démarrage différé</label><br>
-            <label for="classes-creation-startDate" class="libelle">le :</label>
-            <input id="classes-creation-startDate" type="text" class="data text-simple"><br>
-            <label for="classes-creation-startHour" class="libelle">à :</label>
-            <input id="classes-creation-startHour" type="text" class="time data text-simple"><br>
-            <label for="classes-creation-duration" class="libelle">Durée :</label>
-            <input id="classes-creation-duration" type="text" class="time data text-simple">
-          </p>
-          <input id="courses-creation-submit" type="submit" value="Créer la classe">
+      <main id="center">
+        <form id="loginForm">
+          <input id="login" type="text" placeholder="Login"><br>
+          <input id="pass" type="password" placeholder="Password">
         </form>
-        <form id="classes-details-form" style="display:none;">
-          <p>
-            <label id="classes-details-id" style="display:none;" class="data label-simple"></label>
-            <label class="libelle">Cours :</label><span id="classes-details-course" class="data text-simple"></span><br>
-            <label class="libelle">Sujet :</label><span id="classes-details-subject" class="data text-simple"></span><br>
-            <label class="libelle">le :</label><span id="classes-details-startDate" class="data text-simple"></span><br>
-            <label class="libelle">à :</label><span id="classes-details-startHour" class="data text-simple"></span><br>
-            <label class="libelle">Durée :</label><span id="classes-details-duration" class="data text-simple"></span><br>
-            <label class="libelle">Actuellement active :</label><span id="classes-details-active" class="data text-simple"></span><br>
-          </p>
-          <p>
-            <input id="classes-details-submit-start" type="submit" value="Démarrer une classroom">
-            <input id="classes-details-submit-end" type="submit" value="Terminer cette classroom">
-            <input id="classes-details-submit-join" type="submit" value="Rejoindre la classroom">
-            <input id="classes-details-submit-leave" type="submit" value="Quitter la classroom">
-            <input id="classes-details-submit-modify" type="submit" value="Modifier la classroom">
-          </p>
-        </form>
-        <form id="classes-edition-form" style="display:none;">
-          <input id="classes-edition-id" type="hidden"><span class="titre">Modifier une classroom :</span>
-          <p>
-            <label for="classes-edition-course" class="libelle">Cours :</label><span id="classes-edition-course" class="data text-simple"></span>
-            <label for="classes-edition-subject" class="libelle">Sujet :</label>
-            <input id="classes-edition-subject" type="text" class="data text-simple">
-            <label for="classes-edition-startDate" class="libelle">le :</label>
-            <input id="classes-edition-startDate" type="text" class="data text-simple">
-            <label for="classes-edition-startHour" class="libelle">à :</label>
-            <input id="classes-edition-startHour" type="text" class="time data text-simple">
-            <label for="classes-edition-duration" class="libelle">Durée :</label>
-            <input id="classes-edition-duration" type="text" class="time data text-simple">
-            <label for="classes-edition-active" class="libelle">Actuellement active :</label><span id="classes-edition-active" type="text" class="data text-area"></span>
-          </p>
-          <input id="classes-edition-submit-update" type="submit" value="Mettre à jour">
-          <input id="classes-edition-submit-delete" type="submit" value="Supprimer">
-        </form>
-      </section>
-      <section id="repository">
-        <section id="private-repository-section">
-          <div id="private-repository"></div>
-          <div id="private-file-details" style="display:none">
-            <label for="private-file-details-filename">Fichier :</label>
-            <label id="private-file-details-filename"></label><br>
-            <label for="private-file-details-owner">Propriétaire :</label>
-            <label id="private-file-details-owner"></label>
+        <section id="cams" style="display:none">
+          <div class="cam">
+            <p id="localMember"></p>
+            <video id="localVideo" autoplay="true" muted="true"></video>
           </div>
         </section>
-        <section id="public-repository-section">
-          <div id="shared-repository"></div>
-          <div id="uploaded-files"></div><a id="download-link" style="display:none"></a>
+      </main>
+      <aside id="right" class="back">
+        <section id="repository" style="display:none">
+          <section id="private-repository-section">
+            <div id="private-repository"></div>
+            <div id="private-file-details" style="display:none">
+              <label for="private-file-details-filename">Fichier :</label>
+              <label id="private-file-details-filename"></label><br>
+              <label for="private-file-details-owner">Propriétaire :</label>
+              <label id="private-file-details-owner"></label>
+            </div>
+          </section>
+          <section id="public-repository-section">
+            <div id="shared-repository"></div>
+            <div id="uploaded-files"></div><a id="download-link" style="display:none"></a>
+          </section>
         </section>
-      </section>
+        <section id="classes-div" style="display:none">
+          <div id="classes-list"></div>
+          <form id="classes-creation-form" style="display:none">
+            <p>
+              <input id="classes-creation-subject" type="text" title="Sujet" placeholder="Sujet" class="data text-area"><br>
+              <input id="classes-creation-startNow" name="classes-creation-start-when" type="radio" value="NOW" class="data">
+              <label for="classes-creation-startNow" class="libelle">Démarrage immédiat</label><br>
+              <input id="classes-creation-startAt" name="classes-creation-start-when" type="radio" value="DELAY" class="data">
+              <label for="classes-creation-startAt" class="libelle">Démarrage différé</label><br>
+              <input id="classes-creation-startDate" type="text" title="Date de départ" placeholder="Le" class="data text-simple"><br>
+              <input id="classes-creation-startHour" type="text" title="Heure de départ" placeholder="à" class="time data text-simple"><br>
+              <input id="classes-creation-duration" type="text" title="Durée" placeholder="Durée" class="time data text-simple">
+            </p>
+            <input id="courses-creation-submit" type="submit" value="Créer">
+          </form>
+          <form id="classes-details-form" style="display:none;">
+            <p>
+              <label id="classes-details-id" style="display:none;" class="data label-simple"></label>
+              <label class="libelle">Cours : </label><span id="classes-details-course" title="Cours" class="data text-simple"></span><br>
+              <label class="libelle">Sujet : </label><span id="classes-details-subject" title="Sujet" class="data text-simple"></span><br>
+              <label class="libelle">le : </label><span id="classes-details-startDate" title="Le" class="data text-simple"></span><br>
+              <label class="libelle">à : </label><span id="classes-details-startHour" title="à" class="data text-simple"></span><br>
+              <label class="libelle">Durée : </label><span id="classes-details-duration" title="Durée" class="data text-simple"></span><br>
+              <label class="libelle">Actuellement active : </label><span id="classes-details-active" title="Active ?" class="data text-simple"></span><br>
+            </p>
+            <p>
+              <input id="classes-details-submit-start" type="submit" value="Démarrer une classroom">
+              <input id="classes-details-submit-join" type="submit" value="Rejoindre la classroom">
+              <input id="classes-details-submit-modify" type="submit" value="Modifier la classroom">
+            </p>
+          </form>
+          <form id="classes-edition-form" style="display:none;">
+            <input id="classes-edition-id" type="hidden">
+            <p><span id="classes-edition-course" title="Cours" class="data text-simple"></span>
+              <input id="classes-edition-subject" title="Sujet" placeholder="Sujet" type="text" class="data text-simple">
+              <input id="classes-edition-startDate" title="Date de départ" placeholder="Le" type="text" class="data text-simple">
+              <input id="classes-edition-startHour" title="Heure de départ" placeholder="à" type="text" class="time data text-simple">
+              <input id="classes-edition-duration" title="Sujet" placeholder="Sujet" type="text" class="time data text-simple"><span id="classes-edition-active" title="Active ?" type="text" class="data text-area"></span>
+            </p>
+            <input id="classes-edition-submit-update" type="submit" value="Mettre à jour">
+            <input id="classes-edition-submit-delete" type="submit" value="Supprimer">
+          </form>
+        </section>
+      </aside>
     </main>
-    <footer>
-      <section id="courses-div" style="display:none">
-        <div id="courses-list-div"><a id="courses-refresh" href="#refresh"><span>Rafraîchir</span></a>
-          <div id="courses-list"></div>
-        </div>
-        <form id="courses-creation-form" style="display:none"><span class="titre">Créer :</span>
-          <p>
-            <input id="courses-creation-name" type="text" placeholder="Nom" class="data text-simple"><br>
-            <input id="courses-creation-description" type="text" placeholder="Description" class="data text-area">
-          </p>
-          <input id="courses-creation-submit" type="submit" value="Créer !">
-        </form>
-        <form id="courses-details-form" style="display:none"><span class="titre">Détails :</span>
-          <p><span id="courses-details-id" style="display:none" class="data label-simple"></span><span class="libelle">Nom : </span><span id="courses-details-name" class="data label-simple"></span><br><span class="libelle">Enseignant : </span><span id="courses-details-teacher" class="data label-simple"></span><br><span class="libelle">Description : </span><span id="courses-details-description" class="data label-area"></span></p>
-          <p>
-            <input id="courses-details-submit-modify" type="submit" value="Modifier !">
-            <input id="courses-details-submit-enrol" type="submit" value="S'inscrire !">
-            <input id="courses-details-submit-quit" type="submit" value="Se désinscrire !" style="display:none"><span id="courses-details-message" class="data label-area"></span>
-          </p>
-        </form>
-        <form id="courses-edition-form" style="display:none">
-          <input id="courses-edition-id" type="hidden"><span class="titre">Modifier un cours :</span>
-          <p>
-            <input id="courses-edition-name" type="text" placeholder="Nom" class="data text-simple"><br>
-            <input id="courses-edition-description" type="text" placeholder="Description" class="data text-area">
-            <!-- Manque liste des teachers-->
-          </p>
-          <input id="courses-edition-submit-update" type="submit" value="Mettre à jour !">
-          <input id="courses-edition-submit-delete" type="submit" value="Supprimer !">
-        </form>
-      </section>
-    </footer>
   </body>
 </html>

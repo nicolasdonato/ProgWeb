@@ -1,28 +1,41 @@
-label.titre(for='classes-creation-form') Créer une classroom :
-p
-	label.libelle(for='classes-creation-subject') Sujet
-	input#classes-creation-subject.data.text-area(type='text')
-	br
-	input#classes-creation-startNow.data(
-		name='classes-creation-start-when'
-		type='radio'
-		value='NOW')
-	label.libelle(for="classes-creation-startNow") Démarrage immédiat
-	br
-	input#classes-creation-startAt.data(
-		name="classes-creation-start-when"
-		type="radio"
-		value="DELAY")
-	label.libelle(for="classes-creation-startAt") Démarrage différé
-	br
-	label.libelle(for="classes-creation-startDate") le :
-	input#classes-creation-startDate.data.text-simple(type="text")
-	br
-	label.libelle(for="classes-creation-startHour") à :
-	input#classes-creation-startHour.time.data.text-simple(type="text")
-	br
-	label.libelle(for="classes-creation-duration") Durée :
-	input#classes-creation-duration.time.data.text-simple(type="text")
-input#courses-creation-submit(
-	type="submit"
-	value="Créer la classe")
+form#classes-creation-form(style='display:none')
+	//- label.titre(for='classes-creation-form') Créer une classroom :
+	p
+		//- label.libelle(for='classes-creation-subject') Sujet
+		input#classes-creation-subject.data.text-area(
+			type='text'
+			title='Sujet'
+			placeholder='Sujet')
+		br
+		input#classes-creation-startNow.data(
+			name='classes-creation-start-when'
+			type='radio'
+			value='NOW')
+		label.libelle(for="classes-creation-startNow") Démarrage immédiat
+		br
+		input#classes-creation-startAt.data(
+			name="classes-creation-start-when"
+			type="radio"
+			value="DELAY")
+		label.libelle(for="classes-creation-startAt") Démarrage différé
+		br
+		//- label.libelle(for="classes-creation-startDate") le :
+		input#classes-creation-startDate.data.text-simple(
+			type="text"
+			title="Date de départ"
+			placeholder="Le")
+		br
+		//- label.libelle(for="classes-creation-startHour") à :
+		input#classes-creation-startHour.time.data.text-simple(
+			type="text"
+			title="Heure de départ"
+			placeholder="à")
+		br
+		//- label.libelle(for="classes-creation-duration") Durée :
+		input#classes-creation-duration.time.data.text-simple(
+			type="text"
+			title="Durée"
+			placeholder="Durée")
+	input#courses-creation-submit(
+		type="submit"
+		value="Créer")

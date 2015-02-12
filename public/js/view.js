@@ -7,19 +7,27 @@
       }
     },
     loginSuccess: function() {
-      $("#loginForm").hide();
-      $("#pass").val('');
-      $("#rooms, #logout").show();
-      $("#localVideo").parent().show();
-      return GEOCHAT_COMPONENTS.connect();
+      GEOCHAT_COMPONENTS.connect();
+      $("#courses-div").hide();
+      $("#classes-div").hide();
+      GEOCHAT_VIEW.swap($("#loginForm"), $("#logout"));
+      GEOCHAT_VIEW.swap($("#loginForm"), $("#courses-div"));
+      GEOCHAT_VIEW.swap($("#loginForm"), $("#classes-div"));
+      return $("#pass").val('');
     },
     loginFail: function() {
       return $('#loginForm').addClass('fail');
     },
     logout: function() {
       AUTH.requestLogout();
-      $("#loginForm").show();
-      return $("#rooms, #logout").hide();
+      GEOCHAT_VIEW.swap($("#logout"), $("#loginForm"));
+      GEOCHAT_VIEW.swap($('#courses-div'));
+      GEOCHAT_VIEW.swap($('#classes-div'));
+      GEOCHAT_VIEW.swap($('#geochat'));
+      GEOCHAT_VIEW.swap($('#repository'));
+      GEOCHAT_VIEW.swap($('#cams'));
+      GEOCHAT_VIEW.swap($('#classes-details-submit-leave'));
+      return GEOCHAT_VIEW.swap($('#classes-details-submit-end'));
     },
     addVideo: function(member, video) {
       return $("<div id=\"" + member + "\" class=\"cam\">\n	<p>" + member + "</p>\n	" + ($(video).prop('outerHTML')) + "\n</div>").appendTo('#cams').on('dragenter dragstart dragend dragleave dragover drag drop', GEOCHAT_VIEW.dragCancel).on('drop', GEOCHAT_VIEW.dropFile);
@@ -36,15 +44,11 @@
       msg = $(this).val();
       if (msg !== '' && event.keyCode === 13) {
         $(this).val('');
-        if (typeof sendMessage === 'undefined') {
-          return GEOCHAT_VIEW.writeChat('WARNING', 'You are not connected !');
-        } else {
-          GEOCHAT_VIEW.writeChat('me', msg);
-          return sendMessage('messageChat', {
-            user: AUTH.getMember(),
-            message: msg
-          });
-        }
+        GEOCHAT_VIEW.writeChat('moi', msg);
+        return sendMessage('messageChat', {
+          user: AUTH.getMember(),
+          message: msg
+        });
       }
     },
     dragCancel: function(event) {
@@ -58,6 +62,49 @@
       member = this.id;
       files = event.originalEvent.dataTransfer.files;
       return FILE_TRANSFER.sendFile(member, files);
+    },
+    join: function() {
+      $('#geochat').hide();
+      $('#repository').hide();
+      GEOCHAT_VIEW.swap($('#courses-div'), $('#geochat'));
+      GEOCHAT_VIEW.swap($('#classes-div'), $('#repository'));
+      GEOCHAT_VIEW.show($('#cams'));
+      GEOCHAT_VIEW.show($('classes-details-submit-leave'));
+      GEOCHAT_VIEW.show($('classes-details-submit-end'));
+      return true;
+    },
+    leave: function() {
+      GEOCHAT_VIEW.swap($('#geochat'), $('#courses-div'));
+      GEOCHAT_VIEW.swap($('#repository'), $('#classes-div'));
+      GEOCHAT_VIEW.swap($('#cams'));
+      return true;
+    },
+    show: function(elem) {
+      var cb;
+      console.log('show');
+      console.log(elem.selector);
+      cb = (function(_this) {
+        return function() {
+          return elem.removeClass('showOpac');
+        };
+      })(this);
+      return elem.show().addClass('showOpac').one('animationend', cb).one('webkitAnimationEnd', cb);
+    },
+    swap: function(elem, elem2) {
+      var cb;
+      console.log('hide');
+      console.log(elem.selector);
+      cb = (function(_this) {
+        return function() {
+          console.log(elem.selector);
+          console.log(elem2.selector);
+          elem.removeClass('hideOpac').hide();
+          if (elem2) {
+            return GEOCHAT_VIEW.show(elem2);
+          }
+        };
+      })(this);
+      return elem.addClass('hideOpac').one('animationend', cb).one('webkitAnimationEnd', cb);
     }
   };
 
@@ -65,16 +112,10 @@
     window.AUTH.initialize();
     $('#localMember').parent().on('dragover dragenter', GEOCHAT_VIEW.dragCancel).on('drop', GEOCHAT_VIEW.dropFile);
     $('#in').on('keyup', GEOCHAT_VIEW.readChat);
-    if (window.FileReader) {
-      console.log('FILEREADER');
-    } else {
-      console.log('NO FILEREADER !');
-    }
-    if (window.FileList) {
-      return console.log('FILELIST');
-    } else {
-      return console.log('NO FILELIST !');
-    }
+    $('#classes-details-submit-join').on('click', GEOCHAT_VIEW.join);
+    $('#classes-details-submit-leave').on('click', GEOCHAT_VIEW.leave);
+    $('#classes-details-submit-start').on('click', GEOCHAT_VIEW.join);
+    return $('#classes-details-submit-end').on('click', GEOCHAT_VIEW.leave);
   });
 
 }).call(this);
