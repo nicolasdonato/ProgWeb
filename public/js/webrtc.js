@@ -97,6 +97,9 @@ var WebRTC = Class.create({
 	// SDP Constraints
 	sdpConstraints: null,
 
+	// room connected
+	room: null, setRoom: function(room) { this.room = room; },
+	
 	// stream of the local webcam
 	localStream: null,
 	// video of the local webcam
@@ -326,7 +329,7 @@ var WebRTC = Class.create({
 	 * send a message to the server with the component message of this class
 	 */
 	sendMessageWebRtc: function(messageType, data) {
-		this.socketWebrtc.sendMessage(messageType, data);
+		this.socketWebrtc.sendMessage(messageType, data, this.room);
 	},
 
 	/**
@@ -723,9 +726,13 @@ var WebRTC = Class.create({
 		// this.isStarted = false;
 		// isAudioMuted = false;
 		// isVideoMuted = false;
-		this.closeDataChannels(node.sendChannel); // TODO an error has occured when the RTCDataChannel is closing
-		node.pc.close();
-		node.pc = null;
+		if (node) {
+			this.closeDataChannels(node.sendChannel); // TODO an error has occured when the RTCDataChannel is closing
+			if (node.pc) {
+				node.pc.close();
+				node.pc = null;
+			}
+		}
 	},
 
 	///////////////////////////////////////////
@@ -910,8 +917,11 @@ window.WEB_RTC_NODE = {
 		},
 
 		
-		connect 	: function(){
+		connect 	: function(options){
 			if(WEB_RTC_NODE.component && WEB_RTC_NODE.component.webrtc) {
+				if (options) {
+					WEB_RTC_NODE.component.webrtc.setRoom(options.room);
+				}
 				WEB_RTC_NODE.component.webrtc.startWebRTC();
 			}
 			$("#cams").show();
