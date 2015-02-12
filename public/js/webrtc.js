@@ -911,7 +911,7 @@ window.WEB_RTC_NODE = {
 				},
 				receiveMessageByDataChannel: function (event) {
 					console.log("The remote user '"+event.remoteMember+"' [remoteVideo: "+event.remoteVideo+"] sends a message ["+event.message+"]");
-					FileTransfer.receiveFile(event);
+					FILE_TRANSFER.receiveFile(event);
 				}
 			});
 

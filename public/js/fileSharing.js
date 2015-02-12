@@ -3,36 +3,36 @@
 /////////////////////////////////////////
 // File sharing events
 //
-var FileHelper = Class.create({
-	
-	progressHelper : {},
-	
-	outputPanel : document.body,
+var progressHelper = {};
+var outputPanel = document.body;
+var FileHelper = {
 	
     onBegin: function (file) {
-       /* var div = document.createElement('div');
+        var div = document.createElement('div');
         div.title = file.name;
         div.innerHTML = '<label>0%</label> <progress></progress>';
-        this.outputPanel.insertBefore(div, this.outputPanel.firstChild);
-        this.progressHelper[file.uuid] = {
+        outputPanel.insertBefore(div, outputPanel.firstChild);
+        progressHelper[file.uuid] = {
             div: div,
             progress: div.querySelector('progress'),
             label: div.querySelector('label')
         };
-        this.progressHelper[file.uuid].progress.max = file.maxChunks;*/
+        alert(file.maxChunks);
+        progressHelper[file.uuid].progress.max = file.maxChunks;
     },
     onEnd: function (file) {
-    	//this.progressHelper[file.uuid].div.innerHTML = '<a href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
+    	progressHelper[file.uuid].div.innerHTML = '<a id=' + file.uuid + ' href="' + file.url + '" target="_blank" download="' + file.name + '">' + file.name + '</a>';
+    	//$("#"+file.uuid).click();
     },
     onProgress: function (chunk) {
-       /* var helper = this.progressHelper[chunk.uuid];
+        var helper = progressHelper[chunk.uuid];
         helper.progress.value = chunk.currentPosition || chunk.maxChunks || helper.progress.max;
         
         if (helper.progress.position == -1) return;
         var position = +helper.progress.position.toFixed(2).split('.')[1] || 100;
-        helper.label.innerHTML = position + '%';*/ad
+        helper.label.innerHTML = position + '%';
     }
-});
+};
 
 // Class permit to send and receive file. It encapsulates methods of File.js
 
@@ -51,7 +51,7 @@ window.FILE_TRANSFER = {
 	fileReceiver: null,
 		
 	initialize : function(){
-		FILE_TRANSFER.helper = new FileHelper();
+		FILE_TRANSFER.helper = FileHelper;
 		FILE_TRANSFER.fileReceiver = new File.Receiver(FILE_TRANSFER.helper);
 	},
 	
